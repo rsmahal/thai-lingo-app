@@ -25,6 +25,9 @@ jobs:
       run: chmod +x gradlew
       continue-on-error: true # Safe fallback if wrapper not packed
 
+    - name: Decode debug keystore
+      run: base64 --decode debug.keystore.base64 > debug.keystore
+
     - name: Assemble Debug APK
       run: gradle :app:assembleDebug --no-daemon
 
