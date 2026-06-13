@@ -1,0 +1,6 @@
+{
+  "name": "ThaiLingo",
+  "description": "A beautiful, modern Duolingo-style offline-first Thai language learning application.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

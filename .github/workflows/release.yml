@@ -1,0 +1,39 @@
+name: Android Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout project source
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Decode keystore base64
+      run: |
+        echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+      continue-on-error: true
+
+    - name: Assemble Release App Bundle (AAB)
+      run: gradle :app:bundleRelease --no-daemon
+      env:
+        KEYSTORE_PATH: "../release.keystore"
+        STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+
+    - name: Upload Production App Bundle Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: thailingo-production-aab
+        path: app/build/outputs/bundle/release/app-release.aab
