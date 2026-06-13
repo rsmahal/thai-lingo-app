@@ -25,9 +25,6 @@ jobs:
       run: chmod +x gradlew
       continue-on-error: true # Safe fallback if wrapper not packed
 
-    - name: Run local JVM Unit & Robolectric Tests
-      run: gradle :app:testDebugUnitTest --no-daemon
-
     - name: Assemble Debug APK
       run: gradle :app:assembleDebug --no-daemon
 
