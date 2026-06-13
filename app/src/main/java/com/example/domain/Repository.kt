@@ -13,6 +13,11 @@ interface ThaiLingoRepository {
     
     fun getAllVocabulary(): Flow<List<Vocabulary>>
     
+    fun getAllReviewWords(): Flow<List<ReviewWord>>
+    suspend fun addWordToReviewQueue(thaiWord: String)
+    suspend fun removeWordFromReviewQueue(thaiWord: String)
+    suspend fun updateReviewWordSrs(thaiWord: String, isCorrect: Boolean)
+    
     suspend fun getExercisesForLesson(lessonId: Int): List<Exercise>
     
     fun getAllAchievements(): Flow<List<Achievement>>

@@ -274,6 +274,8 @@ fun LessonPlayingLayout(
                         selectedEnglish = state.selectedEnglish,
                         selectedThai = state.selectedThai,
                         matchedPairs = state.matchedPairs,
+                        isMatchingCorrect = state.isMatchingCorrect,
+                        checkActivePair = state.checkActivePair,
                         onSelect = onSelectMatching
                     )
                 }
@@ -315,11 +317,14 @@ fun MultipleChoiceView(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                IconButton(
-                    onClick = onVoicePlay,
-                    modifier = Modifier.background(GemCyan, CircleShape).size(48.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.VolumeUp, contentDescription = "Listen to pronunciation", tint = Color.White)
+                val isQuestionThai = exercise.question.any { it in '\u0E00'..'\u0E7F' }
+                if (isQuestionThai) {
+                    IconButton(
+                        onClick = onVoicePlay,
+                        modifier = Modifier.background(GemCyan, CircleShape).size(48.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.VolumeUp, contentDescription = "Listen to pronunciation", tint = Color.White)
+                    }
                 }
                 Column {
                     Text(
@@ -605,84 +610,125 @@ fun MatchingView(
     selectedEnglish: String,
     selectedThai: String,
     matchedPairs: Set<String>,
+    isMatchingCorrect: Boolean?,
+    checkActivePair: Pair<String, String>?,
     onSelect: (String, Boolean) -> Unit
 ) {
     // Collect options and sort English/Thai separately to let user match
     val rawOptions = exercise.options
-    // Sort words
-    val englishWords = remember(rawOptions) { rawOptions.filter { it.firstOrNull()?.isLetter() ?: false }.shuffled() }
-    val thaiWords = remember(rawOptions) { rawOptions.filter { !englishWords.contains(it) }.shuffled() }
+    // English words containing ASCII alphabet characters shuffled stably
+    val englishWords = remember(rawOptions) {
+        rawOptions.filter { word -> word.any { it in 'A'..'Z' || it in 'a'..'z' } }.shuffled()
+    }
+    val thaiWords = remember(rawOptions) {
+        rawOptions.filter { !englishWords.contains(it) }.shuffled()
+    }
 
-    Row(modifier = Modifier.fillMaxWidth().testTag("matching_panel_row"), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        // Left Thai Cards
+    Row(
+        modifier = Modifier.fillMaxWidth().testTag("matching_panel_row"),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Left Column (English words)
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            thaiWords.forEach { word ->
-                val isMatched = matchedPairs.any { it.startsWith("$word:") }
-                val isSelected = selectedThai == word
-                val bg = when {
-                    isMatched -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-                    isSelected -> DuoGreen.copy(alpha = 0.08f)
-                    else -> MaterialTheme.colorScheme.surface
-                }
-                val border = when {
-                    isMatched -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                    isSelected -> DuoGreen
-                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-                }
+            englishWords.forEach { word ->
+                val isMatched = matchedPairs.any { it.endsWith(":$word") }
 
-                Card(
-                    onClick = { if (!isMatched) onSelect(word, false) },
-                    modifier = Modifier.fillMaxWidth().height(56.dp).testTag("matching_thai_$word"),
-                    colors = CardDefaults.cardColors(containerColor = bg),
-                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                        width = if (isSelected) 3.dp else 1.5.dp,
-                        brush = androidx.compose.ui.graphics.SolidColor(border)
-                    )
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = word,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isMatched) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 16.sp
+                if (isMatched) {
+                    Spacer(modifier = Modifier.fillMaxWidth().height(56.dp))
+                } else {
+                    val isSelected = selectedEnglish == word
+                    val isActiveCheck = checkActivePair?.second == word
+
+                    val bg = when {
+                        isActiveCheck && isMatchingCorrect == true -> CorrectFill
+                        isActiveCheck && isMatchingCorrect == false -> HeartRedLight
+                        isSelected -> DuoGreen.copy(alpha = 0.08f)
+                        else -> MaterialTheme.colorScheme.surface
+                    }
+                    val border = when {
+                        isActiveCheck && isMatchingCorrect == true -> CorrectStroke
+                        isActiveCheck && isMatchingCorrect == false -> HeartRed
+                        isSelected -> DuoGreen
+                        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                    }
+                    val textColor = when {
+                        isActiveCheck && isMatchingCorrect == true -> CorrectText
+                        isActiveCheck && isMatchingCorrect == false -> HeartRed
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+
+                    Card(
+                        onClick = { onSelect(word, true) },
+                        modifier = Modifier.fillMaxWidth().height(56.dp).testTag("matching_eng_$word"),
+                        colors = CardDefaults.cardColors(containerColor = bg),
+                        border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+                            width = if (isSelected || isActiveCheck) 3.dp else 1.5.dp,
+                            brush = androidx.compose.ui.graphics.SolidColor(border)
                         )
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = word,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor,
+                                fontSize = 15.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // Right English Cards
+        // Right Column (Thai words)
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            englishWords.forEach { word ->
-                val isMatched = matchedPairs.any { it.endsWith(":$word") }
-                val isSelected = selectedEnglish == word
-                val bg = when {
-                    isMatched -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
-                    isSelected -> DuoGreen.copy(alpha = 0.08f)
-                    else -> MaterialTheme.colorScheme.surface
-                }
-                val border = when {
-                    isMatched -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                    isSelected -> DuoGreen
-                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-                }
+            thaiWords.forEach { word ->
+                val isMatched = matchedPairs.any { it.startsWith("$word:") }
 
-                Card(
-                    onClick = { if (!isMatched) onSelect(word, true) },
-                    modifier = Modifier.fillMaxWidth().height(56.dp).testTag("matching_eng_$word"),
-                    colors = CardDefaults.cardColors(containerColor = bg),
-                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                        width = if (isSelected) 3.dp else 1.5.dp,
-                        brush = androidx.compose.ui.graphics.SolidColor(border)
-                    )
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = word,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isMatched) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.onSurface,
-                            fontSize = 15.sp
+                if (isMatched) {
+                    Spacer(modifier = Modifier.fillMaxWidth().height(56.dp))
+                } else {
+                    val isSelected = selectedThai == word
+                    val isActiveCheck = checkActivePair?.first == word
+
+                    val bg = when {
+                        isActiveCheck && isMatchingCorrect == true -> CorrectFill
+                        isActiveCheck && isMatchingCorrect == false -> HeartRedLight
+                        isSelected -> DuoGreen.copy(alpha = 0.08f)
+                        else -> MaterialTheme.colorScheme.surface
+                    }
+                    val border = when {
+                        isActiveCheck && isMatchingCorrect == true -> CorrectStroke
+                        isActiveCheck && isMatchingCorrect == false -> HeartRed
+                        isSelected -> DuoGreen
+                        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                    }
+                    val textColor = when {
+                        isActiveCheck && isMatchingCorrect == true -> CorrectText
+                        isActiveCheck && isMatchingCorrect == false -> HeartRed
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
+
+                    Card(
+                        onClick = { onSelect(word, false) },
+                        modifier = Modifier.fillMaxWidth().height(56.dp).testTag("matching_thai_$word"),
+                        colors = CardDefaults.cardColors(containerColor = bg),
+                        border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+                            width = if (isSelected || isActiveCheck) 3.dp else 1.5.dp,
+                            brush = androidx.compose.ui.graphics.SolidColor(border)
                         )
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = word,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor,
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
                     }
                 }
             }

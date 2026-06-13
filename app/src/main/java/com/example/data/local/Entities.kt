@@ -8,6 +8,7 @@ import com.example.domain.ExerciseType
 import com.example.domain.Lesson
 import com.example.domain.UserProgress
 import com.example.domain.Vocabulary
+import com.example.domain.ReviewWord
 
 @Entity(tableName = "user_progress")
 data class UserProgressEntity(
@@ -189,6 +190,48 @@ data class AchievementEntity(
             target = domain.target,
             isUnlocked = domain.isUnlocked,
             iconName = domain.iconName
+        )
+    }
+}
+
+@Entity(tableName = "review_words")
+data class ReviewWordEntity(
+    @PrimaryKey val thai: String,
+    val english: String,
+    val romanization: String,
+    val category: String,
+    val addedAt: Long = System.currentTimeMillis(),
+    val intervalDays: Int = 0,
+    val streak: Int = 0,
+    val lastReviewedAt: Long = 0,
+    val nextDueAt: Long = System.currentTimeMillis(),
+    val isMastered: Boolean = false
+) {
+    fun toDomain() = ReviewWord(
+        thai = thai,
+        english = english,
+        romanization = romanization,
+        category = category,
+        addedAt = addedAt,
+        intervalDays = intervalDays,
+        streak = streak,
+        lastReviewedAt = lastReviewedAt,
+        nextDueAt = nextDueAt,
+        isMastered = isMastered
+    )
+
+    companion object {
+        fun fromDomain(domain: ReviewWord) = ReviewWordEntity(
+            thai = domain.thai,
+            english = domain.english,
+            romanization = domain.romanization,
+            category = domain.category,
+            addedAt = domain.addedAt,
+            intervalDays = domain.intervalDays,
+            streak = domain.streak,
+            lastReviewedAt = domain.lastReviewedAt,
+            nextDueAt = domain.nextDueAt,
+            isMastered = domain.isMastered
         )
     }
 }

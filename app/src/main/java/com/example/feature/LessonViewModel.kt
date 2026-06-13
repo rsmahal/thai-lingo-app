@@ -32,6 +32,8 @@ sealed interface LessonUiState {
         val selectedEnglish: String = "",
         val selectedThai: String = "",
         val matchedPairs: Set<String> = emptySet(), // Ex. "สวัสดี:Hello / Goodbye"
+        val isMatchingCorrect: Boolean? = null,
+        val checkActivePair: Pair<String, String>? = null,
         val isSpeakingSimulated: Boolean = false,
         val isLessonFinished: Boolean = false,
         val xpEarned: Int = 0
@@ -105,41 +107,74 @@ class LessonViewModel(
     fun selectMatchingItem(content: String, isEnglish: Boolean) {
         val state = _uiState.value as? LessonUiState.Playing ?: return
         if (state.isChecked) return
+        if (state.checkActivePair != null) return // Ignore interaction during animation
 
         var nextEng = state.selectedEnglish
         var nextThai = state.selectedThai
-        var nextMatched = state.matchedPairs.toMutableSet()
 
         if (isEnglish) {
+            if (state.matchedPairs.any { it.endsWith(":$content") }) return
+            if (nextEng == content) {
+                _uiState.value = state.copy(selectedEnglish = "")
+                return
+            }
             nextEng = content
         } else {
+            if (state.matchedPairs.any { it.startsWith("$content:") }) return
+            if (nextThai == content) {
+                _uiState.value = state.copy(selectedThai = "")
+                return
+            }
             nextThai = content
         }
 
-        // Try checking match immediately if both are selected
+        _uiState.value = state.copy(
+            selectedEnglish = nextEng,
+            selectedThai = nextThai
+        )
+
+        // If both options are selected, check the pair
         if (nextEng.isNotEmpty() && nextThai.isNotEmpty()) {
             val currentExercise = state.exercises[state.currentStep]
-            // Valid matching criteria defined in exercise.correctAnswer as a format "Key=Val|Key2=Val2"
             val validPairs = currentExercise.correctAnswer.split("|").associate {
                 val parts = it.split("=")
                 parts[0] to parts[1]
             }
 
-            if (validPairs[nextThai] == nextEng) {
-                // Correct match!
-                nextMatched.add("$nextThai:$nextEng")
-            } else {
-                // Incorrect match, plays a minor vibration or error later, clear selections
-            }
-            nextEng = ""
-            nextThai = ""
-        }
+            val isCorrectMatch = validPairs[nextThai] == nextEng
 
-        _uiState.value = state.copy(
-            selectedEnglish = nextEng,
-            selectedThai = nextThai,
-            matchedPairs = nextMatched
-        )
+            _uiState.value = (_uiState.value as LessonUiState.Playing).copy(
+                isMatchingCorrect = isCorrectMatch,
+                checkActivePair = Pair(nextThai, nextEng)
+            )
+
+            viewModelScope.launch {
+                kotlinx.coroutines.delay(800) // Brief glowing duration
+
+                val currentState = _uiState.value as? LessonUiState.Playing ?: return@launch
+                val nextMatched = currentState.matchedPairs.toMutableSet()
+
+                if (isCorrectMatch) {
+                    nextMatched.add("$nextThai:$nextEng")
+                    repository.updateReviewWordSrs(nextThai, isCorrect = true)
+                } else {
+                    repository.updateReviewWordSrs(nextThai, isCorrect = false)
+                }
+
+                val expectedCount = currentExercise.correctAnswer.split("|").size
+                val allMatchedNow = nextMatched.size == expectedCount
+
+                _uiState.value = currentState.copy(
+                    selectedEnglish = "",
+                    selectedThai = "",
+                    matchedPairs = nextMatched,
+                    isMatchingCorrect = null,
+                    checkActivePair = null,
+                    isChecked = allMatchedNow,
+                    isCorrect = if (allMatchedNow) true else currentState.isCorrect
+                )
+            }
+        }
     }
 
     fun simulateMicSpeaking() {
@@ -184,10 +219,17 @@ class LessonViewModel(
         var nextHearts = state.hearts
         if (!isCorrect) {
             nextHearts = (nextHearts - 1).coerceAtLeast(0)
-            // Deduct heart globally in DB
-            viewModelScope.launch {
+        }
+
+        viewModelScope.launch {
+            if (!isCorrect) {
                 val progress = repository.getUserProgressOnce()
                 repository.saveUserProgress(progress.copy(hearts = nextHearts))
+            }
+            if (currentExercise.type != ExerciseType.MATCHING) {
+                val isEnglishToThai = currentExercise.question.any { it in 'A'..'Z' || it in 'a'..'z' }
+                val thaiWordForSrs = if (isEnglishToThai) currentExercise.correctAnswer else currentExercise.question
+                repository.updateReviewWordSrs(thaiWordForSrs, isCorrect = isCorrect)
             }
         }
 
@@ -256,7 +298,9 @@ class LessonViewModel(
                 isCorrect = false,
                 selectedEnglish = "",
                 selectedThai = "",
-                matchedPairs = emptySet()
+                matchedPairs = emptySet(),
+                isMatchingCorrect = null,
+                checkActivePair = null
             )
             speakCurrentIfListening(nextExercise)
         }

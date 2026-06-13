@@ -33,7 +33,8 @@ object ServiceLocator {
                 db.vocabularyDao(),
                 db.lessonDao(),
                 db.exerciseDao(),
-                db.achievementDao()
+                db.achievementDao(),
+                db.reviewWordDao()
             )
             repository = repo
             repo

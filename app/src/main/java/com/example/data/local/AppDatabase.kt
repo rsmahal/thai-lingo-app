@@ -9,9 +9,10 @@ import androidx.room.RoomDatabase
         VocabularyEntity::class,
         LessonEntity::class,
         ExerciseEntity::class,
-        AchievementEntity::class
+        AchievementEntity::class,
+        ReviewWordEntity::class
     ],
-    version = 1,
+    version = 4,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,4 +21,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun lessonDao(): LessonDao
     abstract fun exerciseDao(): ExerciseDao
     abstract fun achievementDao(): AchievementDao
+    abstract fun reviewWordDao(): ReviewWordDao
 }

@@ -12,7 +12,8 @@ class RepositoryImpl(
     private val vocabularyDao: VocabularyDao,
     private val lessonDao: LessonDao,
     private val exerciseDao: ExerciseDao,
-    private val achievementDao: AchievementDao
+    private val achievementDao: AchievementDao,
+    private val reviewWordDao: ReviewWordDao
 ) : ThaiLingoRepository {
 
     override fun getUserProgress(): Flow<UserProgress?> {
@@ -50,6 +51,91 @@ class RepositoryImpl(
         return vocabularyDao.getAllVocabulary().map { list -> list.map { it.toDomain() } }
     }
 
+    override fun getAllReviewWords(): Flow<List<ReviewWord>> {
+        return reviewWordDao.getAllReviewWords().map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun addWordToReviewQueue(thaiWord: String) = withContext(Dispatchers.IO) {
+        updateReviewWordSrs(thaiWord, isCorrect = false)
+    }
+
+    override suspend fun updateReviewWordSrs(thaiWord: String, isCorrect: Boolean) = withContext(Dispatchers.IO) {
+        val existing = reviewWordDao.getReviewWord(thaiWord)
+        val now = System.currentTimeMillis()
+        if (existing == null) {
+            val allVocab = getSampleVocabulary()
+            val vocab = allVocab.find { it.thai == thaiWord }
+            val (english, romanization, category) = if (vocab != null) {
+                Triple(vocab.english, vocab.romanization, vocab.category)
+            } else {
+                Triple(thaiWord, "", "General")
+            }
+
+            if (isCorrect) {
+                val intervalDays = 1
+                val entity = ReviewWordEntity(
+                    thai = thaiWord,
+                    english = english,
+                    romanization = romanization,
+                    category = category,
+                    addedAt = now,
+                    intervalDays = intervalDays,
+                    streak = 1,
+                    lastReviewedAt = now,
+                    nextDueAt = now + intervalDays * 24 * 3600 * 1000L,
+                    isMastered = false
+                )
+                reviewWordDao.insertReviewWord(entity)
+            } else {
+                val entity = ReviewWordEntity(
+                    thai = thaiWord,
+                    english = english,
+                    romanization = romanization,
+                    category = category,
+                    addedAt = now,
+                    intervalDays = 0,
+                    streak = 0,
+                    lastReviewedAt = now,
+                    nextDueAt = now,
+                    isMastered = false
+                )
+                reviewWordDao.insertReviewWord(entity)
+            }
+        } else {
+            val nextEntity = if (isCorrect) {
+                val nextStreak = existing.streak + 1
+                val nextIntervalDays = when (nextStreak) {
+                    1 -> 1
+                    2 -> 3
+                    3 -> 7
+                    4 -> 14
+                    else -> (existing.intervalDays * 2).coerceAtMost(180)
+                }
+                val isMasteredNow = nextStreak >= 4 || nextIntervalDays >= 14
+                existing.copy(
+                    streak = nextStreak,
+                    intervalDays = nextIntervalDays,
+                    lastReviewedAt = now,
+                    nextDueAt = now + nextIntervalDays * 24 * 3600 * 1000L,
+                    isMastered = isMasteredNow
+                )
+            } else {
+                existing.copy(
+                    streak = 0,
+                    intervalDays = 0,
+                    lastReviewedAt = now,
+                    nextDueAt = now,
+                    isMastered = false
+                )
+            }
+            reviewWordDao.insertReviewWord(nextEntity)
+        }
+    }
+
+    override suspend fun removeWordFromReviewQueue(thaiWord: String) = withContext(Dispatchers.IO) {
+        reviewWordDao.deleteReviewWord(thaiWord)
+    }
+
     override suspend fun getExercisesForLesson(lessonId: Int): List<Exercise> = withContext(Dispatchers.IO) {
         exerciseDao.getExercisesByLessonId(lessonId).map { it.toDomain() }
     }
@@ -71,6 +157,7 @@ class RepositoryImpl(
         // Update first lesson unlocked, others locked
         val rawLessons = getSampleLessons()
         lessonDao.insertLessons(rawLessons.map { LessonEntity.fromDomain(it) })
+        reviewWordDao.clearReviewQueue()
     }
 
     override suspend fun initializeDatabase() = withContext(Dispatchers.IO) {
@@ -184,65 +271,104 @@ class RepositoryImpl(
 
     private fun getSampleExercises(): List<Exercise> {
         val list = mutableListOf<Exercise>()
-        
-        // --- LESSON 1 EXERCISES (Greetings 101) ---
-        list.add(Exercise(101, 1, ExerciseType.MULTIPLE_CHOICE, "How do you say 'Hello / Goodbye' in Thai?", "สวัสดี", "Hello / Goodbye", "Sawatdee", listOf("Hello / Goodbye", "Thank you", "Delicious", "Water"), "สวัสดี"))
-        list.add(Exercise(102, 1, ExerciseType.TRANSLATE, "Translate: สบายดี", "สบายดี", "I am fine", "Sabai dee", emptyList(), "สบายดี"))
-        list.add(Exercise(103, 1, ExerciseType.LISTENING, "Listen and select the correct translation:", "ขอบคุณ", "Thank you", "Khop khun", listOf("Thank you", "Excuse me", "Hello / Goodbye", "Yes"), "ขอบคุณ"))
-        list.add(Exercise(104, 1, ExerciseType.SPEAKING, "Speak this phrase clearly into your microphone:", "สบายดีไหม", "สบายดีไหม", "Sabai dee mai", emptyList(), "สบายดีไหม"))
-        list.add(Exercise(105, 1, ExerciseType.MATCHING, "Match matching English and Thai pairs:", "Match vocabulary", "สวัสดี=Hello / Goodbye|ขอบคุณ=Thank you|สบายดี=I am fine|สบายดีไหม=How are you?", "", listOf("สวัสดี", "ขอบคุณ", "สบายดี", "สบายดีไหม", "Hello / Goodbye", "Thank you", "I am fine", "How are you?"), ""))
+        val vocabulary = getSampleVocabulary()
 
-        // --- LESSON 2 EXERCISES (More Greetings) ---
-        list.add(Exercise(201, 2, ExerciseType.MULTIPLE_CHOICE, "What does 'ขอโทษ' mean?", "ขอโทษ", "Sorry / Excuse me", "Kho thot", listOf("Sorry / Excuse me", "Thank you", "Yes", "Goodbye"), "ขอโทษ"))
-        list.add(Exercise(202, 2, ExerciseType.TRANSLATE, "Translate: ใช่", "ใช่", "Yes", "Chai", emptyList(), "ใช่"))
-        list.add(Exercise(203, 2, ExerciseType.LISTENING, "Listen and select the correct words", "ลาก่อน", "Goodbye", "La kon", listOf("Goodbye", "Hello / Goodbye", "No / Not correct", "Good luck"), "ลาก่อน"))
-        list.add(Exercise(204, 2, ExerciseType.SPEAKING, "Pronounce: โชคดี (Chok dee)", "โชคดี", "โชคดี", "Chok dee", emptyList(), "โชคดี"))
-        list.add(Exercise(205, 2, ExerciseType.MATCHING, "Match the greetings", "Match", "ขอโทษ=Sorry / Excuse me|ใช่=Yes|ไม่ใช่=No / Not correct|ลาก่อน=Goodbye", "", listOf("ขอโทษ", "ใช่", "ไม่ใช่", "ลาก่อน", "Sorry / Excuse me", "Yes", "No / Not correct", "Goodbye"), ""))
-
-        // --- LESSON 3 EXERCISES (Thai Food Staples) ---
-        list.add(Exercise(301, 3, ExerciseType.MULTIPLE_CHOICE, "What is 'ข้าว' in English?", "ข้าว", "Rice", "Khao", listOf("Rice", "Water", "Food", "Spicy"), "ข้าว"))
-        list.add(Exercise(302, 3, ExerciseType.TRANSLATE, "Translate: น้ำ", "น้ำ", "Water", "Nam", emptyList(), "น้ำ"))
-        list.add(Exercise(303, 3, ExerciseType.LISTENING, "Listen and select the correct word", "อาหาร", "Food", "Ahan", listOf("Food", "Rice", "Water", "Delicious"), "อาหาร"))
-        list.add(Exercise(304, 3, ExerciseType.SPEAKING, "Speak: กินข้าว", "กินข้าว", "กินข้าว", "Kin khao", emptyList(), "กินข้าว"))
-        list.add(Exercise(305, 3, ExerciseType.MATCHING, "Match words", "Match", "ข้าว=Rice|น้ำ=Water|อาหาร=Food|กิน=Eat", "", listOf("ข้าว", "น้ำ", "อาหาร", "กิน", "Rice", "Water", "Food", "Eat"), ""))
-
-        // --- LESSON 4 EXERCISES (Famous Dishes) ---
-        list.add(Exercise(401, 4, ExerciseType.MULTIPLE_CHOICE, "Select 'Stir-fried noodles' (Pad Thai):", "ผัดไทย", "Stir-fried noodles", "Pad Thai", listOf("Stir-fried noodles", "Spicy shrimp soup", "Papaya salad", "Fruit"), "ผัดไทย"))
-        list.add(Exercise(402, 4, ExerciseType.TRANSLATE, "Translate: อร่อย", "อร่อย", "Delicious", "Aroy", emptyList(), "อร่อย"))
-        list.add(Exercise(403, 4, ExerciseType.LISTENING, "Select what you hear:", "ส้มตำ", "Papaya salad", "Som tam", listOf("Papaya salad", "Fruit", "Coffee", "Spicy"), "ส้มตำ"))
-        list.add(Exercise(404, 4, ExerciseType.SPEAKING, "Speak: เผ็ดมาก", "เผ็ดมาก", "เผ็ดมาก", "Phet mak", emptyList(), "เผ็ดมาก"))
-        list.add(Exercise(405, 4, ExerciseType.MATCHING, "Match elements", "Match", "ผลไม้=Fruit|กาแฟ=Coffee|อร่อย=Delicious|หิว=Hungry", "", listOf("ผลไม้", "กาแฟ", "อร่อย", "หิว", "Fruit", "Coffee", "Delicious", "Hungry"), ""))
-
-        // --- LESSON 5 EXERCISES (Numbers 1 to 5) ---
-        list.add(Exercise(501, 5, ExerciseType.MULTIPLE_CHOICE, "What number is 'หนึ่ง'?", "หนึ่ง", "One", "Nung", listOf("One", "Two", "Three", "Five"), "หนึ่ง"))
-        list.add(Exercise(502, 5, ExerciseType.TRANSLATE, "Translate: สาม", "สาม", "Three", "Sam", emptyList(), "สาม"))
-        list.add(Exercise(503, 5, ExerciseType.LISTENING, "Listen and select:", "ห้า", "Five", "Ha", listOf("Five", "Four", "Two", "One"), "ห้า"))
-        list.add(Exercise(504, 5, ExerciseType.SPEAKING, "Speak 'สอง' (Song)", "สอง", "สอง", "Song", emptyList(), "สอง"))
-        list.add(Exercise(505, 5, ExerciseType.MATCHING, "Match numbers 1-5", "Match", "หนึ่ง=One|สอง=Two|สาม=Three|สี่=Four|ห้า=Five", "", listOf("หนึ่ง", "สอง", "สาม", "สี่", "หนึ่ง", "One", "Two", "Three", "Four", "Five"), ""))
-
-        // --- FILL GENERATED EXERCISES FOR REMAINING LESSONS (6 to 10) SO WE HAVE FULL COVERAGE ---
-        for (lessonId in 6..10) {
-            val offset = lessonId * 100
-            val vocabList = getSampleVocabulary().filter {
-                when (lessonId) {
-                    6 -> it.category == "Numbers"
-                    7 -> it.category == "Travel"
-                    8 -> it.category == "Travel"
-                    9 -> it.category == "Family"
-                    10 -> it.category == "Family"
-                    else -> true
-                }
+        for (lessonId in 1..10) {
+            val lessonVocab = when (lessonId) {
+                1 -> vocabulary.filter { it.id in 1..5 }
+                2 -> vocabulary.filter { it.id in 6..10 }
+                3 -> vocabulary.filter { it.id in 11..16 }
+                4 -> vocabulary.filter { it.id in 17..22 }
+                5 -> vocabulary.filter { it.id in 23..28 }
+                6 -> vocabulary.filter { it.id in 29..34 }
+                7 -> vocabulary.filter { it.id in 35..39 }
+                8 -> vocabulary.filter { it.id in 40..44 }
+                9 -> vocabulary.filter { it.id in 45..48 }
+                10 -> vocabulary.filter { it.id in 49..52 }
+                else -> emptyList()
             }
-            val v1 = vocabList.getOrElse(0) { getSampleVocabulary()[0] }
-            val v2 = vocabList.getOrElse(1) { getSampleVocabulary()[1] }
-            val v3 = vocabList.getOrElse(2) { getSampleVocabulary()[2] }
-            val v4 = vocabList.getOrElse(3) { getSampleVocabulary()[3] }
+            
+            if (lessonVocab.isEmpty()) continue
 
-            list.add(Exercise(offset + 1, lessonId, ExerciseType.MULTIPLE_CHOICE, "Select English meaning of '${v1.thai}':", v1.thai, v1.english, v1.romanization, listOf(v1.english, v2.english, "Airplane", "House"), v1.thai))
-            list.add(Exercise(offset + 2, lessonId, ExerciseType.TRANSLATE, "Translate into English:", v2.thai, v2.english, v2.romanization, emptyList(), v2.thai))
-            list.add(Exercise(offset + 3, lessonId, ExerciseType.LISTENING, "Listen and select:", v3.thai, v3.english, v3.romanization, listOf(v3.english, v4.english, "Friend", "Work"), v3.thai))
-            list.add(Exercise(offset + 4, lessonId, ExerciseType.SPEAKING, "Speak: " + v4.thai, v4.thai, v4.thai, v4.romanization, emptyList(), v4.thai))
-            list.add(Exercise(offset + 5, lessonId, ExerciseType.MATCHING, "Match the pairs:", "Match", "${v1.thai}=${v1.english}|${v2.thai}=${v2.english}|${v3.thai}=${v3.english}|${v4.thai}=${v4.english}", "", listOf(v1.thai, v2.thai, v3.thai, v4.thai, v1.english, v2.english, v3.english, v4.english), ""))
+            // 1. English word in question. Answers in thai
+            val w1 = lessonVocab[0]
+            val otherThais = vocabulary.filter { it.id != w1.id }
+                .map { it.thai }
+                .distinct()
+                .shuffled()
+                .take(3)
+            val options1 = (otherThais + w1.thai).shuffled()
+            list.add(Exercise(
+                id = lessonId * 100 + 1,
+                lessonId = lessonId,
+                type = ExerciseType.MULTIPLE_CHOICE,
+                prompt = "Select the correct Thai translation for this English word:",
+                question = w1.english,
+                correctAnswer = w1.thai,
+                romanization = "",
+                options = options1,
+                audioText = w1.thai
+            ))
+
+            // 2. Thai word in question. Answers in english
+            val w2 = lessonVocab.getOrElse(1) { lessonVocab[0] }
+            val otherEnglishesForW2 = vocabulary.filter { it.id != w2.id }
+                .map { it.english }
+                .distinct()
+                .shuffled()
+                .take(3)
+            val options2 = (otherEnglishesForW2 + w2.english).shuffled()
+            list.add(Exercise(
+                id = lessonId * 100 + 2,
+                lessonId = lessonId,
+                type = ExerciseType.MULTIPLE_CHOICE,
+                prompt = "What is the English meaning of this Thai word?",
+                question = w2.thai,
+                correctAnswer = w2.english,
+                romanization = w2.romanization,
+                options = options2,
+                audioText = w2.thai
+            ))
+
+            // 3. Listening exercise. Sound plays in thai. Answers in english
+            val w3 = lessonVocab.getOrElse(2) { lessonVocab[0] }
+            val otherEnglishesForW3 = vocabulary.filter { it.id != w3.id }
+                .map { it.english }
+                .distinct()
+                .shuffled()
+                .take(3)
+            val options3 = (otherEnglishesForW3 + w3.english).shuffled()
+            list.add(Exercise(
+                id = lessonId * 100 + 3,
+                lessonId = lessonId,
+                type = ExerciseType.LISTENING,
+                prompt = "Listen and select the correct English translation:",
+                question = w3.thai,
+                correctAnswer = w3.english,
+                romanization = "",
+                options = options3,
+                audioText = w3.thai
+            ))
+
+            // 4. The pairing exercise
+            val pairingWords = if (lessonVocab.size >= 4) {
+                lessonVocab.take(4)
+            } else {
+                lessonVocab + vocabulary.filter { it.category == w1.category && !lessonVocab.contains(it) }.take(4 - lessonVocab.size)
+            }
+            val pairingCorrectAnswer = pairingWords.joinToString("|") { "${it.thai}=${it.english}" }
+            val pairingOptions = pairingWords.flatMap { listOf(it.thai, it.english) }.shuffled()
+            list.add(Exercise(
+                id = lessonId * 100 + 4,
+                lessonId = lessonId,
+                type = ExerciseType.MATCHING,
+                prompt = "Tap the matching English and Thai pairs:",
+                question = "Match vocabulary",
+                correctAnswer = pairingCorrectAnswer,
+                romanization = "",
+                options = pairingOptions,
+                audioText = ""
+            ))
         }
 
         return list

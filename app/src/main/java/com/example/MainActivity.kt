@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ import com.example.ui.theme.DuoGreenDark
 
 enum class AppTab {
     LEARN,
+    REVIEW,
     PRACTICE,
     PROFILE
 }
@@ -110,6 +112,19 @@ class MainActivity : ComponentActivity() {
                                     )
 
                                     NavigationBarItem(
+                                        selected = activeTab == AppTab.REVIEW,
+                                        onClick = { activeTab = AppTab.REVIEW },
+                                        icon = { Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "Review mistakes") },
+                                        label = { Text("Review", fontWeight = FontWeight.Bold) },
+                                        colors = NavigationBarItemDefaults.colors(
+                                            selectedIconColor = DuoGreenDark,
+                                            selectedTextColor = DuoGreenDark,
+                                            indicatorColor = DuoGreenLight
+                                        ),
+                                        modifier = Modifier.testTag("review_tab_btn")
+                                    )
+
+                                    NavigationBarItem(
                                         selected = activeTab == AppTab.PRACTICE,
                                         onClick = { activeTab = AppTab.PRACTICE },
                                         icon = { Icon(imageVector = Icons.Default.Book, contentDescription = "Practice & heart shop") },
@@ -152,6 +167,10 @@ class MainActivity : ComponentActivity() {
                                                 activeLessonId = lessonId
                                             }
                                         )
+                                    }
+
+                                    AppTab.REVIEW -> {
+                                        ReviewScreen()
                                     }
 
                                     AppTab.PRACTICE -> {

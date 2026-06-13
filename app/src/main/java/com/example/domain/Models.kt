@@ -72,3 +72,26 @@ data class Achievement(
     val isUnlocked: Boolean,
     val iconName: String
 )
+
+data class ReviewWord(
+    val thai: String,
+    val english: String,
+    val romanization: String,
+    val category: String,
+    val addedAt: Long = System.currentTimeMillis(),
+    val intervalDays: Int = 0,
+    val streak: Int = 0,
+    val lastReviewedAt: Long = 0,
+    val nextDueAt: Long = System.currentTimeMillis(),
+    val isMastered: Boolean = false
+) {
+    fun toVocabulary() = Vocabulary(
+        id = thai.hashCode(),
+        thai = thai,
+        english = english,
+        romanization = romanization,
+        category = category,
+        exampleThai = "",
+        exampleEnglish = ""
+    )
+}

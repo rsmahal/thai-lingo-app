@@ -65,3 +65,21 @@ interface AchievementDao {
     @Update
     suspend fun updateAchievement(achievement: AchievementEntity)
 }
+
+@Dao
+interface ReviewWordDao {
+    @Query("SELECT * FROM review_words ORDER BY addedAt DESC")
+    fun getAllReviewWords(): Flow<List<ReviewWordEntity>>
+
+    @Query("SELECT * FROM review_words WHERE thai = :thai LIMIT 1")
+    suspend fun getReviewWord(thai: String): ReviewWordEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertReviewWord(word: ReviewWordEntity)
+
+    @Query("DELETE FROM review_words WHERE thai = :thai")
+    suspend fun deleteReviewWord(thai: String)
+
+    @Query("DELETE FROM review_words")
+    suspend fun clearReviewQueue()
+}
