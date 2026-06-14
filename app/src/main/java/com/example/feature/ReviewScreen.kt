@@ -225,74 +225,7 @@ fun ReviewDashboardListing(
             }
         }
 
-        // 3. SRS TIME SIMULATION BAR
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-                .testTag("srs_simulation_bar"),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)),
-            shape = RoundedCornerShape(12.dp),
-            border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                width = 1.dp,
-                brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Timer,
-                            contentDescription = "Simulate",
-                            tint = DuoGreenDark,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Time Simulation Control",
-                            fontWeight = FontWeight.Black,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    Text(
-                        text = if (state.timeOffsetDays == 0) "Viewing current exact database due hours." else "Simulated timeline: +${state.timeOffsetDays} days pass",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (state.timeOffsetDays > 0) {
-                        TextButton(
-                            onClick = onResetSimulate,
-                            modifier = Modifier.height(36.dp).testTag("reset_simulation_btn")
-                        ) {
-                            Text("Reset", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = HeartRed)
-                        }
-                    }
-                    Button(
-                        onClick = onSimulatePass,
-                        modifier = Modifier
-                            .height(36.dp)
-                            .testTag("simulate_1day_btn"),
-                        colors = ButtonDefaults.buttonColors(containerColor = DuoGreen),
-                        shape = RoundedCornerShape(8.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                    ) {
-                        Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("+1 Day", fontSize = 12.sp, fontWeight = FontWeight.Black)
-                    }
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 4. BIG ACTION REVIEW PLAY BUTTON
         Button(
