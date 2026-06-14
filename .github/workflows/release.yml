@@ -26,8 +26,8 @@ jobs:
         echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
       continue-on-error: true
 
-    - name: Assemble Release App Bundle (AAB)
-      run: gradle :app:bundleRelease --no-daemon
+    - name: Assemble Release APK
+      run: gradle :app:assembleRelease --no-daemon
       env:
         KEYSTORE_PATH: "../release.keystore"
         STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
@@ -35,8 +35,8 @@ jobs:
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         STORE_TYPE: ${{ secrets.STORE_TYPE }}
 
-    - name: Upload Production App Bundle Artifact
+    - name: Upload Production APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: thailingo-production-aab
-        path: app/build/outputs/bundle/release/app-release.aab
+        name: thailingo-production-apk
+        path: app/build/outputs/apk/release/app-release.apk
