@@ -27,6 +27,13 @@ android {
       storePassword = System.getenv("STORE_PASSWORD")
       keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
+      
+      val customStoreType = System.getenv("STORE_TYPE")
+      if (!customStoreType.isNullOrEmpty()) {
+        storeType = customStoreType
+      } else if (keystorePath.endsWith(".p12") || keystorePath.endsWith(".pfx")) {
+        storeType = "PKCS12"
+      }
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
