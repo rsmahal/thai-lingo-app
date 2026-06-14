@@ -181,6 +181,12 @@ class RepositoryImpl(
 
             // Setup default progress
             userProgressDao.saveProgress(UserProgressEntity.fromDomain(UserProgress()))
+        } else {
+            // Make sure the Topic Test lessons are populated if they are missing
+            if (lessonDao.getLessonById(101) == null) {
+                val tests = getSampleLessons().filter { it.id >= 100 }
+                lessonDao.insertLessons(tests.map { LessonEntity.fromDomain(it) })
+            }
         }
     }
 
@@ -254,18 +260,23 @@ class RepositoryImpl(
         return listOf(
             Lesson(1, "Greetings 101", "Learn sawatdee, khop khun and essentials.", "Greetings", unlocked = true, completed = false, stars = 0),
             Lesson(2, "More Greetings & Politeness", "Practice how to apologize or say goodbye.", "Greetings", unlocked = false, completed = false, stars = 0),
+            Lesson(101, "Greetings Topic Test", "Greetings comprehensive 20-question test.", "Greetings", unlocked = false, completed = false, stars = 0, xpReward = 50),
             
             Lesson(3, "Thai Food Staples", "Master khao, nam, and food nouns.", "Food", unlocked = false, completed = false, stars = 0),
             Lesson(4, "Famous Dishes & Tastes", "Learn Som Tam, Pad Thai, spicy, and hungry.", "Food", unlocked = false, completed = false, stars = 0),
+            Lesson(102, "Food Topic Test", "Food comprehensive 20-question test.", "Food", unlocked = false, completed = false, stars = 0, xpReward = 50),
             
             Lesson(5, "Counting 1 to 5", "Build numbers and count objects.", "Numbers", unlocked = false, completed = false, stars = 0),
             Lesson(6, "Money & Shopping", "Master Baht, cheap, expensive, and asking the price.", "Numbers", unlocked = false, completed = false, stars = 0),
+            Lesson(103, "Numbers Topic Test", "Numbers comprehensive 20-question test.", "Numbers", unlocked = false, completed = false, stars = 0, xpReward = 50),
             
             Lesson(7, "Directions & Transit", "Ask where landmarks are, learn left and right.", "Travel", unlocked = false, completed = false, stars = 0),
             Lesson(8, "Transit & Tuk-Tuk", "Order taxis, ride tuk-tuks, and read maps.", "Travel", unlocked = false, completed = false, stars = 0),
+            Lesson(104, "Travel Topic Test", "Travel comprehensive 20-question test.", "Travel", unlocked = false, completed = false, stars = 0, xpReward = 50),
             
             Lesson(9, "Parents & Core Family", "Talk about mother, father, and family.", "Family", unlocked = false, completed = false, stars = 0),
-            Lesson(10, "Siblings & Love", "Discuss brothers, sisters, and sharing love.", "Family", unlocked = false, completed = false, stars = 0)
+            Lesson(10, "Siblings & Love", "Discuss brothers, sisters, and sharing love.", "Family", unlocked = false, completed = false, stars = 0),
+            Lesson(105, "Family Topic Test", "Family comprehensive 20-question test.", "Family", unlocked = false, completed = false, stars = 0, xpReward = 50)
         )
     }
 

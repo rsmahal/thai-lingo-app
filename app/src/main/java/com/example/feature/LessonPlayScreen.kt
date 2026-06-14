@@ -109,17 +109,34 @@ fun LessonPlayScreen(
 
             is LessonUiState.Playing -> {
                 if (state.isLessonFinished) {
-                    SummaryCompletedScreen(
-                        lesson = state.lesson,
-                        xpEarned = state.xpEarned,
-                        heartsLeft = state.hearts,
-                        onDone = {
-                            if (state.xpEarned > 0) {
-                                onAwardXp(state.xpEarned)
+                    if (state.isTopicTest) {
+                        TestResultScreen(
+                            lesson = state.lesson,
+                            xpEarned = state.xpEarned,
+                            testHasMistakes = state.testHasMistakes,
+                            onDone = {
+                                if (state.xpEarned > 0 && !state.testHasMistakes) {
+                                    onAwardXp(state.xpEarned)
+                                }
+                                onBackToHome()
+                            },
+                            onTryAgain = {
+                                viewModel.restartSession()
                             }
-                            onBackToHome()
-                        }
-                    )
+                        )
+                    } else {
+                        SummaryCompletedScreen(
+                            lesson = state.lesson,
+                            xpEarned = state.xpEarned,
+                            heartsLeft = state.hearts,
+                            onDone = {
+                                if (state.xpEarned > 0) {
+                                    onAwardXp(state.xpEarned)
+                                }
+                                onBackToHome()
+                            }
+                        )
+                    }
                 } else if (state.isIntroducing && state.introWords.isNotEmpty()) {
                     LessonIntroduceLayout(
                         state = state,
@@ -1220,6 +1237,152 @@ fun LessonIntroduceLayout(
                         modifier = Modifier.size(24.dp)
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun TestResultScreen(
+    lesson: Lesson,
+    xpEarned: Int,
+    testHasMistakes: Boolean,
+    onDone: () -> Unit,
+    onTryAgain: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (!testHasMistakes) {
+            // PASS CASE
+            Box(modifier = Modifier.size(140.dp)) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    drawCircle(color = LevelGold, radius = 54f, center = center)
+                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.EmojiEvents,
+                        contentDescription = "Trophy Success",
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Topic Test Passed!",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+                color = DuoGreen,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Congratulations! You made no mistakes and got a perfect score. The next topic is now unlocked!",
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Card(
+                modifier = Modifier.width(180.dp),
+                colors = CardDefaults.cardColors(containerColor = GemCyan.copy(alpha = 0.1f))
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("XP EARNED", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("+$xpEarned XP", fontSize = 22.sp, fontWeight = FontWeight.Black, color = GemCyan)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Button(
+                onClick = onDone,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .testTag("test_finished_done_btn"),
+                colors = ButtonDefaults.buttonColors(containerColor = DuoGreen),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Back to Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        } else {
+            // FAIL CASE
+            Box(modifier = Modifier.size(140.dp)) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    drawCircle(color = HeartRed, radius = 54f, center = center)
+                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.ErrorOutline,
+                        contentDescription = "Test Failed",
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Topic Test Failed!",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+                color = HeartRed,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "You made at least one mistake. To unlock the next topic, you must pass the test with a perfect score (no mistakes).",
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Button(
+                onClick = onTryAgain,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .testTag("test_try_again_btn"),
+                colors = ButtonDefaults.buttonColors(containerColor = DuoGreen),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Try Again", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onDone,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .testTag("test_fail_back_btn"),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Back to Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

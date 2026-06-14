@@ -1,5 +1,6 @@
 package com.example.feature
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,7 +28,7 @@ import com.example.domain.Lesson
 import com.example.domain.UserProgress
 import com.example.ui.theme.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     progress: UserProgress,
@@ -60,13 +61,23 @@ fun HomeScreen(
                 val groupedByCategory = lessons.groupBy { it.category }
                 
                 groupedByCategory.forEach { (category, lessonsInCat) ->
-                    // CATEGORY BANNER CRADLE
-                    item {
-                        CategoryBanner(category = category)
+                    // CATEGORY BANNER CRADLE (Sticky header blocks lessons below during scroll)
+                    stickyHeader {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.background)
+                        ) {
+                            CategoryBanner(category = category)
+                        }
                     }
 
+                    // Separation of standard and test lessons
+                    val standardLessons = lessonsInCat.filter { it.id < 100 }
+                    val testLesson = lessonsInCat.find { it.id >= 100 }
+
                     // LESSON NODES CASCADE
-                    items(lessonsInCat) { lesson ->
+                    items(standardLessons) { lesson ->
                         LessonBadgeNode(
                             lesson = lesson,
                             onClick = {
@@ -75,6 +86,18 @@ fun HomeScreen(
                                 }
                             }
                         )
+                    }
+                    
+                    // Show Topic Test Node (always visible, disabled until available defined by lesson.unlocked)
+                    if (testLesson != null) {
+                        item {
+                            TopicTestBadgeNode(
+                                lesson = testLesson,
+                                onClick = {
+                                    selectedLessonForSheet = testLesson
+                                }
+                            )
+                        }
                     }
                     
                     item {
@@ -358,6 +381,43 @@ fun LessonStartDetailsSheetContent(
     onStart: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isTest = lesson.id >= 100
+    val badgeColor = if (isTest) Color(0xFFC026D3) else DuoGreen
+    val badgeIcon = if (isTest) Icons.Default.School else Icons.Default.LocalLibrary
+
+    val descriptionText = if (isTest) {
+        if (lesson.completed) {
+            "You have passed this Topic Test with 100% accuracy. You can always replay it to test your skills!"
+        } else {
+            "Ready for the ultimate challenge? This test compiles 20 randomized exercises from this topic. You must pass with 100% accuracy (no mistakes) to unlock the next topic."
+        }
+    } else {
+        if (lesson.completed) "Replay this lesson to refresh your vocabulary! (Keep your highest score & continue earning XP)" else lesson.description
+    }
+
+    val rightLabel = if (isTest) "REQUIRED" else "WORDS"
+
+    val newWordsCount = when (lesson.id) {
+        1 -> 5
+        2 -> 5
+        3 -> 6
+        4 -> 6
+        5 -> 6
+        6 -> 6
+        7 -> 5
+        8 -> 5
+        9 -> 4
+        10 -> 4
+        else -> 0
+    }
+    val rightValue = if (isTest) "100% ACCURACY" else "$newWordsCount Words"
+
+    val btnText = if (isTest) {
+        if (lesson.completed) "REPLAY TOPIC TEST" else "TAKE TOPIC TEST"
+    } else {
+        if (lesson.completed) "REPLAY LESSON" else "START LESSON"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -368,11 +428,11 @@ fun LessonStartDetailsSheetContent(
         Box(
             modifier = Modifier
                 .size(68.dp)
-                .background(DuoGreen, shape = CircleShape),
+                .background(badgeColor, shape = CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.LocalLibrary,
+                imageVector = badgeIcon,
                 contentDescription = null,
                 tint = Color.White,
                 modifier = Modifier.size(32.dp)
@@ -392,27 +452,13 @@ fun LessonStartDetailsSheetContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = if (lesson.completed) "Replay this lesson to refresh your vocabulary! (Keep your highest score & continue earning XP)" else lesson.description,
+            text = descriptionText,
             fontSize = 15.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-
-        val newWordsCount = when (lesson.id) {
-            1 -> 5
-            2 -> 5
-            3 -> 6
-            4 -> 6
-            5 -> 6
-            6 -> 6
-            7 -> 5
-            8 -> 5
-            9 -> 4
-            10 -> 4
-            else -> 0
-        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -429,8 +475,8 @@ fun LessonStartDetailsSheetContent(
                     Text("+${lesson.xpReward} XP", fontSize = 18.sp, fontWeight = FontWeight.Black, color = GemCyan)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("WORDS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("$newWordsCount Words", fontSize = 18.sp, fontWeight = FontWeight.Black, color = LevelGold)
+                    Text(rightLabel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(rightValue, fontSize = 18.sp, fontWeight = FontWeight.Black, color = LevelGold)
                 }
             }
         }
@@ -444,9 +490,9 @@ fun LessonStartDetailsSheetContent(
                 .height(56.dp)
                 .testTag("start_lesson_btn"),
             shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = DuoGreen)
+            colors = ButtonDefaults.buttonColors(containerColor = badgeColor)
         ) {
-            Text(if (lesson.completed) "REPLAY LESSON" else "START LESSON", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
+            Text(btnText, fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -556,6 +602,75 @@ fun AchievementRowCard(achievement: Achievement) {
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopicTestBadgeNode(
+    lesson: Lesson,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = lesson.unlocked, onClick = onClick)
+            .testTag("topic_test_node_${lesson.id}"),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val testColor = if (lesson.completed) DuoGreen else if (lesson.unlocked) Color(0xFFC026D3) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        
+        Card(
+            modifier = Modifier
+                .widthIn(max = 280.dp)
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = testColor.copy(alpha = 0.08f)
+            ),
+            border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+                width = 2.dp,
+                brush = androidx.compose.ui.graphics.SolidColor(testColor.copy(alpha = 0.3f))
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Circular Badge Icon
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(testColor, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (lesson.completed) Icons.Default.CheckCircle else if (lesson.unlocked) Icons.Default.School else Icons.Default.Lock,
+                        contentDescription = "Topic Test Icon",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                
+                Text(
+                    text = lesson.title,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 17.sp,
+                    color = if (lesson.unlocked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    textAlign = TextAlign.Center
+                )
+                
+                Text(
+                    text = if (lesson.completed) "COMPLETED! ⭐⭐⭐" else "20 QUESTIONS • 100% CORRECT REQ",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                    color = if (lesson.unlocked) testColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }

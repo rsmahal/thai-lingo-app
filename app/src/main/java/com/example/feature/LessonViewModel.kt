@@ -41,7 +41,9 @@ sealed interface LessonUiState {
         val xpEarned: Int = 0,
         val isIntroducing: Boolean = true,
         val introWords: List<Vocabulary> = emptyList(),
-        val currentIntroWordIdx: Int = 0
+        val currentIntroWordIdx: Int = 0,
+        val isTopicTest: Boolean = false,
+        val testHasMistakes: Boolean = false
     ) : LessonUiState
 }
 
@@ -58,27 +60,51 @@ class LessonViewModel(
         loadLesson()
     }
 
+    fun restartSession() {
+        _uiState.value = LessonUiState.Loading
+        loadLesson()
+    }
+
     private fun loadLesson() {
         viewModelScope.launch {
             try {
+                val isTopicTest = lessonId >= 100
                 val lesson = repository.getLessonById(lessonId)
-                val exercises = repository.getExercisesForLesson(lessonId)
                 val progress = repository.getUserProgressOnce()
+                val allVocab = repository.getAllVocabulary().first()
                 
                 // Load specific vocabulary for the lesson to introduce them at the start
-                val allVocab = repository.getAllVocabulary().first()
-                val lessonVocab = when (lessonId) {
-                    1 -> allVocab.filter { it.id in 1..5 }
-                    2 -> allVocab.filter { it.id in 6..10 }
-                    3 -> allVocab.filter { it.id in 11..16 }
-                    4 -> allVocab.filter { it.id in 17..22 }
-                    5 -> allVocab.filter { it.id in 23..28 }
-                    6 -> allVocab.filter { it.id in 29..34 }
-                    7 -> allVocab.filter { it.id in 35..39 }
-                    8 -> allVocab.filter { it.id in 40..44 }
-                    9 -> allVocab.filter { it.id in 45..48 }
-                    10 -> allVocab.filter { it.id in 49..52 }
-                    else -> emptyList()
+                val lessonVocab = if (isTopicTest) {
+                    emptyList()
+                } else {
+                    when (lessonId) {
+                        1 -> allVocab.filter { it.id in 1..5 }
+                        2 -> allVocab.filter { it.id in 6..10 }
+                        3 -> allVocab.filter { it.id in 11..16 }
+                        4 -> allVocab.filter { it.id in 17..22 }
+                        5 -> allVocab.filter { it.id in 23..28 }
+                        6 -> allVocab.filter { it.id in 29..34 }
+                        7 -> allVocab.filter { it.id in 35..39 }
+                        8 -> allVocab.filter { it.id in 40..44 }
+                        9 -> allVocab.filter { it.id in 45..48 }
+                        10 -> allVocab.filter { it.id in 49..52 }
+                        else -> emptyList()
+                    }
+                }
+
+                val exercises = if (isTopicTest) {
+                    val topicCategory = when (lessonId) {
+                        101 -> "Greetings"
+                        102 -> "Food"
+                        103 -> "Numbers"
+                        104 -> "Travel"
+                        105 -> "Family"
+                        else -> "Greetings"
+                    }
+                    val topicVocab = allVocab.filter { it.category.equals(topicCategory, ignoreCase = true) }
+                    generateTestExercises(topicVocab, topicCategory, allVocab)
+                } else {
+                    repository.getExercisesForLesson(lessonId)
                 }
                 
                 if (lesson == null || exercises.isEmpty()) {
@@ -88,10 +114,12 @@ class LessonViewModel(
                         lesson = lesson,
                         exercises = exercises,
                         currentStep = 0,
-                        hearts = progress.hearts,
+                        hearts = if (isTopicTest) 5 else progress.hearts,
                         isIntroducing = lessonVocab.isNotEmpty(),
                         introWords = lessonVocab,
-                        currentIntroWordIdx = 0
+                        currentIntroWordIdx = 0,
+                        isTopicTest = isTopicTest,
+                        testHasMistakes = false
                     )
                     // Auto-speak the first vocabulary word if in introduction mode
                     if (lessonVocab.isNotEmpty()) {
@@ -104,6 +132,118 @@ class LessonViewModel(
                 _uiState.value = LessonUiState.Error("Error loading lesson: ${e.localizedMessage}")
             }
         }
+    }
+
+    private fun generateTestExercises(topicVocab: List<Vocabulary>, categoryString: String, allVocab: List<Vocabulary>): List<Exercise> {
+        val exercisesList = mutableListOf<Exercise>()
+        
+        // Exactly 2 pairing questions (MATCHING type)
+        repeat(2) { index ->
+            val pairingWords = topicVocab.shuffled().take(minOf(4, topicVocab.size))
+            if (pairingWords.isNotEmpty()) {
+                val pairingCorrectAnswer = pairingWords.joinToString("|") { "${it.thai}=${it.english}" }
+                val pairingOptions = pairingWords.flatMap { listOf(it.thai, it.english) }.shuffled()
+                exercisesList.add(Exercise(
+                    id = 9000 + index,
+                    lessonId = lessonId,
+                    type = ExerciseType.MATCHING,
+                    prompt = "Tap the matching English and Thai pairs:",
+                    question = "Match vocabulary",
+                    correctAnswer = pairingCorrectAnswer,
+                    romanization = "",
+                    options = pairingOptions,
+                    audioText = ""
+                ))
+            }
+        }
+        
+        // Random assortment of MULTIPLE_CHOICE, TRANSLATE, LISTENING for 18 questions
+        val nonMatchingTypes = listOf(ExerciseType.MULTIPLE_CHOICE, ExerciseType.TRANSLATE, ExerciseType.LISTENING)
+        
+        if (topicVocab.isNotEmpty()) {
+            repeat(18) { index ->
+                val vocabWord = topicVocab.random()
+                val type = nonMatchingTypes.random()
+                
+                when (type) {
+                    ExerciseType.MULTIPLE_CHOICE -> {
+                        val isEngQuestion = listOf(true, false).random()
+                        if (isEngQuestion) {
+                            val otherThais = allVocab.filter { it.id != vocabWord.id }
+                                .map { it.thai }
+                                .distinct()
+                                .shuffled()
+                                .take(3)
+                            val options = (otherThais + vocabWord.thai).shuffled()
+                            exercisesList.add(Exercise(
+                                id = 9100 + index,
+                                lessonId = lessonId,
+                                type = ExerciseType.MULTIPLE_CHOICE,
+                                prompt = "Select the correct Thai translation for this English word:",
+                                question = vocabWord.english,
+                                correctAnswer = vocabWord.thai,
+                                romanization = "",
+                                options = options,
+                                audioText = vocabWord.thai
+                            ))
+                        } else {
+                            val otherEnglishes = allVocab.filter { it.id != vocabWord.id }
+                                .map { it.english }
+                                .distinct()
+                                .shuffled()
+                                .take(3)
+                            val options = (otherEnglishes + vocabWord.english).shuffled()
+                            exercisesList.add(Exercise(
+                                id = 9200 + index,
+                                lessonId = lessonId,
+                                type = ExerciseType.MULTIPLE_CHOICE,
+                                prompt = "What is the English meaning of this Thai word?",
+                                question = vocabWord.thai,
+                                correctAnswer = vocabWord.english,
+                                romanization = vocabWord.romanization,
+                                options = options,
+                                audioText = vocabWord.thai
+                            ))
+                        }
+                    }
+                    ExerciseType.LISTENING -> {
+                        val otherEnglishes = allVocab.filter { it.id != vocabWord.id }
+                            .map { it.english }
+                            .distinct()
+                            .shuffled()
+                            .take(3)
+                        val options = (otherEnglishes + vocabWord.english).shuffled()
+                        exercisesList.add(Exercise(
+                            id = 9300 + index,
+                            lessonId = lessonId,
+                            type = ExerciseType.LISTENING,
+                            prompt = "Listen and select the correct English translation:",
+                            question = vocabWord.thai,
+                            correctAnswer = vocabWord.english,
+                            romanization = "",
+                            options = options,
+                            audioText = vocabWord.thai
+                        ))
+                    }
+                    ExerciseType.TRANSLATE -> {
+                        exercisesList.add(Exercise(
+                            id = 9400 + index,
+                            lessonId = lessonId,
+                            type = ExerciseType.TRANSLATE,
+                            prompt = "Type the English translation for this Thai word:",
+                            question = vocabWord.thai,
+                            correctAnswer = vocabWord.english,
+                            romanization = vocabWord.romanization,
+                            options = emptyList(),
+                            audioText = vocabWord.thai
+                        ))
+                    }
+                    else -> {}
+                }
+            }
+        }
+        
+        return exercisesList.shuffled()
     }
 
     fun speakWordText(text: String) {
@@ -284,6 +424,8 @@ class LessonViewModel(
             nextHearts = (nextHearts - 1).coerceAtLeast(0)
         }
 
+        val nextTestHasMistakes = state.testHasMistakes || !isCorrect
+
         viewModelScope.launch {
             if (!isCorrect) {
                 val progress = repository.getUserProgressOnce()
@@ -299,7 +441,8 @@ class LessonViewModel(
         _uiState.value = state.copy(
             isChecked = true,
             isCorrect = isCorrect,
-            hearts = nextHearts
+            hearts = nextHearts,
+            testHasMistakes = nextTestHasMistakes
         )
     }
 
@@ -322,30 +465,85 @@ class LessonViewModel(
                     val xpReward = state.lesson.xpReward
                     val starsAwarded = state.hearts.coerceIn(1, 3)
                     
-                    // Mark lesson completed
-                    val updatedLesson = state.lesson.copy(completed = true, stars = maxOf(state.lesson.stars, starsAwarded))
-                    repository.updateLesson(updatedLesson)
-                    
-                    // Unlock next lesson
-                    val nextLId = lessonId + 1
-                    val nextLesson = repository.getLessonById(nextLId)
-                    if (nextLesson != null) {
-                        repository.updateLesson(nextLesson.copy(unlocked = true))
+                    if (state.isTopicTest) {
+                        val passed = !state.testHasMistakes
+                        if (passed) {
+                            // Mark test completed
+                            val updatedLesson = state.lesson.copy(completed = true, stars = 3)
+                            repository.updateLesson(updatedLesson)
+                            
+                            // Unlock first lesson of next topic
+                            val nextUnlockLId = when (lessonId) {
+                                101 -> 3 // Greetings -> Food
+                                102 -> 5 // Food -> Numbers
+                                103 -> 7 // Numbers -> Travel
+                                104 -> 9 // Travel -> Family
+                                else -> -1
+                            }
+                            var unlockedNextLesson: Lesson? = null
+                            if (nextUnlockLId != -1) {
+                                val nextLesson = repository.getLessonById(nextUnlockLId)
+                                if (nextLesson != null) {
+                                    val updatedNext = nextLesson.copy(unlocked = true)
+                                    repository.updateLesson(updatedNext)
+                                    unlockedNextLesson = updatedNext
+                                }
+                            }
+                            
+                            // Award XP and update progress
+                            val finalProgress = progress.copy(
+                                xp = progress.xp + xpReward,
+                                hearts = 5, // fill hearts on pass!
+                                currentLessonId = if (unlockedNextLesson != null) unlockedNextLesson.id else lessonId
+                            )
+                            repository.saveUserProgress(finalProgress)
+                        } else {
+                            // Failed the test. No database mark as complete.
+                        }
+                        
+                        _uiState.value = state.copy(
+                            currentStep = nextStep,
+                            isLessonFinished = true,
+                            xpEarned = if (passed) xpReward else 0
+                        )
+                    } else {
+                        // Mark lesson completed
+                        val updatedLesson = state.lesson.copy(completed = true, stars = maxOf(state.lesson.stars, starsAwarded))
+                        repository.updateLesson(updatedLesson)
+                        
+                        // Unlock next custom lesson or Topic Test
+                        val nextLId = when (lessonId) {
+                            1 -> 2
+                            2 -> 101
+                            3 -> 4
+                            4 -> 102
+                            5 -> 6
+                            6 -> 103
+                            7 -> 8
+                            8 -> 104
+                            9 -> 10
+                            10 -> 105
+                            else -> lessonId + 1
+                        }
+                        val nextLesson = repository.getLessonById(nextLId)
+                        if (nextLesson != null) {
+                            repository.updateLesson(nextLesson.copy(unlocked = true))
+                        }
+
+                        // Update User Profile Stats
+                        val finalProgress = progress.copy(
+                            xp = progress.xp + xpReward,
+                            hearts = state.hearts,
+                            currentLessonId = if (nextLesson != null) nextLId else lessonId
+                        )
+                        repository.saveUserProgress(finalProgress)
+
+                        _uiState.value = state.copy(
+                            currentStep = nextStep,
+                            isLessonFinished = true,
+                            xpEarned = xpReward
+                        )
                     }
-
-                    // Update User Profile Stats
-                    val finalProgress = progress.copy(
-                        xp = progress.xp + xpReward,
-                        hearts = state.hearts,
-                        currentLessonId = if (nextLesson != null) nextLId else lessonId
-                    )
-                    repository.saveUserProgress(finalProgress)
-
-                    _uiState.value = state.copy(
-                        currentStep = nextStep,
-                        isLessonFinished = true,
-                        xpEarned = xpReward
-                    )
                 } catch (e: Exception) {
                     _uiState.value = LessonUiState.Error("Fail completing lesson: ${e.localizedMessage}")
                 }
