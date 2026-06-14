@@ -120,6 +120,14 @@ fun LessonPlayScreen(
                             onBackToHome()
                         }
                     )
+                } else if (state.isIntroducing && state.introWords.isNotEmpty()) {
+                    LessonIntroduceLayout(
+                        state = state,
+                        onExitClick = { showExitDialog = true },
+                        onVoiceClick = { viewModel.speakIntroWord() },
+                        onNextClick = { viewModel.nextIntroWord() },
+                        onPrevClick = { viewModel.prevIntroWord() }
+                    )
                 } else {
                     LessonPlayingLayout(
                         state = state,
@@ -908,16 +916,21 @@ fun SummaryCompletedScreen(
 
             Card(
                 modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(containerColor = HeartRed.copy(alpha = 0.1f))
+                colors = CardDefaults.cardColors(containerColor = LevelGold.copy(alpha = 0.1f))
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("STARS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = HeartRed)
+                    Text("STARS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = LevelGold)
                     Spacer(modifier = Modifier.height(4.dp))
                     Row {
-                        repeat(heartsLeft.coerceAtLeast(1)) {
+                        val starsAwarded = when (heartsLeft) {
+                            5 -> 3
+                            4 -> 2
+                            else -> 1
+                        }
+                        repeat(starsAwarded) {
                             Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = LevelGold, modifier = Modifier.size(20.dp))
                         }
                     }
@@ -937,6 +950,277 @@ fun SummaryCompletedScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Text("Back to Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        }
+    }
+}
+
+@Composable
+fun LessonIntroduceLayout(
+    state: LessonUiState.Playing,
+    onExitClick: () -> Unit,
+    onVoiceClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onPrevClick: () -> Unit
+) {
+    val currentWord = state.introWords[state.currentIntroWordIdx]
+    val totalWords = state.introWords.size
+    val progressFraction = (state.currentIntroWordIdx + 1).toFloat() / totalWords.toFloat()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding(),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        // TOP STEPS METER BAR
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            IconButton(
+                onClick = onExitClick,
+                modifier = Modifier.size(36.dp).testTag("lesson_exit_btn")
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Exit study session",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
+
+            LinearProgressIndicator(
+                progress = { progressFraction },
+                modifier = Modifier
+                    .weight(1f)
+                    .height(14.dp)
+                    .clip(RoundedCornerShape(7.dp)),
+                color = GemCyan,
+                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+            )
+
+            Text(
+                text = "${state.currentIntroWordIdx + 1}/$totalWords",
+                fontWeight = FontWeight.Black,
+                fontSize = 15.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+
+        // MAIN CONTENT CONTAINER
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header Badge
+            Text(
+                text = "NEW WORD",
+                fontSize = 18.sp,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                color = Color(0xFFCE82FF), // Purple Duolingo style text
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Main Card housing the vocabulary details
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(width = 2.dp, color = GemCyan.copy(alpha = 0.25f), shape = RoundedCornerShape(24.dp)),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Thai word & Sound button Row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = currentWord.thai,
+                            fontSize = 42.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = DuoGreen,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        IconButton(
+                            onClick = onVoiceClick,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(DuoGreen, shape = CircleShape)
+                                .testTag("voice_word_btn")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.VolumeUp,
+                                contentDescription = "Listen voice pronunciation",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Transliteration / Romanization block
+                    Text(
+                        text = "/ ${currentWord.romanization} /",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Divider
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        thickness = 1.dp
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // English Translation
+                    Text(
+                        text = "ENGLISH MEANING",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = currentWord.english,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Sample Context Sentence
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text(
+                                text = "SAMPLE SENTENCE",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DuoGreen,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+
+                            Text(
+                                text = currentWord.exampleThai,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = currentWord.exampleEnglish,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.60f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // BOTTOM ACTION STRIP WITH NAVIGATION
+        Surface(
+            tonalElevation = 4.dp,
+            shadowElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                if (state.currentIntroWordIdx > 0) {
+                    OutlinedButton(
+                        onClick = onPrevClick,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .testTag("vocabulary_prev_btn"),
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Previous Word",
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.size(56.dp))
+                }
+
+                // Middle Text showing word index progress
+                Text(
+                    text = "${state.currentIntroWordIdx + 1} of $totalWords",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+
+                val isLastWord = state.currentIntroWordIdx + 1 == totalWords
+                Button(
+                    onClick = onNextClick,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .testTag("vocabulary_next_btn"),
+                    colors = ButtonDefaults.buttonColors(containerColor = DuoGreen),
+                    shape = RoundedCornerShape(16.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isLastWord) Icons.Default.PlayArrow else Icons.Default.ArrowForward,
+                        contentDescription = if (isLastWord) "Start Exercises" else "Next Word",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
         }
     }
 }

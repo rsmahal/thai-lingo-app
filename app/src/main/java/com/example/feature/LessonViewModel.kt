@@ -14,7 +14,9 @@ import com.example.domain.UserProgress
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import com.example.domain.Vocabulary
 
 sealed interface LessonUiState {
     object Loading : LessonUiState
@@ -36,7 +38,10 @@ sealed interface LessonUiState {
         val checkActivePair: Pair<String, String>? = null,
         val isSpeakingSimulated: Boolean = false,
         val isLessonFinished: Boolean = false,
-        val xpEarned: Int = 0
+        val xpEarned: Int = 0,
+        val isIntroducing: Boolean = true,
+        val introWords: List<Vocabulary> = emptyList(),
+        val currentIntroWordIdx: Int = 0
     ) : LessonUiState
 }
 
@@ -60,6 +65,22 @@ class LessonViewModel(
                 val exercises = repository.getExercisesForLesson(lessonId)
                 val progress = repository.getUserProgressOnce()
                 
+                // Load specific vocabulary for the lesson to introduce them at the start
+                val allVocab = repository.getAllVocabulary().first()
+                val lessonVocab = when (lessonId) {
+                    1 -> allVocab.filter { it.id in 1..5 }
+                    2 -> allVocab.filter { it.id in 6..10 }
+                    3 -> allVocab.filter { it.id in 11..16 }
+                    4 -> allVocab.filter { it.id in 17..22 }
+                    5 -> allVocab.filter { it.id in 23..28 }
+                    6 -> allVocab.filter { it.id in 29..34 }
+                    7 -> allVocab.filter { it.id in 35..39 }
+                    8 -> allVocab.filter { it.id in 40..44 }
+                    9 -> allVocab.filter { it.id in 45..48 }
+                    10 -> allVocab.filter { it.id in 49..52 }
+                    else -> emptyList()
+                }
+                
                 if (lesson == null || exercises.isEmpty()) {
                     _uiState.value = LessonUiState.Error("Lesson not found or empty.")
                 } else {
@@ -67,14 +88,56 @@ class LessonViewModel(
                         lesson = lesson,
                         exercises = exercises,
                         currentStep = 0,
-                        hearts = progress.hearts
+                        hearts = progress.hearts,
+                        isIntroducing = lessonVocab.isNotEmpty(),
+                        introWords = lessonVocab,
+                        currentIntroWordIdx = 0
                     )
-                    // Auto-speak if the first exercise is listening
-                    speakCurrentIfListening(exercises[0])
+                    // Auto-speak the first vocabulary word if in introduction mode
+                    if (lessonVocab.isNotEmpty()) {
+                        ttsHelper.speak(lessonVocab[0].thai)
+                    } else {
+                        speakCurrentIfListening(exercises[0])
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.value = LessonUiState.Error("Error loading lesson: ${e.localizedMessage}")
             }
+        }
+    }
+
+    fun speakWordText(text: String) {
+        ttsHelper.speak(text)
+    }
+
+    fun speakIntroWord() {
+        val state = _uiState.value as? LessonUiState.Playing ?: return
+        if (state.currentIntroWordIdx in state.introWords.indices) {
+            val word = state.introWords[state.currentIntroWordIdx]
+            ttsHelper.speak(word.thai)
+        }
+    }
+
+    fun nextIntroWord() {
+        val state = _uiState.value as? LessonUiState.Playing ?: return
+        val nextIdx = state.currentIntroWordIdx + 1
+        if (nextIdx < state.introWords.size) {
+            _uiState.value = state.copy(currentIntroWordIdx = nextIdx)
+            speakWordText(state.introWords[nextIdx].thai)
+        } else {
+            _uiState.value = state.copy(isIntroducing = false)
+            if (state.exercises.isNotEmpty()) {
+                speakCurrentIfListening(state.exercises[0])
+            }
+        }
+    }
+
+    fun prevIntroWord() {
+        val state = _uiState.value as? LessonUiState.Playing ?: return
+        val prevIdx = state.currentIntroWordIdx - 1
+        if (prevIdx >= 0) {
+            _uiState.value = state.copy(currentIntroWordIdx = prevIdx)
+            speakWordText(state.introWords[prevIdx].thai)
         }
     }
 
@@ -257,10 +320,10 @@ class LessonViewModel(
                 try {
                     val progress = repository.getUserProgressOnce()
                     val xpReward = state.lesson.xpReward
-                    val starsAwarded = state.hearts.coerceAtLeast(1)
+                    val starsAwarded = state.hearts.coerceIn(1, 3)
                     
                     // Mark lesson completed
-                    val updatedLesson = state.lesson.copy(completed = true, stars = starsAwarded)
+                    val updatedLesson = state.lesson.copy(completed = true, stars = maxOf(state.lesson.stars, starsAwarded))
                     repository.updateLesson(updatedLesson)
                     
                     // Unlock next lesson

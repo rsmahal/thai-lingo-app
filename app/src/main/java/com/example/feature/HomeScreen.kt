@@ -392,13 +392,27 @@ fun LessonStartDetailsSheetContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = lesson.description,
+            text = if (lesson.completed) "Replay this lesson to refresh your vocabulary! (Keep your highest score & continue earning XP)" else lesson.description,
             fontSize = 15.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        val newWordsCount = when (lesson.id) {
+            1 -> 5
+            2 -> 5
+            3 -> 6
+            4 -> 6
+            5 -> 6
+            6 -> 6
+            7 -> 5
+            8 -> 5
+            9 -> 4
+            10 -> 4
+            else -> 0
+        }
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -415,12 +429,8 @@ fun LessonStartDetailsSheetContent(
                     Text("+${lesson.xpReward} XP", fontSize = 18.sp, fontWeight = FontWeight.Black, color = GemCyan)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("MODE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("100% Offline", fontSize = 18.sp, fontWeight = FontWeight.Black, color = DuoGreen)
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("STEPS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("5 Challenges", fontSize = 18.sp, fontWeight = FontWeight.Black, color = LevelGold)
+                    Text("WORDS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("$newWordsCount Words", fontSize = 18.sp, fontWeight = FontWeight.Black, color = LevelGold)
                 }
             }
         }
@@ -436,7 +446,7 @@ fun LessonStartDetailsSheetContent(
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = DuoGreen)
         ) {
-            Text("START LESSON", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
+            Text(if (lesson.completed) "REPLAY LESSON" else "START LESSON", fontSize = 16.sp, fontWeight = FontWeight.Black, color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
