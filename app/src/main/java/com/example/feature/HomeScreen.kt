@@ -39,6 +39,7 @@ fun HomeScreen(
     onStartLesson: (Int) -> Unit
 ) {
     var selectedLessonForSheet by remember { mutableStateOf<Lesson?>(null) }
+    var lessonToConfirmReset by remember { mutableStateOf<Lesson?>(null) }
     
     Box(
         modifier = Modifier
@@ -128,12 +129,41 @@ fun HomeScreen(
                 LessonStartDetailsSheetContent(
                     lesson = lesson,
                     onStart = {
-                        selectedLessonForSheet = null
-                        onStartLesson(lesson.id)
+                        if (lesson.stars == 3) {
+                            lessonToConfirmReset = lesson
+                        } else {
+                            selectedLessonForSheet = null
+                            onStartLesson(lesson.id)
+                        }
                     },
                     onDismiss = { selectedLessonForSheet = null }
                 )
             }
+        }
+
+        lessonToConfirmReset?.let { lesson ->
+            AlertDialog(
+                onDismissRequest = { lessonToConfirmReset = null },
+                title = { Text("Reset Progress?", fontWeight = FontWeight.Bold) },
+                text = { Text("Your progress for this lesson will be reset. Are you sure you want to continue?") },
+                confirmButton = {
+                    Button(
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        onClick = {
+                            lessonToConfirmReset = null
+                            selectedLessonForSheet = null
+                            onStartLesson(lesson.id)
+                        }
+                    ) {
+                        Text("Continue", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { lessonToConfirmReset = null }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }

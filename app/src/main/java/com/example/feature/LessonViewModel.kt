@@ -643,8 +643,8 @@ class LessonViewModel(
                     
                     if (state.isTopicTest) {
                         val updatedLesson = state.lesson.copy(
-                            completed = state.lesson.completed || passed,
-                            stars = maxOf(state.lesson.stars, starsAwarded)
+                            completed = passed,
+                            stars = starsAwarded
                         )
                         repository.updateLesson(updatedLesson)
                         
@@ -680,8 +680,8 @@ class LessonViewModel(
                     } else {
                         // Mark lesson completed
                         val updatedLesson = state.lesson.copy(
-                            completed = state.lesson.completed || passed,
-                            stars = maxOf(state.lesson.stars, starsAwarded)
+                            completed = passed,
+                            stars = starsAwarded
                         )
                         repository.updateLesson(updatedLesson)
                         
