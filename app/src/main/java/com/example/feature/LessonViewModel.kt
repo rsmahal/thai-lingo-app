@@ -629,12 +629,17 @@ class LessonViewModel(
 
         val nextStep = state.currentStep + 1
         if (nextStep >= state.exercises.size) {
-            // Finish Lesson! Award XP and mark lesson complete
+            // Finish Lesson! Mark lesson complete and calculate star rating
             viewModelScope.launch {
                 try {
                     val progress = repository.getUserProgressOnce()
-                    val xpReward = state.lesson.xpReward
-                    val starsAwarded = state.hearts.coerceIn(1, 3)
+                    val starsAwarded = if (!state.testHasMistakes) {
+                        3
+                    } else if (state.hearts >= 3) {
+                        2
+                    } else {
+                        1
+                    }
                     
                     if (state.isTopicTest) {
                         val passed = !state.testHasMistakes
@@ -659,9 +664,8 @@ class LessonViewModel(
                                 }
                             }
                             
-                            // Award XP and update progress
+                            // Update progress (xp unchanged/not compiled)
                             val finalProgress = progress.copy(
-                                xp = progress.xp + xpReward,
                                 hearts = 5, // fill hearts on pass!
                                 currentLessonId = if (unlockedNextLesson != null) unlockedNextLesson.id else lessonId
                             )
@@ -673,7 +677,7 @@ class LessonViewModel(
                         _uiState.value = state.copy(
                             currentStep = nextStep,
                             isLessonFinished = true,
-                            xpEarned = if (passed) xpReward else 0
+                            xpEarned = 0
                         )
                     } else {
                         // Mark lesson completed
@@ -695,7 +699,6 @@ class LessonViewModel(
 
                         // Update User Profile Stats
                         val finalProgress = progress.copy(
-                            xp = progress.xp + xpReward,
                             hearts = state.hearts,
                             currentLessonId = if (nextLesson != null) nextLId else lessonId
                         )
@@ -704,7 +707,7 @@ class LessonViewModel(
                         _uiState.value = state.copy(
                             currentStep = nextStep,
                             isLessonFinished = true,
-                            xpEarned = xpReward
+                            xpEarned = 0
                         )
                     }
                 } catch (e: Exception) {

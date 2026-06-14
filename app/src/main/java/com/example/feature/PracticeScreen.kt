@@ -339,7 +339,7 @@ fun PracticeScreen(
                                 }
                             }
 
-                            // OPTION 1: SPEND XP
+                            // OPTION 1: FREE INSTANT REPLENISH
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -352,14 +352,14 @@ fun PracticeScreen(
                                 Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                         Box(modifier = Modifier.size(44.dp).background(LevelGold, CircleShape), contentAlignment = Alignment.Center) {
-                                            Icon(imageVector = Icons.Default.OfflineBolt, contentDescription = null, tint = Color.White)
+                                            Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = Color.White)
                                         }
                                         Column {
                                             Text("Instant Replenish", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("Spent 20 XP to recover 5 Hearts", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                            Text("Recover all 5 Hearts instantly for free", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                                         }
                                     }
-                                    Text("20 XP", fontWeight = FontWeight.Black, fontSize = 18.sp, color = LevelGold)
+                                    Text("FREE", fontWeight = FontWeight.Black, fontSize = 18.sp, color = LevelGold)
                                 }
                             }
 

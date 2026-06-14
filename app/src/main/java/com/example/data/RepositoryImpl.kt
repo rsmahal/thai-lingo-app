@@ -1031,8 +1031,8 @@ class RepositoryImpl(
         return listOf(
             Achievement("streak_1", "Streak Starter", "Achieve a 1-day study streak.", 0, 1, isUnlocked = false, "streak"),
             Achievement("streak_3", "Streak Master", "Achieve a 3-day study streak.", 0, 3, isUnlocked = false, "streak"),
-            Achievement("xp_50", "Knowledge Seeker", "Earn 50 XP in total.", 0, 50, isUnlocked = false, "xp"),
-            Achievement("xp_200", "XP Champion", "Earn 200 XP in total.", 0, 200, isUnlocked = false, "xp"),
+            Achievement("stars_15", "Star Collector", "Earn 15 Stars in total.", 0, 15, isUnlocked = false, "star"),
+            Achievement("stars_60", "Star Champion", "Earn 60 Stars in total.", 0, 60, isUnlocked = false, "star"),
             Achievement("lessons_3", "Graduate", "Complete 3 full lessons.", 0, 3, isUnlocked = false, "lesson")
         )
     }

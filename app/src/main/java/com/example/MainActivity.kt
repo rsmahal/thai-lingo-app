@@ -183,6 +183,7 @@ class MainActivity : ComponentActivity() {
                                         ProfileScreen(
                                             progress = progress,
                                             achievements = achievements,
+                                            lessons = lessons,
                                             onToggleSound = { mainViewModel.toggleSound(it) },
                                             onToggleDarkMode = { mainViewModel.toggleDarkMode(it) },
                                             onResetProgress = { mainViewModel.resetProgress() }

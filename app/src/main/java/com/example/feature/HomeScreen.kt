@@ -28,6 +28,8 @@ import com.example.domain.Achievement
 import com.example.domain.Lesson
 import com.example.domain.UserProgress
 import com.example.ui.theme.*
+import com.example.ui.ThaiRank
+import com.example.ui.RankBadge
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -45,7 +47,7 @@ fun HomeScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // DUOLINGO-STYLE HEADER WITH TOP BAR INSETS
-            HomeHeader(progress = progress)
+            HomeHeader(progress = progress, lessons = lessons)
 
             // ROADMAP OF CURRICULUM
             LazyColumn(
@@ -137,8 +139,13 @@ fun HomeScreen(
 }
 
 @Composable
-fun HomeHeader(progress: UserProgress) {
+fun HomeHeader(
+    progress: UserProgress,
+    lessons: List<Lesson>
+) {
     var showLevelDialog by remember { mutableStateOf(false) }
+    val totalStars = lessons.sumOf { it.stars }
+    val currentRank = ThaiRank.fromStars(totalStars)
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -155,48 +162,43 @@ fun HomeHeader(progress: UserProgress) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Group Level and Survivor together side by side
+                // League of Legends styled dynamic Thai rank badge
                 Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(currentRank.primaryColor.copy(alpha = 0.12f))
+                        .border(1.dp, currentRank.primaryColor.copy(alpha = 0.40f), RoundedCornerShape(8.dp))
+                        .clickable { showLevelDialog = true }
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    HeaderStatItem(
-                        icon = Icons.Default.Stars,
-                        text = "Lvl ${progress.level}",
-                        color = LevelGold,
-                        contentDescription = "User level"
+                    RankBadge(
+                        rank = currentRank,
+                        modifier = Modifier.size(20.dp),
+                        showBackgroundFrame = false
                     )
-
-                    // Stairs badge
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(DuoGreenLight.copy(alpha = 0.15f))
-                            .clickable { showLevelDialog = true }
-                            .padding(horizontal = 6.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowUpward, // Rising stair steps symbol
-                            contentDescription = "Language level selector",
-                            tint = DuoGreenDark,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = "Survivor",
-                            fontWeight = FontWeight.Black,
-                            fontSize = 11.sp,
-                            color = DuoGreenDark
-                        )
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Dropdown icon",
-                            tint = DuoGreenDark,
-                            modifier = Modifier.size(12.dp)
-                        )
-                    }
+                    Text(
+                        text = currentRank.title,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 11.sp,
+                        color = currentRank.secColor
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Rank details dropdown",
+                        tint = currentRank.secColor,
+                        modifier = Modifier.size(12.dp)
+                    )
                 }
+
+                // Total Stars
+                HeaderStatItem(
+                    icon = Icons.Default.Star,
+                    text = "$totalStars Stars",
+                    color = LevelGold,
+                    contentDescription = "Total Stars"
+                )
 
                 // Streak Fire
                 HeaderStatItem(
@@ -204,14 +206,6 @@ fun HomeHeader(progress: UserProgress) {
                     text = "${progress.streak} d",
                     color = StreakOrange,
                     contentDescription = "Active streak"
-                )
-
-                // XP Star
-                HeaderStatItem(
-                    icon = Icons.Default.WorkspacePremium,
-                    text = "${progress.xp} XP",
-                    color = GemCyan,
-                    contentDescription = "Total experience points"
                 )
 
                 // Hearts Left
@@ -229,20 +223,27 @@ fun HomeHeader(progress: UserProgress) {
                     title = {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowUpward,
-                                contentDescription = null,
-                                tint = DuoGreenDark,
-                                modifier = Modifier.size(28.dp)
+                            RankBadge(
+                                rank = currentRank,
+                                modifier = Modifier.size(38.dp),
+                                showBackgroundFrame = true
                             )
-                            Text(
-                                text = "Select Language Level",
-                                fontWeight = FontWeight.Black,
-                                fontSize = 18.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Column {
+                                Text(
+                                    text = "Thai Rank Tier",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 18.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Current Rank: ${currentRank.title}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = currentRank.secColor
+                                )
+                            }
                         }
                     },
                     text = {
@@ -251,82 +252,89 @@ fun HomeHeader(progress: UserProgress) {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Choose your level to adjust your vocabulary curriculum.",
-                                fontSize = 13.sp,
+                                text = "Earn Stars to ascend through ancient Thai ranks and unlock custom symbolic badges of heritage. Redo completed lessons as many times as you like to max out your stars!",
+                                fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 6.dp)
                             )
                             
-                            val levels = listOf(
-                                Triple("Survivor", "Survival Level (0-500 words, 50 lessons)", true),
-                                Triple("Beginner", "Beginner Level (501+ words) - Locked", false),
-                                Triple("Intermediate", "Intermediate Level - Locked", false),
-                                Triple("Advanced", "Advanced Level - Locked", false),
-                                Triple("Expert", "Expert Level - Locked", false)
-                            )
+                            val ranks = ThaiRank.values()
                             
-                            levels.forEach { (name, desc, isEnabled) ->
+                            ranks.forEach { r ->
+                                val isMyRank = currentRank == r
+                                val isUnlocked = totalStars >= r.minStars
                                 Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable(enabled = isEnabled) {
-                                            showLevelDialog = false
-                                        },
+                                    modifier = Modifier.fillMaxWidth(),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = if (isEnabled) {
-                                            DuoGreenLight.copy(alpha = 0.15f)
+                                        containerColor = if (isMyRank) {
+                                            r.primaryColor.copy(alpha = 0.15f)
                                         } else {
                                             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                                         }
                                     ),
-                                    border = if (isEnabled) {
-                                        BorderStroke(1.5.dp, DuoGreenDark)
+                                    border = if (isMyRank) {
+                                        BorderStroke(2.dp, r.primaryColor)
+                                    } else if (isUnlocked) {
+                                        BorderStroke(1.dp, r.primaryColor.copy(alpha = 0.4f))
                                     } else {
-                                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
                                     }
                                 ) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(12.dp),
+                                            .padding(10.dp),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
+                                        RankBadge(
+                                            rank = r,
+                                            modifier = Modifier.size(44.dp),
+                                            showBackgroundFrame = true
+                                        )
                                         Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = name,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 14.sp,
-                                                color = if (isEnabled) {
-                                                    DuoGreenDark
-                                                } else {
-                                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                                }
-                                            )
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                            ) {
+                                                Text(
+                                                    text = "${r.title} (${r.badgeSymbol})",
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 13.sp,
+                                                    color = if (isUnlocked) r.secColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                                )
+                                                Text(
+                                                    text = r.starRange,
+                                                    fontWeight = FontWeight.Medium,
+                                                    fontSize = 11.sp,
+                                                    color = if (isUnlocked) r.primaryColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                                )
+                                            }
                                             Spacer(modifier = Modifier.height(2.dp))
                                             Text(
-                                                text = desc,
-                                                fontSize = 11.sp,
-                                                color = if (isEnabled) {
+                                                text = r.description,
+                                                fontSize = 10.5.sp,
+                                                lineHeight = 14.sp,
+                                                color = if (isUnlocked) {
                                                     MaterialTheme.colorScheme.onSurfaceVariant
                                                 } else {
                                                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                                                 }
                                             )
                                         }
-                                        if (isEnabled) {
+                                        if (isMyRank) {
                                             Icon(
                                                 imageVector = Icons.Default.CheckCircle,
-                                                contentDescription = "Selected",
-                                                tint = DuoGreenDark,
-                                                modifier = Modifier.size(20.dp)
+                                                contentDescription = "Active Rank",
+                                                tint = r.secColor,
+                                                modifier = Modifier.size(18.dp)
                                             )
-                                        } else {
+                                        } else if (!isUnlocked) {
                                             Icon(
                                                 imageVector = Icons.Default.Lock,
-                                                contentDescription = "Locked",
+                                                contentDescription = "Locked Rank",
                                                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                                                modifier = Modifier.size(18.dp)
+                                                modifier = Modifier.size(16.dp)
                                             )
                                         }
                                     }
@@ -336,7 +344,7 @@ fun HomeHeader(progress: UserProgress) {
                     },
                     confirmButton = {
                         TextButton(onClick = { showLevelDialog = false }) {
-                            Text("Close", fontWeight = FontWeight.Bold, color = DuoGreenDark)
+                            Text("Awesome", fontWeight = FontWeight.Bold, color = DuoGreenDark)
                         }
                     }
                 )

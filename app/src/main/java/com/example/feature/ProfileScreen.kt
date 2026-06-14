@@ -1,6 +1,7 @@
 package com.example.feature
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -22,12 +23,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.UserProgress
 import com.example.domain.Achievement
+import com.example.domain.Lesson
 import com.example.ui.theme.*
+import com.example.ui.ThaiRank
+import com.example.ui.RankBadge
 
 @Composable
 fun ProfileScreen(
     progress: UserProgress,
     achievements: List<Achievement>,
+    lessons: List<Lesson>,
     onToggleSound: (Boolean) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onResetProgress: () -> Unit
@@ -38,7 +43,7 @@ fun ProfileScreen(
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
             title = { Text("Reset Progress?", fontWeight = FontWeight.Bold, color = HeartRed) },
-            text = { Text("This will permanently delete your streak, level, accumulated XP, unlocked categories, and restore default profiles. This operation is offline and irreversible!") },
+            text = { Text("This will permanently delete your streak, star rank accomplishments, unlocked categories, and restore default profiles. This operation is offline and irreversible!") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -58,6 +63,9 @@ fun ProfileScreen(
         )
     }
 
+    val totalStars = lessons.sumOf { it.stars }
+    val rank = ThaiRank.fromStars(totalStars)
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -74,18 +82,38 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(vertical = 12.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(92.dp)
-                        .background(DuoGreen, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val initials = progress.name.firstOrNull()?.toString()?.uppercase() ?: "L"
-                    Text(
-                        text = initials,
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color.White
+                Box {
+                    // Main Avatar Circle
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .background(
+                                brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                                    colors = listOf(rank.primaryColor, rank.secColor)
+                                ),
+                                shape = CircleShape
+                            )
+                            .border(3.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val initials = progress.name.firstOrNull()?.toString()?.uppercase() ?: "L"
+                        Text(
+                            text = initials,
+                            fontSize = 38.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
+                    }
+
+                    // Floating Rank Badge in corner
+                    RankBadge(
+                        rank = rank,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .align(Alignment.BottomEnd)
+                            .background(Color.White, CircleShape)
+                            .padding(2.dp),
+                        showBackgroundFrame = true
                     )
                 }
 
@@ -96,11 +124,28 @@ fun ProfileScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
-                Text(
-                    text = "ThaiLingo Learner (Level ${progress.level})",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text(
+                        text = "${rank.title} Rank",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = rank.secColor
+                    )
+                    Text(
+                        text = "•",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    )
+                    Text(
+                        text = "$totalStars Stars",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
             }
         }
 
@@ -118,11 +163,11 @@ fun ProfileScreen(
                     modifier = Modifier.weight(1f).testTag("stat_streak")
                 )
                 StatCard(
-                    icon = Icons.Default.OfflineBolt,
+                    icon = Icons.Default.Star,
                     iconColor = LevelGold,
-                    value = "${progress.xp} XP",
-                    label = "Earned Points",
-                    modifier = Modifier.weight(1f).testTag("stat_xp")
+                    value = "$totalStars",
+                    label = "Total Stars",
+                    modifier = Modifier.weight(1f).testTag("stat_stars")
                 )
             }
         }
@@ -132,12 +177,13 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                val completedLessonsCount = lessons.count { it.completed }
                 StatCard(
-                    icon = Icons.Default.Flag,
+                    icon = Icons.Default.School,
                     iconColor = GemCyan,
-                    value = "${progress.selectedLanguageGoal} XP",
-                    label = "Daily Challenge",
-                    modifier = Modifier.weight(1f).testTag("stat_goal")
+                    value = "$completedLessonsCount / ${lessons.size}",
+                    label = "Completed Lessons",
+                    modifier = Modifier.weight(1f).testTag("stat_lessons")
                 )
                 StatCard(
                     icon = Icons.Default.Favorite,
@@ -363,7 +409,7 @@ fun AchievementRowCard(achievement: Achievement) {
                 Icon(
                     imageVector = when (achievement.iconName) {
                         "streak" -> Icons.Default.LocalFireDepartment
-                        "xp" -> Icons.Default.WorkspacePremium
+                        "star" -> Icons.Default.Star
                         else -> Icons.Default.School
                     },
                     contentDescription = null,

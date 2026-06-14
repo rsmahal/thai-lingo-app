@@ -184,8 +184,8 @@ class MainViewModel(
             val updatedProgress = when (ach.id) {
                 "streak_1" -> progress.streak
                 "streak_3" -> progress.streak
-                "xp_50" -> progress.xp
-                "xp_200" -> progress.xp
+                "stars_15" -> lessons.value.sumOf { it.stars }
+                "stars_60" -> lessons.value.sumOf { it.stars }
                 "lessons_3" -> {
                     lessons.value.count { it.completed }
                 }

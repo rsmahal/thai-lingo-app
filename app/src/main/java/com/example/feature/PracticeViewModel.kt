@@ -63,17 +63,12 @@ class PracticeViewModel(
     fun spendXpToRefillHearts() {
         viewModelScope.launch {
             val progress = repository.getUserProgressOnce()
-            if (progress.xp < 20) {
-                _shopError.value = "Need 20 XP to buy hearts! Earn some in lessons."
-                return@launch
-            }
             if (progress.hearts >= 5) {
                 _shopError.value = "Hearts are already full!"
                 return@launch
             }
 
             val updatedProgress = progress.copy(
-                xp = progress.xp - 20,
                 hearts = 5
             )
             repository.saveUserProgress(updatedProgress)

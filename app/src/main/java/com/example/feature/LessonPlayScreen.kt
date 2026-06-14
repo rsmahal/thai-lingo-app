@@ -75,7 +75,7 @@ fun LessonPlayScreen(
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
             title = { Text("Quit Lesson?", fontWeight = FontWeight.Bold) },
-            text = { Text("You will lose all XP progress and hearts earned in this lesson. Are you sure you want to go back?") },
+            text = { Text("You will lose all stars and hearts earned in this lesson. Are you sure you want to go back?") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -1290,9 +1290,9 @@ fun SummaryCompletedScreen(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("XP EARNED", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
+                        Text("STATUS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("+$xpEarned XP", fontSize = 22.sp, fontWeight = FontWeight.Black, color = GemCyan)
+                        Text(if (starsAwarded == 3) "PERFECT" else "COMPLETED", fontSize = 20.sp, fontWeight = FontWeight.Black, color = GemCyan)
                     }
                 }
 
@@ -2081,9 +2081,9 @@ fun TestResultScreen(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("XP EARNED", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
+                    Text("RESULT", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("+$xpEarned XP", fontSize = 22.sp, fontWeight = FontWeight.Black, color = GemCyan)
+                    Text("PASSED", fontSize = 22.sp, fontWeight = FontWeight.Black, color = GemCyan)
                 }
             }
 
