@@ -20,8 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
@@ -29,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.domain.Exercise
 import com.example.domain.ExerciseType
@@ -319,6 +325,7 @@ fun LessonPlayingLayout(
             matchedPairs = state.matchedPairs,
             currentType = currentExercise.type,
             correctAnswer = currentExercise.correctAnswer,
+            matchingIncorrectAttempts = state.matchingIncorrectAttempts,
             onCheck = onCheckClick,
             onContinue = onContinueClick
         )
@@ -799,14 +806,17 @@ fun BottomActionStrip(
     matchedPairs: Set<String>,
     currentType: ExerciseType,
     correctAnswer: String,
+    matchingIncorrectAttempts: Int,
     onCheck: () -> Unit,
     onContinue: () -> Unit
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
+    val isWarning = currentType == ExerciseType.MATCHING && isChecked && !isCorrect
+
     LaunchedEffect(isChecked) {
-        if (isChecked && isCorrect) {
+        if (isChecked && (isCorrect || isWarning)) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
@@ -820,12 +830,17 @@ fun BottomActionStrip(
     Surface(
         tonalElevation = 8.dp,
         color = when {
+            isWarning -> WarningFill
             isChecked && isCorrect -> CorrectFill
             isChecked && !isCorrect -> IncorrectFill
             else -> MaterialTheme.colorScheme.surface
         },
         border = if (isChecked) {
-            androidx.compose.foundation.BorderStroke(2.dp, if (isCorrect) CorrectStroke else IncorrectStroke)
+            androidx.compose.foundation.BorderStroke(2.dp, when {
+                isWarning -> WarningStroke
+                isCorrect -> CorrectStroke
+                else -> IncorrectStroke
+            })
         } else null,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -835,6 +850,30 @@ fun BottomActionStrip(
                 .padding(horizontal = 24.dp, vertical = 18.dp)
         ) {
             if (isChecked) {
+                val boxBg = when {
+                    isWarning -> WarningStroke
+                    isCorrect -> CorrectStroke
+                    else -> IncorrectStroke
+                }
+                
+                val iconVector = when {
+                    isWarning -> Icons.Default.PriorityHigh
+                    isCorrect -> Icons.Default.Check
+                    else -> Icons.Default.PriorityHigh
+                }
+                
+                val headerText = when {
+                    isWarning -> "Nearly"
+                    isCorrect -> "Excellent job! You got it."
+                    else -> "Oops, incorrect!"
+                }
+                
+                val headerColor = when {
+                    isWarning -> WarningText
+                    isCorrect -> CorrectText
+                    else -> IncorrectText
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -843,23 +882,29 @@ fun BottomActionStrip(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
-                            .background(if (isCorrect) CorrectStroke else IncorrectStroke, CircleShape),
+                            .background(boxBg, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (isCorrect) Icons.Default.Check else Icons.Default.PriorityHigh,
-                            contentDescription = if (isCorrect) "Correct answer" else "Incorrect answer",
+                            imageVector = iconVector,
+                            contentDescription = "Status",
                             tint = Color.White
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = if (isCorrect) "Excellent job! You got it." else "Oops, incorrect!",
+                            text = headerText,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = if (isCorrect) CorrectText else IncorrectText
+                            color = headerColor
                         )
-                        if (!isCorrect) {
+                        if (isWarning) {
+                            Text(
+                                text = "You made $matchingIncorrectAttempts incorrect attempts.",
+                                fontSize = 14.sp,
+                                color = WarningText.copy(alpha = 0.8f)
+                            )
+                        } else if (!isCorrect) {
                             Text(
                                 text = "Correct answer: $correctAnswer",
                                 fontSize = 14.sp,
@@ -879,7 +924,11 @@ fun BottomActionStrip(
                         .height(50.dp)
                         .testTag("grading_continue_btn"),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isCorrect) CorrectStroke else IncorrectStroke
+                        containerColor = when {
+                            isWarning -> WarningStroke
+                            isCorrect -> CorrectStroke
+                            else -> IncorrectStroke
+                        }
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -917,103 +966,467 @@ fun SummaryCompletedScreen(
     onDone: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        // Star Canvas Draw
-        Box(modifier = Modifier.size(140.dp)) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val center = Offset(size.width / 2f, size.height / 2f)
-                // Draw Golden Cup
-                drawCircle(color = LevelGold, radius = 54f, center = center)
-            }
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Icon(imageVector = Icons.Default.EmojiEvents, contentDescription = "Trophy Success", tint = Color.White, modifier = Modifier.size(64.dp))
-            }
+    val starsAwarded = when (heartsLeft) {
+        5 -> 3
+        4 -> 2
+        else -> 1
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background rating visual FX
+        when (starsAwarded) {
+            3 -> ThreeStarsPartyAnimation()
+            2 -> TwoStarsFloatAnimation()
+            1 -> OneStarStormAnimation()
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Lesson Completed!",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Black,
-            color = DuoGreen,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "Sabai dee! You studied '${lesson.title}' successfully offline.",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Card(
-                modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(containerColor = GemCyan.copy(alpha = 0.1f))
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("XP EARNED", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("+$xpEarned XP", fontSize = 22.sp, fontWeight = FontWeight.Black, color = GemCyan)
+            // Star Canvas Draw
+            Box(modifier = Modifier.size(140.dp)) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    drawCircle(color = LevelGold, radius = 54f, center = center)
+                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = when (starsAwarded) {
+                            3 -> Icons.Default.EmojiEvents
+                            2 -> Icons.Default.WorkspacePremium
+                            else -> Icons.Default.Cloud
+                        },
+                        contentDescription = "Rating Trophy",
+                        tint = Color.White,
+                        modifier = Modifier.size(64.dp)
+                    )
                 }
             }
 
-            Card(
-                modifier = Modifier.weight(1f),
-                colors = CardDefaults.cardColors(containerColor = LevelGold.copy(alpha = 0.1f))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = when (starsAwarded) {
+                    3 -> "Perfect Flawless! 🎉"
+                    2 -> "Well Done! ⭐⭐"
+                    else -> "Stormy Weather! Keep Trying"
+                },
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Black,
+                color = when (starsAwarded) {
+                    3 -> LevelGold
+                    2 -> DuoGreen
+                    else -> HeartRed
+                },
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = when (starsAwarded) {
+                    3 -> "Sensational! You completed '${lesson.title}' with 3 stars!"
+                    2 -> "Great practice! '${lesson.title}' completed with 2 stars."
+                    else -> "Nearly there. Practice makes perfect!"
+                },
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = GemCyan.copy(alpha = 0.1f))
                 ) {
-                    Text("STARS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = LevelGold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row {
-                        val starsAwarded = when (heartsLeft) {
-                            5 -> 3
-                            4 -> 2
-                            else -> 1
-                        }
-                        repeat(starsAwarded) {
-                            Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = LevelGold, modifier = Modifier.size(20.dp))
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("XP EARNED", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("+$xpEarned XP", fontSize = 22.sp, fontWeight = FontWeight.Black, color = GemCyan)
+                    }
+                }
+
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = LevelGold.copy(alpha = 0.1f))
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("STARS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = LevelGold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row {
+                            repeat(starsAwarded) {
+                                Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = LevelGold, modifier = Modifier.size(20.dp))
+                            }
                         }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Button(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onDone()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .testTag("lesson_finished_done_btn"),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = when (starsAwarded) {
+                        3 -> LevelGold
+                        2 -> DuoGreen
+                        else -> HeartRed
+                    }
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text("Back to Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(40.dp))
+// SUPPORTING ANIMATED CLASSES & COMPOSABLES FOR RATING FXs:
 
-        Button(
-            onClick = {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                onDone()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .testTag("lesson_finished_done_btn"),
-            colors = ButtonDefaults.buttonColors(containerColor = DuoGreen),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Text("Back to Dashboard", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+class ConfettiParticle(
+    var x: Float,
+    var y: Float,
+    var radius: Float,
+    var color: Color,
+    var speedY: Float,
+    var speedX: Float,
+    var rotation: Float,
+    var rotationalSpeed: Float,
+    var swayOffset: Float
+)
+
+class BubbleParticle(
+    var x: Float,
+    var y: Float,
+    var radius: Float,
+    var speedY: Float,
+    var alpha: Float,
+    var color: Color,
+    var swayOffset: Float
+)
+
+class RainDropParticle(
+    var x: Float,
+    var y: Float,
+    var length: Float,
+    var speedY: Float
+)
+
+@Composable
+fun ThreeStarsPartyAnimation() {
+    var screenSize by remember { mutableStateOf(IntSize.Zero) }
+    val confettiList = remember { mutableStateListOf<ConfettiParticle>() }
+    
+    // Create firework effect state
+    var fireworkX by remember { mutableStateOf(0f) }
+    var fireworkY by remember { mutableStateOf(0f) }
+    var fireworkRadius by remember { mutableStateOf(0f) }
+    var fireworkColor by remember { mutableStateOf(Color.Yellow) }
+    var fireworkAlpha by remember { mutableStateOf(0f) }
+    
+    LaunchedEffect(screenSize) {
+        if (screenSize.width == 0 || screenSize.height == 0) return@LaunchedEffect
+        
+        // Initialize confetti
+        confettiList.clear()
+        val colors = listOf(
+            Color(0xFFFF4B4B), // Red
+            Color(0xFF1CB0F6), // GemCyan
+            Color(0xFF58CC02), // DuoGreen
+            Color(0xFFFFC800), // LevelGold
+            Color(0xFFFF9600), // StreakOrange
+            Color(0xFFD946EF), // Magenta
+            Color(0xFF8B5CF6)  // Violet
+        )
+        repeat(45) {
+            confettiList.add(
+                ConfettiParticle(
+                    x = (0..screenSize.width).random().toFloat(),
+                    y = (-screenSize.height..0).random().toFloat(),
+                    radius = (8..20).random().toFloat(),
+                    color = colors.random(),
+                    speedY = (4..10).random().toFloat(),
+                    speedX = (-3..3).random().toFloat(),
+                    rotation = (0..360).random().toFloat(),
+                    rotationalSpeed = (-10..10).random().toFloat(),
+                    swayOffset = (0..360).random().toFloat()
+                )
+            )
+        }
+        
+        var frame = 0
+        while (true) {
+            kotlinx.coroutines.delay(16) // ~60 FPS
+            frame++
+            
+            // 1. Update confetti
+            for (i in confettiList.indices) {
+                val p = confettiList[i]
+                p.y += p.speedY
+                p.x += p.speedX + (kotlin.math.sin(p.swayOffset) * 1.5f)
+                p.swayOffset += 0.05f
+                p.rotation += p.rotationalSpeed
+                
+                // Reset when falls off bottom
+                if (p.y > screenSize.height) {
+                    p.y = -20f
+                    p.x = (0..screenSize.width).random().toFloat()
+                    p.speedY = (4..10).random().toFloat()
+                }
+            }
+            
+            // 2. Firework launcher
+            if (fireworkAlpha > 0) {
+                fireworkRadius += 8f
+                fireworkAlpha -= 0.02f
+            } else if (frame % 90 == 0) {
+                // Spawn new firework safely
+                val minX = (screenSize.width * 0.2f).toInt()
+                val maxX = (screenSize.width * 0.8f).toInt()
+                fireworkX = if (maxX > minX) (minX..maxX).random().toFloat() else screenSize.width / 2f
+                
+                val minY = (screenSize.height * 0.15f).toInt()
+                val maxY = (screenSize.height * 0.6f).toInt()
+                fireworkY = if (maxY > minY) (minY..maxY).random().toFloat() else screenSize.height * 0.4f
+                
+                fireworkRadius = 10f
+                fireworkAlpha = 1f
+                fireworkColor = listOf(Color.Red, Color.Yellow, Color.Cyan, Color.Green, Color.Magenta).random()
+            }
+        }
+    }
+    
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .onSizeChanged { screenSize = it }
+    ) {
+        // Draw Fireworks if active
+        if (fireworkAlpha > 0) {
+            drawCircle(
+                color = fireworkColor,
+                radius = fireworkRadius,
+                center = Offset(fireworkX, fireworkY),
+                style = Stroke(width = 4.dp.toPx()),
+                alpha = fireworkAlpha
+            )
+            // Spark particles
+            for (angle in 0 until 360 step 45) {
+                val rad = Math.toRadians(angle.toDouble())
+                val sparkX = fireworkX + Math.cos(rad).toFloat() * (fireworkRadius * 1.2f)
+                val sparkY = fireworkY + Math.sin(rad).toFloat() * (fireworkRadius * 1.2f)
+                drawCircle(
+                    color = fireworkColor,
+                    radius = 6.dp.toPx() * fireworkAlpha,
+                    center = Offset(sparkX, sparkY),
+                    alpha = fireworkAlpha
+                )
+            }
+        }
+        
+        // Draw Confetti
+        confettiList.forEach { p ->
+            rotate(degrees = p.rotation, pivot = Offset(p.x, p.y)) {
+                drawRect(
+                    color = p.color,
+                    topLeft = Offset(p.x - p.radius, p.y - p.radius / 2),
+                    size = Size(p.radius * 2, p.radius)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TwoStarsFloatAnimation() {
+    var screenSize by remember { mutableStateOf(IntSize.Zero) }
+    val bubbleList = remember { mutableStateListOf<BubbleParticle>() }
+    
+    LaunchedEffect(screenSize) {
+        if (screenSize.width == 0 || screenSize.height == 0) return@LaunchedEffect
+        
+        bubbleList.clear()
+        val colors = listOf(
+            LevelGold.copy(alpha = 0.6f),
+            GemCyan.copy(alpha = 0.5f),
+            DuoGreen.copy(alpha = 0.5f),
+            Color.White.copy(alpha = 0.7f)
+        )
+        repeat(20) {
+            bubbleList.add(
+                BubbleParticle(
+                    x = (0..screenSize.width).random().toFloat(),
+                    y = (0..screenSize.height).random().toFloat(),
+                    radius = (10..30).random().toFloat(),
+                    speedY = -(1.5f + (0..3).random().toFloat() * 0.5f),
+                    alpha = (0.3f + (0..5).random().toFloat() * 0.1f),
+                    color = colors.random(),
+                    swayOffset = (0..360).random().toFloat()
+                )
+            )
+        }
+        
+        while (true) {
+            kotlinx.coroutines.delay(16)
+            for (i in bubbleList.indices) {
+                val b = bubbleList[i]
+                b.y += b.speedY
+                b.x += kotlin.math.sin(b.swayOffset) * 0.8f
+                b.swayOffset += 0.04f
+                
+                // Floating up off top, reset to bottom
+                if (b.y < -30f) {
+                    b.y = screenSize.height + 30f
+                    b.x = (0..screenSize.width).random().toFloat()
+                }
+            }
+        }
+    }
+    
+    Canvas(
+        modifier = Modifier
+            .fillMaxSize()
+            .onSizeChanged { screenSize = it }
+    ) {
+        bubbleList.forEach { p ->
+            drawCircle(
+                color = p.color,
+                radius = p.radius,
+                center = Offset(p.x, p.y),
+                alpha = p.alpha
+            )
+            // Elegant inner glass reflection crescent/shine
+            drawCircle(
+                color = Color.White.copy(alpha = p.alpha * 0.4f),
+                radius = p.radius * 0.3f,
+                center = Offset(p.x - p.radius * 0.3f, p.y - p.radius * 0.3f)
+            )
+        }
+    }
+}
+
+@Composable
+fun OneStarStormAnimation() {
+    var screenSize by remember { mutableStateOf(IntSize.Zero) }
+    val rainDropList = remember { mutableStateListOf<RainDropParticle>() }
+    var lightningAlpha by remember { mutableStateOf(0f) }
+    
+    LaunchedEffect(screenSize) {
+        if (screenSize.width == 0 || screenSize.height == 0) return@LaunchedEffect
+        
+        rainDropList.clear()
+        repeat(35) {
+            rainDropList.add(
+                RainDropParticle(
+                    x = (0..screenSize.width).random().toFloat(),
+                    y = (0..screenSize.height).random().toFloat(),
+                    length = (15..35).random().toFloat(),
+                    speedY = (15..25).random().toFloat()
+                )
+            )
+        }
+        
+        var frame = 0
+        while (true) {
+            kotlinx.coroutines.delay(16)
+            frame++
+            
+            // Update rain
+            for (i in rainDropList.indices) {
+                val r = rainDropList[i]
+                r.y += r.speedY
+                r.x -= 2f // Slight angle falling downwards to the left
+                
+                if (r.y > screenSize.height) {
+                    r.y = -r.length
+                    r.x = (0..screenSize.width).random().toFloat()
+                }
+            }
+            
+            // Random lightning flash
+            if (lightningAlpha > 0) {
+                lightningAlpha -= 0.1f
+            } else if (frame % 200 == 0 && (0..1).random() == 1) {
+                lightningAlpha = 0.8f
+            }
+        }
+    }
+    
+    // Background Darkening layer dynamically integrated
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.4f)) // Stormy overcast tint
+            .onSizeChanged { screenSize = it }
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val width = size.width
+            val height = size.height
+            
+            // Draw storm clouds at the top
+            val cloudColor = Color(0xFF3F4E52)
+            drawCircle(
+                color = cloudColor,
+                radius = 120.dp.toPx(),
+                center = Offset(0f, 0f)
+            )
+            drawCircle(
+                color = cloudColor.copy(alpha = 0.9f),
+                radius = 140.dp.toPx(),
+                center = Offset(width * 0.4f, -40.dp.toPx())
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = 110.dp.toPx(),
+                center = Offset(width * 0.7f, -40.dp.toPx())
+            )
+            drawCircle(
+                color = cloudColor.copy(alpha = 0.95f),
+                radius = 130.dp.toPx(),
+                center = Offset(width, 0f)
+            )
+            
+            // Raindrops
+            rainDropList.forEach { p ->
+                drawLine(
+                    color = Color(0x6663D7FE),
+                    start = Offset(p.x, p.y),
+                    end = Offset(p.x - 2f, p.y + p.length),
+                    strokeWidth = 2.dp.toPx()
+                )
+            }
+            
+            // Flash lightning overlay
+            if (lightningAlpha > 0) {
+                drawRect(
+                    color = Color.White,
+                    size = Size(width, height),
+                    alpha = lightningAlpha * 0.3f
+                )
+            }
         }
     }
 }

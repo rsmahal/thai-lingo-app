@@ -44,7 +44,8 @@ sealed interface LessonUiState {
         val currentIntroWordIdx: Int = 0,
         val isTopicTest: Boolean = false,
         val testHasMistakes: Boolean = false,
-        val matchingHadMistake: Boolean = false
+        val matchingHadMistake: Boolean = false,
+        val matchingIncorrectAttempts: Int = 0
     ) : LessonUiState
 }
 
@@ -383,6 +384,7 @@ class LessonViewModel(
                 }
 
                 val nextMatchingHadMistake = currentState.matchingHadMistake || mismatchHappened
+                val nextIncorrectAttempts = currentState.matchingIncorrectAttempts + if (mismatchHappened) 1 else 0
                 val expectedCount = currentExercise.correctAnswer.split("|").size
                 val allMatchedNow = nextMatched.size == expectedCount
 
@@ -396,7 +398,8 @@ class LessonViewModel(
                     isCorrect = if (allMatchedNow) !nextMatchingHadMistake else false,
                     hearts = currentHearts,
                     testHasMistakes = nextTestHasMistakes,
-                    matchingHadMistake = nextMatchingHadMistake
+                    matchingHadMistake = nextMatchingHadMistake,
+                    matchingIncorrectAttempts = nextIncorrectAttempts
                 )
             }
         }
@@ -584,7 +587,8 @@ class LessonViewModel(
                 matchedPairs = emptySet(),
                 isMatchingCorrect = null,
                 checkActivePair = null,
-                matchingHadMistake = false
+                matchingHadMistake = false,
+                matchingIncorrectAttempts = 0
             )
             speakCurrentIfListening(nextExercise)
         }

@@ -26,6 +26,10 @@ val IncorrectFill = Color(0xFFFFDFDF)
 val IncorrectStroke = Color(0xFFEA580C)
 val IncorrectText = Color(0xFFC026D3)
 
+val WarningFill = Color(0xFFFEF3C1)
+val WarningStroke = Color(0xFFF59E0B)
+val WarningText = Color(0xFF78350F)
+
 // Dark/Light Material 3 theme base colors
 val DarkBackground = Color(0xFF131F22)
 val DarkSurface = Color(0xFF1E2D30)
