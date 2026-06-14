@@ -43,7 +43,8 @@ sealed interface LessonUiState {
         val introWords: List<Vocabulary> = emptyList(),
         val currentIntroWordIdx: Int = 0,
         val isTopicTest: Boolean = false,
-        val testHasMistakes: Boolean = false
+        val testHasMistakes: Boolean = false,
+        val matchingHadMistake: Boolean = false
     ) : LessonUiState
 }
 
@@ -364,6 +365,24 @@ class LessonViewModel(
                     repository.updateReviewWordSrs(nextThai, isCorrect = false)
                 }
 
+                var currentHearts = currentState.hearts
+                var nextTestHasMistakes = currentState.testHasMistakes
+                val mismatchHappened = !isCorrectMatch
+
+                if (mismatchHappened) {
+                    currentHearts = (currentHearts - 1).coerceAtLeast(0)
+                    nextTestHasMistakes = true
+                    viewModelScope.launch {
+                        try {
+                            val progress = repository.getUserProgressOnce()
+                            repository.saveUserProgress(progress.copy(hearts = currentHearts))
+                        } catch (e: Exception) {
+                            // Safe save skip
+                        }
+                    }
+                }
+
+                val nextMatchingHadMistake = currentState.matchingHadMistake || mismatchHappened
                 val expectedCount = currentExercise.correctAnswer.split("|").size
                 val allMatchedNow = nextMatched.size == expectedCount
 
@@ -374,7 +393,10 @@ class LessonViewModel(
                     isMatchingCorrect = null,
                     checkActivePair = null,
                     isChecked = allMatchedNow,
-                    isCorrect = if (allMatchedNow) true else currentState.isCorrect
+                    isCorrect = if (allMatchedNow) !nextMatchingHadMistake else false,
+                    hearts = currentHearts,
+                    testHasMistakes = nextTestHasMistakes,
+                    matchingHadMistake = nextMatchingHadMistake
                 )
             }
         }
@@ -561,7 +583,8 @@ class LessonViewModel(
                 selectedThai = "",
                 matchedPairs = emptySet(),
                 isMatchingCorrect = null,
-                checkActivePair = null
+                checkActivePair = null,
+                matchingHadMistake = false
             )
             speakCurrentIfListening(nextExercise)
         }

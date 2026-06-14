@@ -21,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -143,7 +145,8 @@ fun LessonPlayScreen(
                         onExitClick = { showExitDialog = true },
                         onVoiceClick = { viewModel.speakIntroWord() },
                         onNextClick = { viewModel.nextIntroWord() },
-                        onPrevClick = { viewModel.prevIntroWord() }
+                        onPrevClick = { viewModel.prevIntroWord() },
+                        onSpeakText = { viewModel.speakWordText(it) }
                     )
                 } else {
                     LessonPlayingLayout(
@@ -330,6 +333,7 @@ fun MultipleChoiceView(
     onSelect: (String) -> Unit,
     onVoicePlay: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     Column {
         // Question bubble card
         Card(
@@ -382,7 +386,12 @@ fun MultipleChoiceView(
                 val bg = if (isSelected) DuoGreen.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
 
                 Card(
-                    onClick = { if (!isChecked) onSelect(option) },
+                    onClick = {
+                        if (!isChecked) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onSelect(option)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
@@ -471,12 +480,16 @@ fun ListeningView(
     onSelect: (String) -> Unit,
     onVoicePlay: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         // Speaker Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onVoicePlay() }
+                .clickable {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onVoicePlay()
+                }
                 .testTag("listen_speaker_box"),
             colors = CardDefaults.cardColors(containerColor = GemCyan.copy(alpha = 0.1f)),
             shape = RoundedCornerShape(20.dp),
@@ -512,7 +525,12 @@ fun ListeningView(
                 val bg = if (isSelected) DuoGreen.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
 
                 Card(
-                    onClick = { if (!isChecked) onSelect(option) },
+                    onClick = {
+                        if (!isChecked) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onSelect(option)
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
@@ -547,6 +565,7 @@ fun SpeakingView(
     onTriggerSim: () -> Unit,
     isChecked: Boolean
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         // Text Target
         Card(
@@ -590,7 +609,10 @@ fun SpeakingView(
                 .background(
                     if (isSpeakingSimulated) HeartRed.copy(alpha = 0.15f) else DuoGreen.copy(alpha = 0.15f)
                 )
-                .clickable(enabled = !isChecked && !isSpeakingSimulated) { onTriggerSim() }
+                .clickable(enabled = !isChecked && !isSpeakingSimulated) {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onTriggerSim()
+                }
                 .testTag("microphone_sim_btn"),
             contentAlignment = Alignment.Center
         ) {
@@ -639,6 +661,7 @@ fun MatchingView(
     checkActivePair: Pair<String, String>?,
     onSelect: (String, Boolean) -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     // Collect options and sort English/Thai separately to let user match
     val rawOptions = exercise.options
     // English words containing ASCII alphabet characters shuffled stably
@@ -683,7 +706,10 @@ fun MatchingView(
                     }
 
                     Card(
-                        onClick = { onSelect(word, true) },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onSelect(word, true)
+                        },
                         modifier = Modifier.fillMaxWidth().height(56.dp).testTag("matching_eng_$word"),
                         colors = CardDefaults.cardColors(containerColor = bg),
                         border = CardDefaults.outlinedCardBorder(enabled = true).copy(
@@ -736,7 +762,10 @@ fun MatchingView(
                     }
 
                     Card(
-                        onClick = { onSelect(word, false) },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onSelect(word, false)
+                        },
                         modifier = Modifier.fillMaxWidth().height(56.dp).testTag("matching_thai_$word"),
                         colors = CardDefaults.cardColors(containerColor = bg),
                         border = CardDefaults.outlinedCardBorder(enabled = true).copy(
@@ -774,6 +803,14 @@ fun BottomActionStrip(
     onContinue: () -> Unit
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    LaunchedEffect(isChecked) {
+        if (isChecked && isCorrect) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
+
     val hasMadeSelection = when (currentType) {
         ExerciseType.MULTIPLE_CHOICE, ExerciseType.LISTENING -> selectedValue.isNotEmpty()
         ExerciseType.TRANSLATE, ExerciseType.SPEAKING -> typedValue.isNotBlank()
@@ -833,7 +870,10 @@ fun BottomActionStrip(
                 }
 
                 Button(
-                    onClick = onContinue,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onContinue()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -847,7 +887,10 @@ fun BottomActionStrip(
                 }
             } else {
                 Button(
-                    onClick = onCheck,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onCheck()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
@@ -873,6 +916,7 @@ fun SummaryCompletedScreen(
     heartsLeft: Int,
     onDone: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -958,7 +1002,10 @@ fun SummaryCompletedScreen(
         Spacer(modifier = Modifier.height(40.dp))
 
         Button(
-            onClick = onDone,
+            onClick = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onDone()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp)
@@ -977,7 +1024,8 @@ fun LessonIntroduceLayout(
     onExitClick: () -> Unit,
     onVoiceClick: () -> Unit,
     onNextClick: () -> Unit,
-    onPrevClick: () -> Unit
+    onPrevClick: () -> Unit,
+    onSpeakText: (String) -> Unit
 ) {
     val currentWord = state.introWords[state.currentIntroWordIdx]
     val totalWords = state.introWords.size
@@ -1137,8 +1185,14 @@ fun LessonIntroduceLayout(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // Sample Context Sentence
+                    val haptic = LocalHapticFeedback.current
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onSpeakText(currentWord.exampleThai)
+                            },
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)),
                         shape = RoundedCornerShape(16.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
@@ -1250,6 +1304,7 @@ fun TestResultScreen(
     onDone: () -> Unit,
     onTryAgain: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1312,7 +1367,10 @@ fun TestResultScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             Button(
-                onClick = onDone,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onDone()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp)
@@ -1361,7 +1419,10 @@ fun TestResultScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             Button(
-                onClick = onTryAgain,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onTryAgain()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp)
@@ -1375,7 +1436,10 @@ fun TestResultScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = onDone,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onDone()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp)

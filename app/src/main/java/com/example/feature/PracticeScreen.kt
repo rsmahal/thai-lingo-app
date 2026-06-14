@@ -26,12 +26,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.common.ServiceLocator
 import com.example.domain.Vocabulary
+import com.example.domain.Lesson
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.example.ui.theme.*
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PracticeScreen(
-    vocabulary: List<Vocabulary>
+    vocabulary: List<Vocabulary>,
+    lessons: List<Lesson>
 ) {
     val context = LocalContext.current
     val viewModel: PracticeViewModel = viewModel(factory = PracticeViewModel.Factory(context))
@@ -50,10 +54,18 @@ fun PracticeScreen(
     
     val categories = listOf("All", "Greetings", "Food", "Numbers", "Travel", "Family")
 
-    val filteredVocab = remember(vocabulary, searchQuery, selectedCategory) {
-        vocabulary.filter {
-            (selectedCategory == "All" || it.category == selectedCategory) &&
-            (it.thai.contains(searchQuery, ignoreCase = true) || it.english.contains(searchQuery, ignoreCase = true) || it.romanization.contains(searchQuery, ignoreCase = true))
+    val completedCategories = remember(lessons) {
+        lessons.filter { it.completed && it.id < 100 }.map { it.category }.toSet()
+    }
+
+    val filteredVocab = remember(vocabulary, searchQuery, selectedCategory, completedCategories) {
+        vocabulary.filter { word ->
+            word.category in completedCategories &&
+            (selectedCategory == "All" || word.category == selectedCategory) &&
+            (searchQuery.isEmpty() || 
+             word.thai.contains(searchQuery, ignoreCase = true) || 
+             word.english.contains(searchQuery, ignoreCase = true) || 
+             word.romanization.contains(searchQuery, ignoreCase = true))
         }
     }
 
@@ -162,7 +174,7 @@ fun PracticeScreen(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                "No Thai words found! Try another keyword.",
+                                                if (completedCategories.isEmpty()) "🚫 No words discovered yet!\n\nComplete standard lessons in the Learn track to unlock words in your bilingual practice dictionary." else "No Thai words found! Try another keyword.",
                                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 textAlign = TextAlign.Center
                                             )
@@ -233,16 +245,29 @@ fun PracticeScreen(
                                                                 color = DuoGreenDark
                                                             )
                                                             if (word.exampleThai.isNotEmpty()) {
+                                                                val haptic = LocalHapticFeedback.current
                                                                 Spacer(modifier = Modifier.height(4.dp))
                                                                 Text(
                                                                     text = "Ex: ${word.exampleThai}",
                                                                     fontSize = 13.sp,
-                                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                                                    modifier = Modifier
+                                                                        .clickable {
+                                                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                            ttsHelper.speak(word.exampleThai)
+                                                                        }
+                                                                        .padding(vertical = 2.dp)
                                                                 )
                                                                 Text(
                                                                     text = "(${word.exampleEnglish})",
                                                                     fontSize = 12.sp,
-                                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                                    modifier = Modifier
+                                                                        .clickable {
+                                                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                            ttsHelper.speak(word.exampleThai)
+                                                                        }
+                                                                        .padding(vertical = 2.dp)
                                                                 )
                                                             }
                                                         }

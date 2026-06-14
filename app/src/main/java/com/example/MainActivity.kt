@@ -162,7 +162,6 @@ class MainActivity : ComponentActivity() {
                                         HomeScreen(
                                             progress = progress,
                                             lessons = lessons,
-                                            achievements = achievements,
                                             onStartLesson = { lessonId ->
                                                 activeLessonId = lessonId
                                             }
@@ -175,13 +174,15 @@ class MainActivity : ComponentActivity() {
 
                                     AppTab.PRACTICE -> {
                                         PracticeScreen(
-                                            vocabulary = vocabulary
+                                            vocabulary = vocabulary,
+                                            lessons = lessons
                                         )
                                     }
 
                                     AppTab.PROFILE -> {
                                         ProfileScreen(
                                             progress = progress,
+                                            achievements = achievements,
                                             onToggleSound = { mainViewModel.toggleSound(it) },
                                             onToggleDarkMode = { mainViewModel.toggleDarkMode(it) },
                                             onResetProgress = { mainViewModel.resetProgress() }

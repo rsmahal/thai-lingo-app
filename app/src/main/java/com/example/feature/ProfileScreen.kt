@@ -3,6 +3,7 @@ package com.example.feature
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -20,11 +21,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.domain.UserProgress
+import com.example.domain.Achievement
 import com.example.ui.theme.*
 
 @Composable
 fun ProfileScreen(
     progress: UserProgress,
+    achievements: List<Achievement>,
     onToggleSound: (Boolean) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onResetProgress: () -> Unit
@@ -144,6 +147,24 @@ fun ProfileScreen(
                     modifier = Modifier.weight(1f).testTag("stat_hearts")
                 )
             }
+        }
+
+        // ACHIEVEMENTS TIER
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "🏆 Achievement Badges",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Start
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+
+        items(achievements) { achievement ->
+            AchievementRowCard(achievement = achievement)
         }
 
         // SETTINGS CONTROL CARD BOARD
@@ -301,6 +322,107 @@ fun StatCard(
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
+        }
+    }
+}
+
+@Composable
+fun AchievementRowCard(achievement: Achievement) {
+    val progressFraction = achievement.progress.toFloat() / achievement.target.toFloat()
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("achievement_card_${achievement.id}"),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (achievement.isUnlocked) LevelGold.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+            width = 1.dp,
+            brush = androidx.compose.ui.graphics.SolidColor(
+                if (achievement.isUnlocked) LevelGold.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+            )
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Icon Badge
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(
+                        if (achievement.isUnlocked) LevelGold else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = when (achievement.iconName) {
+                        "streak" -> Icons.Default.LocalFireDepartment
+                        "xp" -> Icons.Default.WorkspacePremium
+                        else -> Icons.Default.School
+                    },
+                    contentDescription = null,
+                    tint = if (achievement.isUnlocked) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            // Description and slider
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = achievement.title,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (achievement.isUnlocked) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Unlocked",
+                            tint = DuoGreen,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                
+                Text(
+                    text = achievement.description,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LinearProgressIndicator(
+                        progress = { progressFraction.coerceIn(0f, 1f) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp)),
+                        color = if (achievement.isUnlocked) LevelGold else DuoGreen,
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                    )
+                    Text(
+                        text = "${achievement.progress}/${achievement.target}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+            }
         }
     }
 }

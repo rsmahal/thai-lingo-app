@@ -33,7 +33,6 @@ import com.example.ui.theme.*
 fun HomeScreen(
     progress: UserProgress,
     lessons: List<Lesson>,
-    achievements: List<Achievement>,
     onStartLesson: (Int) -> Unit
 ) {
     var selectedLessonForSheet by remember { mutableStateOf<Lesson?>(null) }
@@ -61,6 +60,11 @@ fun HomeScreen(
                 val groupedByCategory = lessons.groupBy { it.category }
                 
                 groupedByCategory.forEach { (category, lessonsInCat) ->
+                    val standardLessons = lessonsInCat.filter { it.id < 100 }
+                    val testLesson = lessonsInCat.find { it.id >= 100 }
+                    val totalCount = standardLessons.size
+                    val completedCount = standardLessons.count { it.completed }
+
                     // CATEGORY BANNER CRADLE (Sticky header blocks lessons below during scroll)
                     stickyHeader {
                         Box(
@@ -68,13 +72,13 @@ fun HomeScreen(
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.background)
                         ) {
-                            CategoryBanner(category = category)
+                            CategoryBanner(
+                                category = category,
+                                completedCount = completedCount,
+                                totalCount = totalCount
+                            )
                         }
                     }
-
-                    // Separation of standard and test lessons
-                    val standardLessons = lessonsInCat.filter { it.id < 100 }
-                    val testLesson = lessonsInCat.find { it.id >= 100 }
 
                     // LESSON NODES CASCADE
                     items(standardLessons) { lesson ->
@@ -103,25 +107,6 @@ fun HomeScreen(
                     item {
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                }
-
-                // ACHIEVEMENTS TIER
-                item {
-                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), thickness = 2.dp)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "🏆 Achievement Badges",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Start
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                items(achievements) { achievement ->
-                    AchievementRowCard(achievement = achievement)
                 }
 
                 item {
@@ -229,7 +214,7 @@ fun HeaderStatItem(
 }
 
 @Composable
-fun CategoryBanner(category: String) {
+fun CategoryBanner(category: String, completedCount: Int, totalCount: Int) {
     val (color, label) = when (category) {
         "Greetings" -> Pair(DuoGreen, "Greetings & Manners")
         "Food" -> Pair(StreakOrange, "Thai Food & Cooking")
@@ -275,17 +260,41 @@ fun CategoryBanner(category: String) {
                     modifier = Modifier.size(20.dp)
                 )
             }
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = label.uppercase(),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Black,
                     color = color
                 )
-                Text(
-                    text = "Unlock topics and test your skills offline!",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "$completedCount of $totalCount Lessons",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = "${if (totalCount > 0) (completedCount * 100 / totalCount) else 0}%",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Black,
+                        color = color
+                    )
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                LinearProgressIndicator(
+                    progress = { if (totalCount > 0) completedCount.toFloat() / totalCount else 0F },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = color,
+                    trackColor = color.copy(alpha = 0.15f)
                 )
             }
         }
@@ -502,107 +511,6 @@ fun LessonStartDetailsSheetContent(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Maybe Later", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-        }
-    }
-}
-
-@Composable
-fun AchievementRowCard(achievement: Achievement) {
-    val progressFraction = achievement.progress.toFloat() / achievement.target.toFloat()
-    
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("achievement_card_${achievement.id}"),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (achievement.isUnlocked) LevelGold.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-        ),
-        border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-            width = 1.dp,
-            brush = androidx.compose.ui.graphics.SolidColor(
-                if (achievement.isUnlocked) LevelGold.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-            )
-        )
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Icon Badge
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .background(
-                        if (achievement.isUnlocked) LevelGold else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = when (achievement.iconName) {
-                        "streak" -> Icons.Default.LocalFireDepartment
-                        "xp" -> Icons.Default.WorkspacePremium
-                        else -> Icons.Default.School
-                    },
-                    contentDescription = null,
-                    tint = if (achievement.isUnlocked) Color.White else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
-            // Description and slider
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = achievement.title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    if (achievement.isUnlocked) {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Unlocked",
-                            tint = DuoGreen,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-                
-                Text(
-                    text = achievement.description,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    LinearProgressIndicator(
-                        progress = { progressFraction.coerceIn(0f, 1f) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        color = if (achievement.isUnlocked) LevelGold else DuoGreen,
-                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                    )
-                    Text(
-                        text = "${achievement.progress}/${achievement.target}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-                }
-            }
         }
     }
 }
