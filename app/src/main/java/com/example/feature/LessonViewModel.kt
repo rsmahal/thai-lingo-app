@@ -80,16 +80,16 @@ class LessonViewModel(
                     emptyList()
                 } else {
                     when (lessonId) {
-                        1 -> allVocab.filter { it.id in 1..5 }
-                        2 -> allVocab.filter { it.id in 6..10 }
-                        3 -> allVocab.filter { it.id in 11..16 }
-                        4 -> allVocab.filter { it.id in 17..22 }
-                        5 -> allVocab.filter { it.id in 23..28 }
-                        6 -> allVocab.filter { it.id in 29..34 }
-                        7 -> allVocab.filter { it.id in 35..39 }
-                        8 -> allVocab.filter { it.id in 40..44 }
-                        9 -> allVocab.filter { it.id in 45..48 }
-                        10 -> allVocab.filter { it.id in 49..52 }
+                        1 -> allVocab.filter { it.id in 1..10 }
+                        2 -> allVocab.filter { it.id in 11..20 }
+                        3 -> allVocab.filter { it.id in 21..30 }
+                        4 -> allVocab.filter { it.id in 31..40 }
+                        5 -> allVocab.filter { it.id in 41..50 }
+                        6 -> allVocab.filter { it.id in 51..60 }
+                        7 -> allVocab.filter { it.id in 61..70 }
+                        8 -> allVocab.filter { it.id in 71..80 }
+                        9 -> allVocab.filter { it.id in 81..90 }
+                        10 -> allVocab.filter { it.id in 91..100 }
                         else -> emptyList()
                     }
                 }
@@ -106,7 +106,37 @@ class LessonViewModel(
                     val topicVocab = allVocab.filter { it.category.equals(topicCategory, ignoreCase = true) }
                     generateTestExercises(topicVocab, topicCategory, allVocab)
                 } else {
-                    repository.getExercisesForLesson(lessonId)
+                    val dbExercises = repository.getExercisesForLesson(lessonId)
+                    val fixedMatching = dbExercises.firstOrNull { it.type == ExerciseType.MATCHING }
+                    val fixedSentences = dbExercises.filter { it.type == ExerciseType.SENTENCE_BUILD }
+                    
+                    val vocabExercises = generateVocabExercises(lessonVocab, allVocab)
+                    
+                    val combined = mutableListOf<Exercise>()
+                    combined.addAll(vocabExercises)
+                    if (fixedMatching != null) {
+                        combined.add(fixedMatching)
+                    } else {
+                        // Fallback matching
+                        val pairingWords = lessonVocab.shuffled().take(minOf(4, lessonVocab.size))
+                        if (pairingWords.isNotEmpty()) {
+                            val pairingCorrectAnswer = pairingWords.joinToString("|") { "${it.thai}=${it.english}" }
+                            val pairingOptions = pairingWords.flatMap { listOf(it.thai, it.english) }.shuffled()
+                            combined.add(Exercise(
+                                id = lessonId * 100 + 4,
+                                lessonId = lessonId,
+                                type = ExerciseType.MATCHING,
+                                prompt = "Tap the matching English and Thai pairs:",
+                                question = "Match vocabulary",
+                                correctAnswer = pairingCorrectAnswer,
+                                romanization = "",
+                                options = pairingOptions,
+                                audioText = ""
+                            ))
+                        }
+                    }
+                    combined.addAll(fixedSentences)
+                    combined.shuffled()
                 }
                 
                 if (lesson == null || exercises.isEmpty()) {
@@ -246,6 +276,89 @@ class LessonViewModel(
         }
         
         return exercisesList.shuffled()
+    }
+
+    private fun generateVocabExercises(
+        lessonVocab: List<Vocabulary>,
+        allVocab: List<Vocabulary>
+    ): List<Exercise> {
+        val list = mutableListOf<Exercise>()
+        var exerciseIdCounter = 10000
+        var listeningCount = 0
+
+        lessonVocab.forEach { v ->
+            val possibleTypes = mutableListOf("EN_TO_TH_MC", "TH_TO_EN_MC")
+            if (listeningCount < 8) {
+                possibleTypes.add("LISTENING")
+            }
+            val selectedTypes = possibleTypes.shuffled().take(2)
+            if (selectedTypes.contains("LISTENING")) {
+                listeningCount++
+            }
+
+            selectedTypes.forEach { type ->
+                when (type) {
+                    "EN_TO_TH_MC" -> {
+                        val otherThais = allVocab.filter { it.id != v.id }
+                            .map { it.thai }
+                            .distinct()
+                            .shuffled()
+                            .take(3)
+                        val options = (otherThais + v.thai).shuffled()
+                        list.add(Exercise(
+                            id = exerciseIdCounter++,
+                            lessonId = lessonId,
+                            type = ExerciseType.MULTIPLE_CHOICE,
+                            prompt = "Select the correct Thai translation for this English word:",
+                            question = v.english,
+                            correctAnswer = v.thai,
+                            romanization = "",
+                            options = options,
+                            audioText = v.thai
+                        ))
+                    }
+                    "TH_TO_EN_MC" -> {
+                        val otherEnglishes = allVocab.filter { it.id != v.id }
+                            .map { it.english }
+                            .distinct()
+                            .shuffled()
+                            .take(3)
+                        val options = (otherEnglishes + v.english).shuffled()
+                        list.add(Exercise(
+                            id = exerciseIdCounter++,
+                            lessonId = lessonId,
+                            type = ExerciseType.MULTIPLE_CHOICE,
+                            prompt = "What is the English meaning of this Thai word?",
+                            question = v.thai,
+                            correctAnswer = v.english,
+                            romanization = v.romanization,
+                            options = options,
+                            audioText = v.thai
+                        ))
+                    }
+                    "LISTENING" -> {
+                        val otherEnglishes = allVocab.filter { it.id != v.id }
+                            .map { it.english }
+                            .distinct()
+                            .shuffled()
+                            .take(3)
+                        val options = (otherEnglishes + v.english).shuffled()
+                        list.add(Exercise(
+                            id = exerciseIdCounter++,
+                            lessonId = lessonId,
+                            type = ExerciseType.LISTENING,
+                            prompt = "Listen and select the correct English translation:",
+                            question = v.thai,
+                            correctAnswer = v.english,
+                            romanization = "",
+                            options = options,
+                            audioText = v.thai
+                        ))
+                    }
+                }
+            }
+        }
+        return list
     }
 
     fun speakWordText(text: String) {
@@ -442,6 +555,11 @@ class LessonViewModel(
                 val expectedCount = currentExercise.correctAnswer.split("|").size
                 isCorrect = state.matchedPairs.size == expectedCount
             }
+            ExerciseType.SENTENCE_BUILD -> {
+                val formattedInput = state.typedAnswer.trim().lowercase()
+                val formattedAns = currentExercise.correctAnswer.trim().lowercase()
+                isCorrect = formattedInput == formattedAns
+            }
         }
 
         var nextHearts = state.hearts
@@ -456,7 +574,7 @@ class LessonViewModel(
                 val progress = repository.getUserProgressOnce()
                 repository.saveUserProgress(progress.copy(hearts = nextHearts))
             }
-            if (currentExercise.type != ExerciseType.MATCHING) {
+            if (currentExercise.type != ExerciseType.MATCHING && currentExercise.type != ExerciseType.SENTENCE_BUILD) {
                 val isEnglishToThai = currentExercise.question.any { it in 'A'..'Z' || it in 'a'..'z' }
                 val thaiWordForSrs = if (isEnglishToThai) currentExercise.correctAnswer else currentExercise.question
                 repository.updateReviewWordSrs(thaiWordForSrs, isCorrect = isCorrect)

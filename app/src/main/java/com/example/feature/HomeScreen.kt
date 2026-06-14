@@ -407,19 +407,11 @@ fun LessonStartDetailsSheetContent(
     val rightLabel = if (isTest) "REQUIRED" else "WORDS"
 
     val newWordsCount = when (lesson.id) {
-        1 -> 5
-        2 -> 5
-        3 -> 6
-        4 -> 6
-        5 -> 6
-        6 -> 6
-        7 -> 5
-        8 -> 5
-        9 -> 4
-        10 -> 4
+        in 1..10 -> 10
         else -> 0
     }
     val rightValue = if (isTest) "100% ACCURACY" else "$newWordsCount Words"
+    val questionCount = if (isTest) "20 Questions" else "25 Questions"
 
     val btnText = if (isTest) {
         if (lesson.completed) "REPLAY TOPIC TEST" else "TAKE TOPIC TEST"
@@ -481,11 +473,15 @@ fun LessonStartDetailsSheetContent(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("REWARD", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("+${lesson.xpReward} XP", fontSize = 18.sp, fontWeight = FontWeight.Black, color = GemCyan)
+                    Text("+${lesson.xpReward} XP", fontSize = 16.sp, fontWeight = FontWeight.Black, color = GemCyan)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(rightLabel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(rightValue, fontSize = 18.sp, fontWeight = FontWeight.Black, color = LevelGold)
+                    Text(rightValue, fontSize = 16.sp, fontWeight = FontWeight.Black, color = LevelGold)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("QUESTIONS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(questionCount, fontSize = 16.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.secondary)
                 }
             }
         }

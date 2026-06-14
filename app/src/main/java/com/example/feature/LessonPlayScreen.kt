@@ -4,7 +4,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -51,9 +55,11 @@ fun LessonPlayScreen(
     val context = LocalContext.current
     var showExitDialog by remember { mutableStateOf(false) }
 
+    val sessionId = remember(lessonId) { System.currentTimeMillis() }
+
     val viewModel: LessonViewModel = viewModel(
         factory = LessonViewModel.Factory(lessonId, context),
-        key = "LessonPlayVM_$lessonId"
+        key = "LessonPlayVM_${lessonId}_$sessionId"
     )
 
     val uiState by viewModel.uiState.collectAsState()
@@ -313,6 +319,16 @@ fun LessonPlayingLayout(
                         onSelect = onSelectMatching
                     )
                 }
+
+                ExerciseType.SENTENCE_BUILD -> {
+                    SentenceBuildView(
+                        exercise = currentExercise,
+                        textVal = state.typedAnswer,
+                        onTextChange = onTextAnswerChange,
+                        isChecked = state.isChecked,
+                        onVoicePlay = onVoiceClick
+                    )
+                }
             }
         }
 
@@ -476,6 +492,216 @@ fun TranslateView(
             ),
             shape = RoundedCornerShape(16.dp)
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun SentenceBuildView(
+    exercise: Exercise,
+    textVal: String,
+    onTextChange: (String) -> Unit,
+    isChecked: Boolean,
+    onVoicePlay: () -> Unit
+) {
+    val selectedTokens = remember(textVal) {
+        if (textVal.isEmpty()) emptyList() else textVal.split("|")
+    }
+
+    // Smart duplicate-aware tracking of used indices in the options list
+    val usedIndices = remember(selectedTokens, exercise.options) {
+        val indices = mutableSetOf<Int>()
+        for (token in selectedTokens) {
+            val matchIndex = exercise.options.indices.firstOrNull { idx ->
+                exercise.options[idx] == token && !indices.contains(idx)
+            }
+            if (matchIndex != null) {
+                indices.add(matchIndex)
+            }
+        }
+        indices
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Source Question Bubble Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("sentence_build_question_bubble"),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.25f)
+            ),
+            shape = RoundedCornerShape(20.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                val isQuestionThai = exercise.question.any { it in '\u0E00'..'\u0E7F' }
+                if (isQuestionThai) {
+                    IconButton(
+                        onClick = onVoicePlay,
+                        modifier = Modifier
+                            .background(GemCyan, CircleShape)
+                            .size(44.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VolumeUp,
+                            contentDescription = "Listen to pronunciation",
+                            tint = Color.White
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = exercise.question,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (exercise.romanization.isNotEmpty()) {
+                        Text(
+                            text = "(${exercise.romanization})",
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // ASSEMBLED CHIPS CONTAINER
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 130.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f))
+                .border(
+                    width = 1.5.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selectedTokens.isEmpty()) {
+                Text(
+                    text = "Tap words below to assemble the translation",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
+                )
+            } else {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    selectedTokens.forEachIndexed { index, token ->
+                        // Chip representing assembled word
+                        Card(
+                            onClick = {
+                                if (!isChecked) {
+                                    val list = selectedTokens.toMutableList()
+                                    list.removeAt(index)
+                                    onTextChange(list.joinToString("|"))
+                                }
+                            },
+                            enabled = !isChecked,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            modifier = Modifier.testTag("assembled_chip_$index")
+                        ) {
+                            Text(
+                                text = token,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // WORD CHOICES BANK
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            exercise.options.forEachIndexed { index, option ->
+                val isUsed = usedIndices.contains(index)
+                
+                Box(modifier = Modifier.height(44.dp)) {
+                    if (isUsed) {
+                        // Ghost/Used item placeholder
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = option,
+                                color = Color.Transparent, // Invisible text to reserve exact layout size
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
+                        // Clickable choice chip
+                        Card(
+                            onClick = {
+                                if (!isChecked) {
+                                    val list = selectedTokens.toMutableList()
+                                    list.add(option)
+                                    onTextChange(list.joinToString("|"))
+                                }
+                            },
+                            enabled = !isChecked,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)),
+                            modifier = Modifier.testTag("choice_chip_$index")
+                        ) {
+                            Text(
+                                text = option,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -823,7 +1049,7 @@ fun BottomActionStrip(
 
     val hasMadeSelection = when (currentType) {
         ExerciseType.MULTIPLE_CHOICE, ExerciseType.LISTENING -> selectedValue.isNotEmpty()
-        ExerciseType.TRANSLATE, ExerciseType.SPEAKING -> typedValue.isNotBlank()
+        ExerciseType.TRANSLATE, ExerciseType.SPEAKING, ExerciseType.SENTENCE_BUILD -> typedValue.isNotBlank()
         ExerciseType.MATCHING -> matchedPairs.size == correctAnswer.split("|").size
     }
 
@@ -905,8 +1131,13 @@ fun BottomActionStrip(
                                 color = WarningText.copy(alpha = 0.8f)
                             )
                         } else if (!isCorrect) {
+                            val formattedCorrectAnswer = if (currentType == ExerciseType.SENTENCE_BUILD) {
+                                correctAnswer.replace("|", " ")
+                            } else {
+                                correctAnswer
+                            }
                             Text(
-                                text = "Correct answer: $correctAnswer",
+                                text = "Correct answer: $formattedCorrectAnswer",
                                 fontSize = 14.sp,
                                 color = IncorrectText.copy(alpha = 0.8f)
                             )

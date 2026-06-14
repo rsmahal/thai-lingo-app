@@ -28,6 +28,9 @@ interface VocabularyDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertVocabulary(vocab: List<VocabularyEntity>)
+
+    @Query("DELETE FROM vocabulary")
+    suspend fun clearVocabulary()
 }
 
 @Dao
@@ -43,6 +46,9 @@ interface LessonDao {
 
     @Update
     suspend fun updateLesson(lesson: LessonEntity)
+
+    @Query("DELETE FROM lessons")
+    suspend fun clearLessons()
 }
 
 @Dao
@@ -52,6 +58,9 @@ interface ExerciseDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExercises(exercises: List<ExerciseEntity>)
+
+    @Query("DELETE FROM exercises")
+    suspend fun clearExercises()
 }
 
 @Dao

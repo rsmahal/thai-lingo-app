@@ -60,7 +60,8 @@ enum class ExerciseType {
     TRANSLATE,       // Type / construct translation
     LISTENING,       // Listen via TTS, select / type
     SPEAKING,        // Speak into microphone
-    MATCHING         // Pair English with Thai words
+    MATCHING,        // Pair English with Thai words
+    SENTENCE_BUILD   // Select words in the correct sequence to build the translation
 }
 
 data class Achievement(
