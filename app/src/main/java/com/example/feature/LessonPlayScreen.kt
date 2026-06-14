@@ -126,14 +126,26 @@ fun LessonPlayScreen(
 
             is LessonUiState.Playing -> {
                 if (state.isLessonFinished) {
+                    val totalNonPopQuiz = state.exercises.count { !it.isPopQuiz }
+                    val nonPopQuizMistakes = state.incorrectExercises.count { !it.first.isPopQuiz }
+                    val correctNonPopQuiz = totalNonPopQuiz - nonPopQuizMistakes
+                    val ratio = if (totalNonPopQuiz > 0) correctNonPopQuiz.toFloat() / totalNonPopQuiz else 1f
+                    val starsAwarded = when {
+                        ratio >= 1.0f -> 3
+                        ratio >= 0.8f -> 2
+                        ratio >= 0.6f -> 1
+                        else -> 0
+                    }
+                    val passed = starsAwarded >= 1
+
                     if (state.isTopicTest) {
                         TestResultScreen(
                             lesson = state.lesson,
                             xpEarned = state.xpEarned,
-                            testHasMistakes = state.testHasMistakes,
+                            exercises = state.exercises,
                             incorrectExercises = state.incorrectExercises,
                             onDone = {
-                                if (state.xpEarned > 0 && !state.testHasMistakes) {
+                                if (state.xpEarned > 0 && passed) {
                                     onAwardXp(state.xpEarned)
                                 }
                                 onBackToHome()
@@ -146,10 +158,10 @@ fun LessonPlayScreen(
                         SummaryCompletedScreen(
                             lesson = state.lesson,
                             xpEarned = state.xpEarned,
-                            heartsLeft = state.hearts,
+                            exercises = state.exercises,
                             incorrectExercises = state.incorrectExercises,
                             onDone = {
-                                if (state.xpEarned > 0) {
+                                if (state.xpEarned > 0 && passed) {
                                     onAwardXp(state.xpEarned)
                                 }
                                 onBackToHome()
@@ -1222,16 +1234,21 @@ fun BottomActionStrip(
 fun SummaryCompletedScreen(
     lesson: Lesson,
     xpEarned: Int,
-    heartsLeft: Int,
+    exercises: List<Exercise> = emptyList(),
     incorrectExercises: List<Pair<Exercise, String>> = emptyList(),
     onDone: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val totalNonPopQuiz = exercises.count { !it.isPopQuiz }
     val nonPopQuizMistakes = incorrectExercises.count { !it.first.isPopQuiz }
-    val starsAwarded = when (nonPopQuizMistakes) {
-        0 -> 3
-        1, 2 -> 2
-        else -> 1
+    val correctNonPopQuiz = totalNonPopQuiz - nonPopQuizMistakes
+    val ratio = if (totalNonPopQuiz > 0) correctNonPopQuiz.toFloat() / totalNonPopQuiz else 1f
+    
+    val starsAwarded = when {
+        ratio >= 1.0f -> 3
+        ratio >= 0.8f -> 2
+        ratio >= 0.6f -> 1
+        else -> 0
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -1261,7 +1278,8 @@ fun SummaryCompletedScreen(
                         imageVector = when (starsAwarded) {
                             3 -> Icons.Default.EmojiEvents
                             2 -> Icons.Default.WorkspacePremium
-                            else -> Icons.Default.Cloud
+                            1 -> Icons.Default.Cloud
+                            else -> Icons.Default.ErrorOutline
                         },
                         contentDescription = "Rating Trophy",
                         tint = Color.White,
@@ -1276,13 +1294,15 @@ fun SummaryCompletedScreen(
                 text = when (starsAwarded) {
                     3 -> "Perfect Flawless! 🎉"
                     2 -> "Well Done! ⭐⭐"
-                    else -> "Stormy Weather! Keep Trying"
+                    1 -> "Lesson Passed! ⭐"
+                    else -> "Keep Practicing! 🎯"
                 },
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Black,
                 color = when (starsAwarded) {
                     3 -> LevelGold
                     2 -> DuoGreen
+                    1 -> MaterialTheme.colorScheme.primary
                     else -> HeartRed
                 },
                 textAlign = TextAlign.Center
@@ -1294,7 +1314,8 @@ fun SummaryCompletedScreen(
                 text = when (starsAwarded) {
                     3 -> "Sensational! You completed '${lesson.title}' with 3 stars!"
                     2 -> "Great practice! '${lesson.title}' completed with 2 stars."
-                    else -> "Nearly there. Practice makes perfect!"
+                    1 -> "Nice job! '${lesson.title}' completed with 1 star."
+                    else -> "You got ${(ratio * 100).toInt()}% correct on '${lesson.title}'. You need at least 60% (1 Star) to unlock the next lesson!"
                 },
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
@@ -1318,7 +1339,16 @@ fun SummaryCompletedScreen(
                     ) {
                         Text("STATUS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GemCyan)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(if (starsAwarded == 3) "PERFECT" else "COMPLETED", fontSize = 20.sp, fontWeight = FontWeight.Black, color = GemCyan)
+                        Text(
+                            text = when (starsAwarded) {
+                                3 -> "PERFECT"
+                                2, 1 -> "COMPLETED"
+                                else -> "TRY AGAIN"
+                            },
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = GemCyan
+                        )
                     }
                 }
 
@@ -1333,8 +1363,12 @@ fun SummaryCompletedScreen(
                         Text("STARS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = LevelGold)
                         Spacer(modifier = Modifier.height(4.dp))
                         Row {
-                            repeat(starsAwarded) {
-                                Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = LevelGold, modifier = Modifier.size(20.dp))
+                            if (starsAwarded == 0) {
+                                Text("0 Stars", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            } else {
+                                repeat(starsAwarded) {
+                                    Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = LevelGold, modifier = Modifier.size(20.dp))
+                                }
                             }
                         }
                     }
@@ -1415,7 +1449,7 @@ fun SummaryCompletedScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = when (starsAwarded) {
                         3 -> LevelGold
-                        2 -> DuoGreen
+                        2, 1 -> DuoGreen
                         else -> HeartRed
                     }
                 ),
@@ -2047,12 +2081,25 @@ fun LessonIntroduceLayout(
 fun TestResultScreen(
     lesson: Lesson,
     xpEarned: Int,
-    testHasMistakes: Boolean,
+    exercises: List<Exercise> = emptyList(),
     incorrectExercises: List<Pair<Exercise, String>> = emptyList(),
     onDone: () -> Unit,
     onTryAgain: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val totalNonPopQuiz = exercises.count { !it.isPopQuiz }
+    val nonPopQuizMistakes = incorrectExercises.count { !it.first.isPopQuiz }
+    val correctNonPopQuiz = totalNonPopQuiz - nonPopQuizMistakes
+    val ratio = if (totalNonPopQuiz > 0) correctNonPopQuiz.toFloat() / totalNonPopQuiz else 1f
+    
+    val starsAwarded = when {
+        ratio >= 1.0f -> 3
+        ratio >= 0.8f -> 2
+        ratio >= 0.6f -> 1
+        else -> 0
+    }
+    val passed = starsAwarded >= 1
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -2061,7 +2108,7 @@ fun TestResultScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        if (!testHasMistakes) {
+        if (passed) {
             // PASS CASE
             Box(modifier = Modifier.size(140.dp)) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
@@ -2091,7 +2138,7 @@ fun TestResultScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Congratulations! You made no mistakes and got a perfect score. The next topic is now unlocked!",
+                text = "Congratulations! You got a score of ${(ratio * 100).toInt()}% ($starsAwarded ${if (starsAwarded == 1) "Star" else "Stars"}). The next topic is now unlocked!",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
@@ -2159,7 +2206,7 @@ fun TestResultScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "You made at least one mistake. To unlock the next topic, you must pass the test with a perfect score (no mistakes).",
+                text = "Your score was ${(ratio * 100).toInt()}% (0 Stars). To unlock the next topic, you must achieve at least 1 star (60% correct).",
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center

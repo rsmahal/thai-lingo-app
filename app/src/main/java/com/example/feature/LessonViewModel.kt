@@ -628,54 +628,61 @@ class LessonViewModel(
             viewModelScope.launch {
                 try {
                     val progress = repository.getUserProgressOnce()
+                    val totalNonPopQuiz = state.exercises.count { !it.isPopQuiz }
                     val nonPopQuizMistakes = state.incorrectExercises.count { !it.first.isPopQuiz }
-                    val starsAwarded = when (nonPopQuizMistakes) {
-                        0 -> 3
-                        1, 2 -> 2
-                        else -> 1
+                    val correctNonPopQuiz = totalNonPopQuiz - nonPopQuizMistakes
+                    val ratio = if (totalNonPopQuiz > 0) correctNonPopQuiz.toFloat() / totalNonPopQuiz else 1f
+                    
+                    val starsAwarded = when {
+                        ratio >= 1.0f -> 3
+                        ratio >= 0.8f -> 2
+                        ratio >= 0.6f -> 1
+                        else -> 0
                     }
+                    val passed = starsAwarded >= 1
                     
                     if (state.isTopicTest) {
-                        val passed = !state.testHasMistakes
-                        if (passed) {
-                            // Mark test completed
-                            val updatedLesson = state.lesson.copy(completed = true, stars = 3)
-                            repository.updateLesson(updatedLesson)
-                            
-                            // Unlock first lesson of next topic
-                            val nextUnlockLId = if (lessonId in 101..112) {
-                                (lessonId - 100) * 4 + 1
-                            } else {
-                                -1
-                            }
-                            var unlockedNextLesson: Lesson? = null
-                            if (nextUnlockLId != -1) {
-                                val nextLesson = repository.getLessonById(nextUnlockLId)
-                                if (nextLesson != null) {
-                                    val updatedNext = nextLesson.copy(unlocked = true)
-                                    repository.updateLesson(updatedNext)
-                                    unlockedNextLesson = updatedNext
-                                }
-                            }
-                            
-                            // Update progress (xp unchanged/not compiled)
-                            val finalProgress = progress.copy(
-                                hearts = 5, // fill hearts on pass!
-                                currentLessonId = if (unlockedNextLesson != null) unlockedNextLesson.id else lessonId
-                            )
-                            repository.saveUserProgress(finalProgress)
+                        val updatedLesson = state.lesson.copy(
+                            completed = state.lesson.completed || passed,
+                            stars = maxOf(state.lesson.stars, starsAwarded)
+                        )
+                        repository.updateLesson(updatedLesson)
+                        
+                        // Unlock first lesson of next topic
+                        val nextUnlockLId = if (lessonId in 101..112) {
+                            (lessonId - 100) * 4 + 1
                         } else {
-                            // Failed the test. No database mark as complete.
+                            -1
+                        }
+                        var unlockedNextLesson: Lesson? = null
+                        if (passed && nextUnlockLId != -1) {
+                            val nextLesson = repository.getLessonById(nextUnlockLId)
+                            if (nextLesson != null) {
+                                val updatedNext = nextLesson.copy(unlocked = true)
+                                repository.updateLesson(updatedNext)
+                                unlockedNextLesson = updatedNext
+                            }
                         }
                         
+                        // Update progress
+                        val finalProgress = progress.copy(
+                            hearts = 5, // fill hearts on pass!
+                            currentLessonId = if (unlockedNextLesson != null) unlockedNextLesson.id else lessonId
+                        )
+                        repository.saveUserProgress(finalProgress)
+                        
                         _uiState.value = state.copy(
+                            lesson = updatedLesson,
                             currentStep = nextStep,
                             isLessonFinished = true,
-                            xpEarned = 0
+                            xpEarned = if (passed) state.lesson.xpReward else 0
                         )
                     } else {
                         // Mark lesson completed
-                        val updatedLesson = state.lesson.copy(completed = true, stars = maxOf(state.lesson.stars, starsAwarded))
+                        val updatedLesson = state.lesson.copy(
+                            completed = state.lesson.completed || passed,
+                            stars = maxOf(state.lesson.stars, starsAwarded)
+                        )
                         repository.updateLesson(updatedLesson)
                         
                         // Unlock next custom lesson or Topic Test
@@ -686,15 +693,20 @@ class LessonViewModel(
                         } else {
                             lessonId + 1
                         }
-                        val nextLesson = repository.getLessonById(nextLId)
-                        if (nextLesson != null) {
-                            repository.updateLesson(nextLesson.copy(unlocked = true))
+                        
+                        var unlockedNextLesson: Lesson? = null
+                        if (passed) {
+                            val nextLesson = repository.getLessonById(nextLId)
+                            if (nextLesson != null) {
+                                repository.updateLesson(nextLesson.copy(unlocked = true))
+                                unlockedNextLesson = nextLesson
+                            }
                         }
 
                         // Update User Profile Stats
                         val finalProgress = progress.copy(
                             hearts = 5,
-                            currentLessonId = if (nextLesson != null) nextLId else lessonId
+                            currentLessonId = if (unlockedNextLesson != null) nextLId else lessonId
                         )
                         repository.saveUserProgress(finalProgress)
 
@@ -702,7 +714,7 @@ class LessonViewModel(
                             lesson = updatedLesson,
                             currentStep = nextStep,
                             isLessonFinished = true,
-                            xpEarned = 0
+                            xpEarned = if (passed) state.lesson.xpReward else 0
                         )
                     }
                 } catch (e: Exception) {
