@@ -208,13 +208,7 @@ fun HomeHeader(
                     contentDescription = "Active streak"
                 )
 
-                // Hearts Left
-                HeaderStatItem(
-                    icon = Icons.Default.Favorite,
-                    text = if (progress.hearts == 0) "Empty" else "${progress.hearts}",
-                    color = HeartRed,
-                    contentDescription = "Hearts remaining"
-                )
+
             }
 
             if (showLevelDialog) {
@@ -568,7 +562,7 @@ fun LessonStartDetailsSheetContent(
             "Ready for the ultimate challenge? This test compiles 20 randomized exercises from this topic. You must pass with 100% accuracy (no mistakes) to unlock the next topic."
         }
     } else {
-        if (lesson.completed) "Replay this lesson to refresh your vocabulary! (Keep your highest score & continue earning XP)" else lesson.description
+        if (lesson.completed) "Replay this lesson to refresh your vocabulary! (Keep your highest score & continue earning Stars)" else lesson.description
     }
 
     val rightLabel = if (isTest) "REQUIRED" else "WORDS"
@@ -636,8 +630,21 @@ fun LessonStartDetailsSheetContent(
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("REWARD", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("+${lesson.xpReward} XP", fontSize = 16.sp, fontWeight = FontWeight.Black, color = GemCyan)
+                    Text("MAX REWARD", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(3) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = null,
+                                tint = LevelGold,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(rightLabel, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)

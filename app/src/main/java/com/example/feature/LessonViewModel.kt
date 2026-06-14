@@ -123,7 +123,25 @@ class LessonViewModel(
                         }
                     }
                     combined.addAll(fixedSentences)
-                    combined.shuffled()
+                    val shuffledList = combined.shuffled().toMutableList()
+                    if (lessonId > 1 && lessonId < 100) {
+                        val prevLessonIds = (1 until lessonId)
+                        val prevVocabList = allVocab.filter { vocabItem ->
+                            prevLessonIds.any { id -> vocabItem.id in getLessonVocabIdsRange(id) }
+                        }
+                        if (prevVocabList.isNotEmpty()) {
+                            val selectedVocabs = prevVocabList.shuffled().take(2)
+                            selectedVocabs.forEach { vocab ->
+                                val generated = generateVocabExercises(listOf(vocab), allVocab)
+                                if (generated.isNotEmpty()) {
+                                    val quizEx = generated.random().copy(isPopQuiz = true)
+                                    val insertIndex = if (shuffledList.size > 1) (1..shuffledList.size).random() else shuffledList.size
+                                    shuffledList.add(insertIndex.coerceAtMost(shuffledList.size), quizEx)
+                                }
+                            }
+                        }
+                    }
+                    shuffledList
                 }
                 
                 if (lesson == null || exercises.isEmpty()) {
@@ -469,21 +487,12 @@ class LessonViewModel(
                     repository.updateReviewWordSrs(nextThai, isCorrect = false)
                 }
 
-                var currentHearts = currentState.hearts
+                val currentHearts = currentState.hearts
                 var nextTestHasMistakes = currentState.testHasMistakes
                 val mismatchHappened = !isCorrectMatch
 
                 if (mismatchHappened) {
-                    currentHearts = (currentHearts - 1).coerceAtLeast(0)
                     nextTestHasMistakes = true
-                    viewModelScope.launch {
-                        try {
-                            val progress = repository.getUserProgressOnce()
-                            repository.saveUserProgress(progress.copy(hearts = currentHearts))
-                        } catch (e: Exception) {
-                            // Safe save skip
-                        }
-                    }
                 }
 
                 val nextMatchingHadMistake = currentState.matchingHadMistake || mismatchHappened
@@ -564,18 +573,10 @@ class LessonViewModel(
             }
         }
 
-        var nextHearts = state.hearts
-        if (!isCorrect) {
-            nextHearts = (nextHearts - 1).coerceAtLeast(0)
-        }
-
-        val nextTestHasMistakes = state.testHasMistakes || !isCorrect
+        val nextHearts = state.hearts
+        val nextTestHasMistakes = state.testHasMistakes || (!isCorrect && !currentExercise.isPopQuiz)
 
         viewModelScope.launch {
-            if (!isCorrect) {
-                val progress = repository.getUserProgressOnce()
-                repository.saveUserProgress(progress.copy(hearts = nextHearts))
-            }
             if (currentExercise.type != ExerciseType.MATCHING && currentExercise.type != ExerciseType.SENTENCE_BUILD) {
                 val isEnglishToThai = currentExercise.question.any { it in 'A'..'Z' || it in 'a'..'z' }
                 val thaiWordForSrs = if (isEnglishToThai) currentExercise.correctAnswer else currentExercise.question
@@ -621,24 +622,17 @@ class LessonViewModel(
         val state = _uiState.value as? LessonUiState.Playing ?: return
         if (!state.isChecked) return
 
-        if (state.hearts <= 0) {
-            // Out of hearts visual fallback
-            _uiState.value = state.copy(isLessonFinished = true, xpEarned = 0)
-            return
-        }
-
         val nextStep = state.currentStep + 1
         if (nextStep >= state.exercises.size) {
             // Finish Lesson! Mark lesson complete and calculate star rating
             viewModelScope.launch {
                 try {
                     val progress = repository.getUserProgressOnce()
-                    val starsAwarded = if (!state.testHasMistakes) {
-                        3
-                    } else if (state.hearts >= 3) {
-                        2
-                    } else {
-                        1
+                    val nonPopQuizMistakes = state.incorrectExercises.count { !it.first.isPopQuiz }
+                    val starsAwarded = when (nonPopQuizMistakes) {
+                        0 -> 3
+                        1, 2 -> 2
+                        else -> 1
                     }
                     
                     if (state.isTopicTest) {
@@ -699,12 +693,13 @@ class LessonViewModel(
 
                         // Update User Profile Stats
                         val finalProgress = progress.copy(
-                            hearts = state.hearts,
+                            hearts = 5,
                             currentLessonId = if (nextLesson != null) nextLId else lessonId
                         )
                         repository.saveUserProgress(finalProgress)
 
                         _uiState.value = state.copy(
+                            lesson = updatedLesson,
                             currentStep = nextStep,
                             isLessonFinished = true,
                             xpEarned = 0

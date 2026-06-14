@@ -104,14 +104,14 @@ fun PracticeScreen(
                         color = if (activeChapter == 0) DuoGreenDark else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                     Text(
-                        text = "❤️ Heart Shop",
+                        text = "⚡ Flashcards",
                         modifier = tabModifier
                             .background(if (activeChapter == 1) MaterialTheme.colorScheme.surface else Color.Transparent)
                             .clickable { activeChapter = 1 }
                             .testTag("shop_tab"),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
-                        color = if (activeChapter == 1) HeartRed else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        color = if (activeChapter == 1) DuoGreenDark else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 }
 
@@ -287,7 +287,7 @@ fun PracticeScreen(
                     }
 
                     1 -> {
-                        // HEART REFILL SHOP WINDOW
+                        // FLASHCARD PRACTICE WINDOW
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -295,105 +295,54 @@ fun PracticeScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Top
                         ) {
-                            Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = HeartRed, modifier = Modifier.size(68.dp))
+                            Icon(imageVector = Icons.Default.School, contentDescription = null, tint = DuoGreen, modifier = Modifier.size(68.dp))
                             
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            Text("Offline Heart Refills", fontSize = 24.sp, fontWeight = FontWeight.Black)
-                            Text("Replenish hearts so you can keep studying!", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            Text("Flashcard Practice", fontSize = 24.sp, fontWeight = FontWeight.Black)
+                            Text("Improve your vocabulary recall of words you already unlocked.", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
 
                             Spacer(modifier = Modifier.height(28.dp))
 
-                            // SHOP ERROR ALERT TOSTRIP
-                            if (shopError.isNotEmpty()) {
+                            if (studyVocabs.isNotEmpty()) {
+                                // START REVIEW WORKOUT CARD
                                 Card(
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                    colors = CardDefaults.cardColors(containerColor = IncorrectFill),
-                                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(IncorrectStroke))
-                                ) {
-                                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = IncorrectStroke, modifier = Modifier.size(20.dp))
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(shopError, color = IncorrectText, fontSize = 13.sp, modifier = Modifier.weight(1f))
-                                        IconButton(onClick = { viewModel.clearShopError() }) {
-                                            Icon(imageVector = Icons.Default.Close, contentDescription = "Clear warning", tint = IncorrectStroke, modifier = Modifier.size(16.dp))
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (heartsRestored) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                                    colors = CardDefaults.cardColors(containerColor = CorrectFill),
-                                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(width = 1.dp, brush = androidx.compose.ui.graphics.SolidColor(CorrectStroke))
-                                ) {
-                                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = CorrectStroke, modifier = Modifier.size(20.dp))
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text("Hearts restored to maximum successfully!", color = CorrectText, fontSize = 13.sp, modifier = Modifier.weight(1f))
-                                        IconButton(onClick = { viewModel.clearHeartsRestored() }) {
-                                            Icon(imageVector = Icons.Default.Close, contentDescription = "Clear info", tint = CorrectStroke, modifier = Modifier.size(16.dp))
-                                        }
-                                    }
-                                }
-                            }
-
-                            // OPTION 1: FREE INSTANT REPLENISH
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { viewModel.spendXpToRefillHearts() }
-                                    .testTag("refill_with_xp_btn"),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                shape = RoundedCornerShape(16.dp),
-                                border = CardDefaults.outlinedCardBorder(enabled = true).copy(width = 1.5.dp, brush = androidx.compose.ui.graphics.SolidColor(LevelGold))
-                            ) {
-                                Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                        Box(modifier = Modifier.size(44.dp).background(LevelGold, CircleShape), contentAlignment = Alignment.Center) {
-                                            Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = Color.White)
-                                        }
-                                        Column {
-                                            Text("Instant Replenish", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("Recover all 5 Hearts instantly for free", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                                        }
-                                    }
-                                    Text("FREE", fontWeight = FontWeight.Black, fontSize = 18.sp, color = LevelGold)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // OPTION 2: STUDY FREE
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        if (studyVocabs.isNotEmpty()) {
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
                                             activeChapter = 2
                                             currentFlashcardStep = 0
                                         }
-                                    }
-                                    .testTag("free_study_practice_btn"),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                shape = RoundedCornerShape(16.dp),
-                                border = CardDefaults.outlinedCardBorder(enabled = true).copy(width = 1.5.dp, brush = androidx.compose.ui.graphics.SolidColor(DuoGreen))
-                            ) {
-                                Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                        Box(modifier = Modifier.size(44.dp).background(DuoGreen, CircleShape), contentAlignment = Alignment.Center) {
-                                            Icon(imageVector = Icons.Default.School, contentDescription = null, tint = Color.White)
+                                        .testTag("free_study_practice_btn"),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(width = 1.5.dp, brush = androidx.compose.ui.graphics.SolidColor(DuoGreen))
+                                ) {
+                                    Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                            Box(modifier = Modifier.size(44.dp).background(DuoGreen, CircleShape), contentAlignment = Alignment.Center) {
+                                                Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White)
+                                            }
+                                            Column {
+                                                Text("Start Review Workout", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                                Text("Review 5 random flashcards", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                            }
                                         }
-                                        Column {
-                                            Text("Free Review Workout", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                            Text("Review 5 random flashcards", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                                        }
+                                        Text("START", fontWeight = FontWeight.Black, fontSize = 16.sp, color = DuoGreen)
                                     }
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = HeartRed, modifier = Modifier.size(16.dp))
-                                        Text("+1 Heart", fontWeight = FontWeight.Black, fontSize = 15.sp, color = HeartRed)
-                                    }
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "Unlock some words in lessons first to start practicing with flashcards!",
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                        textAlign = TextAlign.Center
+                                    )
                                 }
                             }
                         }
@@ -510,7 +459,7 @@ fun PracticeScreen(
                                     enabled = isFlipped
                                 ) {
                                     Text(
-                                        text = if (currentFlashcardStep == studyVocabs.size - 1) "COMPLETED & CLAIM HEART" else "NEXT FLASHCARD",
+                                        text = if (currentFlashcardStep == studyVocabs.size - 1) "FINISH WORKOUT" else "NEXT FLASHCARD",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 15.sp
                                     )

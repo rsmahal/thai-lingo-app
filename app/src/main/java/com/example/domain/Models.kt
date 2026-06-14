@@ -52,7 +52,8 @@ data class Exercise(
     val correctAnswer: String,
     val romanization: String = "", // Helpful tooltips
     val options: List<String> = emptyList(), // For Multiple Choice and Matching
-    val audioText: String = "" // Specifically for TTS
+    val audioText: String = "", // Specifically for TTS
+    val isPopQuiz: Boolean = false
 )
 
 enum class ExerciseType {

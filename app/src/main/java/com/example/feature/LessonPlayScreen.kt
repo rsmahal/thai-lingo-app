@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -75,7 +76,7 @@ fun LessonPlayScreen(
         AlertDialog(
             onDismissRequest = { showExitDialog = false },
             title = { Text("Quit Lesson?", fontWeight = FontWeight.Bold) },
-            text = { Text("You will lose all stars and hearts earned in this lesson. Are you sure you want to go back?") },
+            text = { Text("You will lose all progress and stars earned in this lesson. Are you sure you want to go back?") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -196,10 +197,18 @@ fun LessonPlayingLayout(
 ) {
     val currentExercise = state.exercises[state.currentStep]
     val progressFraction = state.currentStep.toFloat() / state.exercises.size.toFloat()
+    val isDark = isSystemInDarkTheme()
+    val isPopQuiz = currentExercise.isPopQuiz
+    val bgyColor = if (isPopQuiz) {
+        if (isDark) Color(0xFF51197A) else Color(0xFFF3E8FF)
+    } else {
+        MaterialTheme.colorScheme.background
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(bgyColor)
             .statusBarsPadding()
             .navigationBarsPadding(),
         verticalArrangement = Arrangement.SpaceBetween
@@ -233,23 +242,7 @@ fun LessonPlayingLayout(
                 trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
             )
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = "Life pool meter",
-                    tint = HeartRed,
-                    modifier = Modifier.size(24.dp)
-                )
-                Text(
-                    text = state.hearts.toString(),
-                    fontWeight = FontWeight.Black,
-                    fontSize = 17.sp,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
+
         }
 
         // CENTER EXERCISE CAROUSEL
@@ -260,13 +253,45 @@ fun LessonPlayingLayout(
                 .padding(horizontal = 24.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (isPopQuiz) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isDark) Color(0xFF7B2CBF) else Color(0xFF6200EE),
+                    modifier = Modifier.padding(bottom = 12.dp).testTag("pop_quiz_badge")
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.OfflineBolt,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "POP QUIZ",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+            }
             
             // PROMPT TITLE
             Text(
                 text = currentExercise.prompt,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = if (isPopQuiz) {
+                    if (isDark) Color(0xFFEADBFF) else Color(0xFF3B1E54)
+                } else {
+                    MaterialTheme.colorScheme.onBackground
+                }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -1202,9 +1227,10 @@ fun SummaryCompletedScreen(
     onDone: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val starsAwarded = when (heartsLeft) {
-        5 -> 3
-        4 -> 2
+    val nonPopQuizMistakes = incorrectExercises.count { !it.first.isPopQuiz }
+    val starsAwarded = when (nonPopQuizMistakes) {
+        0 -> 3
+        1, 2 -> 2
         else -> 1
     }
 

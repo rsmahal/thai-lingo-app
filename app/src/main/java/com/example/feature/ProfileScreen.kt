@@ -173,26 +173,14 @@ fun ProfileScreen(
         }
 
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                val completedLessonsCount = lessons.count { it.completed }
-                StatCard(
-                    icon = Icons.Default.School,
-                    iconColor = GemCyan,
-                    value = "$completedLessonsCount / ${lessons.size}",
-                    label = "Completed Lessons",
-                    modifier = Modifier.weight(1f).testTag("stat_lessons")
-                )
-                StatCard(
-                    icon = Icons.Default.Favorite,
-                    iconColor = HeartRed,
-                    value = "${progress.hearts} / 5",
-                    label = "Hearts Pool",
-                    modifier = Modifier.weight(1f).testTag("stat_hearts")
-                )
-            }
+            val completedLessonsCount = lessons.count { it.completed }
+            StatCard(
+                icon = Icons.Default.School,
+                iconColor = GemCyan,
+                value = "$completedLessonsCount / ${lessons.size}",
+                label = "Completed Lessons",
+                modifier = Modifier.fillMaxWidth().testTag("stat_lessons")
+            )
         }
 
         // ACHIEVEMENTS TIER
