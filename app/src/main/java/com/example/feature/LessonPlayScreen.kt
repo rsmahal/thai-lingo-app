@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -128,6 +130,7 @@ fun LessonPlayScreen(
                             lesson = state.lesson,
                             xpEarned = state.xpEarned,
                             testHasMistakes = state.testHasMistakes,
+                            incorrectExercises = state.incorrectExercises,
                             onDone = {
                                 if (state.xpEarned > 0 && !state.testHasMistakes) {
                                     onAwardXp(state.xpEarned)
@@ -143,6 +146,7 @@ fun LessonPlayScreen(
                             lesson = state.lesson,
                             xpEarned = state.xpEarned,
                             heartsLeft = state.hearts,
+                            incorrectExercises = state.incorrectExercises,
                             onDone = {
                                 if (state.xpEarned > 0) {
                                     onAwardXp(state.xpEarned)
@@ -1194,6 +1198,7 @@ fun SummaryCompletedScreen(
     lesson: Lesson,
     xpEarned: Int,
     heartsLeft: Int,
+    incorrectExercises: List<Pair<Exercise, String>> = emptyList(),
     onDone: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -1214,7 +1219,8 @@ fun SummaryCompletedScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -1309,6 +1315,66 @@ fun SummaryCompletedScreen(
                 }
             }
 
+            if (incorrectExercises.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Review Your Mistakes",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                incorrectExercises.forEach { (exercise, userAns) ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = exercise.prompt,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = exercise.question,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Your answer: $userAns",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = "Correct: ${exercise.correctAnswer.replace("|", " ")}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DuoGreen
+                            )
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(40.dp))
 
             Button(
@@ -1370,6 +1436,7 @@ class RainDropParticle(
 fun ThreeStarsPartyAnimation() {
     var screenSize by remember { mutableStateOf(IntSize.Zero) }
     val confettiList = remember { mutableStateListOf<ConfettiParticle>() }
+    var ticker by remember { mutableStateOf(0) }
     
     // Create firework effect state
     var fireworkX by remember { mutableStateOf(0f) }
@@ -1447,6 +1514,8 @@ fun ThreeStarsPartyAnimation() {
                 fireworkAlpha = 1f
                 fireworkColor = listOf(Color.Red, Color.Yellow, Color.Cyan, Color.Green, Color.Magenta).random()
             }
+            
+            ticker++
         }
     }
     
@@ -1455,6 +1524,7 @@ fun ThreeStarsPartyAnimation() {
             .fillMaxSize()
             .onSizeChanged { screenSize = it }
     ) {
+        val t = ticker // Force recomposition and redraw
         // Draw Fireworks if active
         if (fireworkAlpha > 0) {
             drawCircle(
@@ -1495,6 +1565,7 @@ fun ThreeStarsPartyAnimation() {
 fun TwoStarsFloatAnimation() {
     var screenSize by remember { mutableStateOf(IntSize.Zero) }
     val bubbleList = remember { mutableStateListOf<BubbleParticle>() }
+    var ticker by remember { mutableStateOf(0) }
     
     LaunchedEffect(screenSize) {
         if (screenSize.width == 0 || screenSize.height == 0) return@LaunchedEffect
@@ -1534,6 +1605,7 @@ fun TwoStarsFloatAnimation() {
                     b.x = (0..screenSize.width).random().toFloat()
                 }
             }
+            ticker++
         }
     }
     
@@ -1542,6 +1614,7 @@ fun TwoStarsFloatAnimation() {
             .fillMaxSize()
             .onSizeChanged { screenSize = it }
     ) {
+        val t = ticker // Force recomposition and redraw
         bubbleList.forEach { p ->
             drawCircle(
                 color = p.color,
@@ -1564,6 +1637,7 @@ fun OneStarStormAnimation() {
     var screenSize by remember { mutableStateOf(IntSize.Zero) }
     val rainDropList = remember { mutableStateListOf<RainDropParticle>() }
     var lightningAlpha by remember { mutableStateOf(0f) }
+    var ticker by remember { mutableStateOf(0) }
     
     LaunchedEffect(screenSize) {
         if (screenSize.width == 0 || screenSize.height == 0) return@LaunchedEffect
@@ -1603,6 +1677,8 @@ fun OneStarStormAnimation() {
             } else if (frame % 200 == 0 && (0..1).random() == 1) {
                 lightningAlpha = 0.8f
             }
+            
+            ticker++
         }
     }
     
@@ -1616,6 +1692,7 @@ fun OneStarStormAnimation() {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
             val height = size.height
+            val t = ticker // Force recomposition and redraw
             
             // Draw storm clouds at the top
             val cloudColor = Color(0xFF3F4E52)
@@ -1945,6 +2022,7 @@ fun TestResultScreen(
     lesson: Lesson,
     xpEarned: Int,
     testHasMistakes: Boolean,
+    incorrectExercises: List<Pair<Exercise, String>> = emptyList(),
     onDone: () -> Unit,
     onTryAgain: () -> Unit
 ) {
@@ -1952,7 +2030,8 @@ fun TestResultScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -2059,6 +2138,66 @@ fun TestResultScreen(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
             )
+
+            if (incorrectExercises.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Review Your Mistakes",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                incorrectExercises.forEach { (exercise, userAns) ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.2f)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = exercise.prompt,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = exercise.question,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = "Your answer: $userAns",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = "Correct: ${exercise.correctAnswer.replace("|", " ")}",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DuoGreen
+                            )
+                        }
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(40.dp))
 

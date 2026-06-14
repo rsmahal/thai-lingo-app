@@ -1,5 +1,6 @@
 package com.example.feature
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -137,51 +138,209 @@ fun HomeScreen(
 
 @Composable
 fun HomeHeader(progress: UserProgress) {
+    var showLevelDialog by remember { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         tonalElevation = 6.dp,
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Level Badge
-            HeaderStatItem(
-                icon = Icons.Default.Stars,
-                text = "Lvl ${progress.level}",
-                color = LevelGold,
-                contentDescription = "User level"
-            )
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Group Level and Survivor together side by side
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    HeaderStatItem(
+                        icon = Icons.Default.Stars,
+                        text = "Lvl ${progress.level}",
+                        color = LevelGold,
+                        contentDescription = "User level"
+                    )
 
-            // Streak Fire
-            HeaderStatItem(
-                icon = Icons.Default.LocalFireDepartment,
-                text = "${progress.streak} days",
-                color = StreakOrange,
-                contentDescription = "Active streak"
-            )
+                    // Stairs badge
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(DuoGreenLight.copy(alpha = 0.15f))
+                            .clickable { showLevelDialog = true }
+                            .padding(horizontal = 6.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowUpward, // Rising stair steps symbol
+                            contentDescription = "Language level selector",
+                            tint = DuoGreenDark,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "Survivor",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 11.sp,
+                            color = DuoGreenDark
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Dropdown icon",
+                            tint = DuoGreenDark,
+                            modifier = Modifier.size(12.dp)
+                        )
+                    }
+                }
 
-            // XP Star
-            HeaderStatItem(
-                icon = Icons.Default.WorkspacePremium,
-                text = "${progress.xp} XP",
-                color = GemCyan,
-                contentDescription = "Total experience points"
-            )
+                // Streak Fire
+                HeaderStatItem(
+                    icon = Icons.Default.LocalFireDepartment,
+                    text = "${progress.streak} d",
+                    color = StreakOrange,
+                    contentDescription = "Active streak"
+                )
 
-            // Hearts Left
-            HeaderStatItem(
-                icon = Icons.Default.Favorite,
-                text = if (progress.hearts == 0) "Empty" else "${progress.hearts}",
-                color = HeartRed,
-                contentDescription = "Hearts remaining"
-            )
+                // XP Star
+                HeaderStatItem(
+                    icon = Icons.Default.WorkspacePremium,
+                    text = "${progress.xp} XP",
+                    color = GemCyan,
+                    contentDescription = "Total experience points"
+                )
+
+                // Hearts Left
+                HeaderStatItem(
+                    icon = Icons.Default.Favorite,
+                    text = if (progress.hearts == 0) "Empty" else "${progress.hearts}",
+                    color = HeartRed,
+                    contentDescription = "Hearts remaining"
+                )
+            }
+
+            if (showLevelDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLevelDialog = false },
+                    title = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowUpward,
+                                contentDescription = null,
+                                tint = DuoGreenDark,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Text(
+                                text = "Select Language Level",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "Choose your level to adjust your vocabulary curriculum.",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+                            
+                            val levels = listOf(
+                                Triple("Survivor", "Survival Level (0-500 words, 50 lessons)", true),
+                                Triple("Beginner", "Beginner Level (501+ words) - Locked", false),
+                                Triple("Intermediate", "Intermediate Level - Locked", false),
+                                Triple("Advanced", "Advanced Level - Locked", false),
+                                Triple("Expert", "Expert Level - Locked", false)
+                            )
+                            
+                            levels.forEach { (name, desc, isEnabled) ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(enabled = isEnabled) {
+                                            showLevelDialog = false
+                                        },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isEnabled) {
+                                            DuoGreenLight.copy(alpha = 0.15f)
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                                        }
+                                    ),
+                                    border = if (isEnabled) {
+                                        BorderStroke(1.5.dp, DuoGreenDark)
+                                    } else {
+                                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                                    }
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = name,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp,
+                                                color = if (isEnabled) {
+                                                    DuoGreenDark
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                                }
+                                            )
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = desc,
+                                                fontSize = 11.sp,
+                                                color = if (isEnabled) {
+                                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                                }
+                                            )
+                                        }
+                                        if (isEnabled) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = "Selected",
+                                                tint = DuoGreenDark,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Default.Lock,
+                                                contentDescription = "Locked",
+                                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showLevelDialog = false }) {
+                            Text("Close", fontWeight = FontWeight.Bold, color = DuoGreenDark)
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -215,12 +374,12 @@ fun HeaderStatItem(
 
 @Composable
 fun CategoryBanner(category: String, completedCount: Int, totalCount: Int) {
-    val (color, label) = when (category) {
-        "Greetings" -> Pair(DuoGreen, "Greetings & Manners")
-        "Food" -> Pair(StreakOrange, "Thai Food & Cooking")
-        "Numbers" -> Pair(LevelGold, "Counting & Market Shop")
-        "Travel" -> Pair(GemCyan, "Directions & Travel")
-        "Family" -> Pair(HeartRed, "Family & Relatives")
+    val (color, label) = when {
+        category.contains("Greetings", ignoreCase = true) || category.contains("Politeness", ignoreCase = true) -> Pair(DuoGreen, category)
+        category.contains("Food", ignoreCase = true) || category.contains("Dishes", ignoreCase = true) || category.contains("Dine", ignoreCase = true) -> Pair(StreakOrange, category)
+        category.contains("Numbers", ignoreCase = true) || category.contains("Money", ignoreCase = true) || category.contains("Bargaining", ignoreCase = true) || category.contains("Shopping", ignoreCase = true) -> Pair(LevelGold, category)
+        category.contains("Transit", ignoreCase = true) || category.contains("Travel", ignoreCase = true) || category.contains("Tuk-Tuk", ignoreCase = true) || category.contains("Directions", ignoreCase = true) || category.contains("Sightseeing", ignoreCase = true) -> Pair(GemCyan, category)
+        category.contains("Parents", ignoreCase = true) || category.contains("Relatives", ignoreCase = true) || category.contains("Siblings", ignoreCase = true) || category.contains("Family", ignoreCase = true) || category.contains("Connections", ignoreCase = true) -> Pair(HeartRed, category)
         else -> Pair(DuoGreen, category)
     }
 
@@ -247,12 +406,12 @@ fun CategoryBanner(category: String, completedCount: Int, totalCount: Int) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = when (category) {
-                        "Greetings" -> Icons.Default.Translate
-                        "Food" -> Icons.Default.Restaurant
-                        "Numbers" -> Icons.Default.AttachMoney
-                        "Travel" -> Icons.Default.DirectionsTransit
-                        "Family" -> Icons.Default.FamilyRestroom
+                    imageVector = when {
+                        category.contains("Greetings", ignoreCase = true) || category.contains("Politeness", ignoreCase = true) -> Icons.Default.Translate
+                        category.contains("Food", ignoreCase = true) || category.contains("Dishes", ignoreCase = true) || category.contains("Dine", ignoreCase = true) -> Icons.Default.Restaurant
+                        category.contains("Numbers", ignoreCase = true) || category.contains("Money", ignoreCase = true) || category.contains("Bargaining", ignoreCase = true) || category.contains("Shopping", ignoreCase = true) -> Icons.Default.AttachMoney
+                        category.contains("Transit", ignoreCase = true) || category.contains("Travel", ignoreCase = true) || category.contains("Tuk-Tuk", ignoreCase = true) || category.contains("Directions", ignoreCase = true) || category.contains("Sightseeing", ignoreCase = true) -> Icons.Default.DirectionsTransit
+                        category.contains("Parents", ignoreCase = true) || category.contains("Relatives", ignoreCase = true) || category.contains("Siblings", ignoreCase = true) || category.contains("Family", ignoreCase = true) || category.contains("Connections", ignoreCase = true) -> Icons.Default.FamilyRestroom
                         else -> Icons.Default.School
                     },
                     contentDescription = null,
@@ -406,10 +565,7 @@ fun LessonStartDetailsSheetContent(
 
     val rightLabel = if (isTest) "REQUIRED" else "WORDS"
 
-    val newWordsCount = when (lesson.id) {
-        in 1..10 -> 10
-        else -> 0
-    }
+    val newWordsCount = if (lesson.id in 1..50) 10 else 0
     val rightValue = if (isTest) "100% ACCURACY" else "$newWordsCount Words"
     val questionCount = if (isTest) "20 Questions" else "25 Questions"
 

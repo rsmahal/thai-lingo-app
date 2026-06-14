@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.example.domain.Vocabulary
+import com.example.domain.getLessonVocabIdsRange
+import com.example.domain.getTopicTestVocabIdsRange
 
 sealed interface LessonUiState {
     object Loading : LessonUiState
@@ -45,7 +47,8 @@ sealed interface LessonUiState {
         val isTopicTest: Boolean = false,
         val testHasMistakes: Boolean = false,
         val matchingHadMistake: Boolean = false,
-        val matchingIncorrectAttempts: Int = 0
+        val matchingIncorrectAttempts: Int = 0,
+        val incorrectExercises: List<Pair<Exercise, String>> = emptyList()
     ) : LessonUiState
 }
 
@@ -79,32 +82,16 @@ class LessonViewModel(
                 val lessonVocab = if (isTopicTest) {
                     emptyList()
                 } else {
-                    when (lessonId) {
-                        1 -> allVocab.filter { it.id in 1..10 }
-                        2 -> allVocab.filter { it.id in 11..20 }
-                        3 -> allVocab.filter { it.id in 21..30 }
-                        4 -> allVocab.filter { it.id in 31..40 }
-                        5 -> allVocab.filter { it.id in 41..50 }
-                        6 -> allVocab.filter { it.id in 51..60 }
-                        7 -> allVocab.filter { it.id in 61..70 }
-                        8 -> allVocab.filter { it.id in 71..80 }
-                        9 -> allVocab.filter { it.id in 81..90 }
-                        10 -> allVocab.filter { it.id in 91..100 }
-                        else -> emptyList()
-                    }
+                    val range = getLessonVocabIdsRange(lessonId)
+                    allVocab.filter { it.id in range }
                 }
 
                 val exercises = if (isTopicTest) {
-                    val topicCategory = when (lessonId) {
-                        101 -> "Greetings"
-                        102 -> "Food"
-                        103 -> "Numbers"
-                        104 -> "Travel"
-                        105 -> "Family"
-                        else -> "Greetings"
+                    val ranges = getTopicTestVocabIdsRange(lessonId)
+                    val topicVocab = allVocab.filter { vocab ->
+                        ranges.any { r -> vocab.id in r }
                     }
-                    val topicVocab = allVocab.filter { it.category.equals(topicCategory, ignoreCase = true) }
-                    generateTestExercises(topicVocab, topicCategory, allVocab)
+                    generateTestExercises(topicVocab, "", allVocab)
                 } else {
                     val dbExercises = repository.getExercisesForLesson(lessonId)
                     val fixedMatching = dbExercises.firstOrNull { it.type == ExerciseType.MATCHING }
@@ -189,8 +176,8 @@ class LessonViewModel(
             }
         }
         
-        // Random assortment of MULTIPLE_CHOICE, TRANSLATE, LISTENING for 18 questions
-        val nonMatchingTypes = listOf(ExerciseType.MULTIPLE_CHOICE, ExerciseType.TRANSLATE, ExerciseType.LISTENING)
+        // Random assortment of MULTIPLE_CHOICE, LISTENING for 18 questions
+        val nonMatchingTypes = listOf(ExerciseType.MULTIPLE_CHOICE, ExerciseType.LISTENING)
         
         if (topicVocab.isNotEmpty()) {
             repeat(18) { index ->
@@ -407,6 +394,9 @@ class LessonViewModel(
     private fun speakCurrentIfListening(exercise: Exercise) {
         if (exercise.type == ExerciseType.LISTENING && exercise.audioText.isNotEmpty()) {
             ttsHelper.speak(exercise.audioText)
+        } else if (exercise.type != ExerciseType.MATCHING && exercise.question.any { it in '\u0E00'..'\u0E7F' }) {
+            // Auto play Thai audio when the question contains Thai text 
+            ttsHelper.speak(exercise.question)
         }
     }
 
@@ -501,6 +491,17 @@ class LessonViewModel(
                 val expectedCount = currentExercise.correctAnswer.split("|").size
                 val allMatchedNow = nextMatched.size == expectedCount
 
+                val nextIncorrectExs = if (mismatchHappened) {
+                    val alreadyAdded = currentState.incorrectExercises.any { it.first.id == currentExercise.id }
+                    if (!alreadyAdded) {
+                        currentState.incorrectExercises + (currentExercise to "Mismatching pairs tapped")
+                    } else {
+                        currentState.incorrectExercises
+                    }
+                } else {
+                    currentState.incorrectExercises
+                }
+
                 _uiState.value = currentState.copy(
                     selectedEnglish = "",
                     selectedThai = "",
@@ -512,7 +513,8 @@ class LessonViewModel(
                     hearts = currentHearts,
                     testHasMistakes = nextTestHasMistakes,
                     matchingHadMistake = nextMatchingHadMistake,
-                    matchingIncorrectAttempts = nextIncorrectAttempts
+                    matchingIncorrectAttempts = nextIncorrectAttempts,
+                    incorrectExercises = nextIncorrectExs
                 )
             }
         }
@@ -581,12 +583,38 @@ class LessonViewModel(
             }
         }
 
+        val userAns = when (currentExercise.type) {
+            ExerciseType.MULTIPLE_CHOICE, ExerciseType.LISTENING -> if (state.selectedOption.isNotBlank()) state.selectedOption else "No option selected"
+            ExerciseType.TRANSLATE, ExerciseType.SPEAKING -> state.typedAnswer
+            ExerciseType.SENTENCE_BUILD -> state.typedAnswer.replace("|", " ")
+            ExerciseType.MATCHING -> "Mismatching pairs tapped"
+        }
+
+        val nextIncorrectExercises = if (!isCorrect) {
+            val alreadyAdded = state.incorrectExercises.any { it.first.id == currentExercise.id }
+            if (!alreadyAdded) {
+                state.incorrectExercises + (currentExercise to userAns)
+            } else {
+                state.incorrectExercises
+            }
+        } else {
+            state.incorrectExercises
+        }
+
         _uiState.value = state.copy(
             isChecked = true,
             isCorrect = isCorrect,
             hearts = nextHearts,
-            testHasMistakes = nextTestHasMistakes
+            testHasMistakes = nextTestHasMistakes,
+            incorrectExercises = nextIncorrectExercises
         )
+
+        // Play Thai sound on result for English -> Thai translation (Correct or Incorrect)
+        if (currentExercise.audioText.any { it in '\u0E00'..'\u0E7F' }) {
+            ttsHelper.speak(currentExercise.audioText)
+        } else if (currentExercise.correctAnswer.any { it in '\u0E00'..'\u0E7F' } && currentExercise.type != ExerciseType.MATCHING) {
+            ttsHelper.speak(currentExercise.correctAnswer.replace("|", " "))
+        }
     }
 
     fun continueToNext() {
@@ -616,12 +644,10 @@ class LessonViewModel(
                             repository.updateLesson(updatedLesson)
                             
                             // Unlock first lesson of next topic
-                            val nextUnlockLId = when (lessonId) {
-                                101 -> 3 // Greetings -> Food
-                                102 -> 5 // Food -> Numbers
-                                103 -> 7 // Numbers -> Travel
-                                104 -> 9 // Travel -> Family
-                                else -> -1
+                            val nextUnlockLId = if (lessonId in 101..112) {
+                                (lessonId - 100) * 4 + 1
+                            } else {
+                                -1
                             }
                             var unlockedNextLesson: Lesson? = null
                             if (nextUnlockLId != -1) {
@@ -655,18 +681,12 @@ class LessonViewModel(
                         repository.updateLesson(updatedLesson)
                         
                         // Unlock next custom lesson or Topic Test
-                        val nextLId = when (lessonId) {
-                            1 -> 2
-                            2 -> 101
-                            3 -> 4
-                            4 -> 102
-                            5 -> 6
-                            6 -> 103
-                            7 -> 8
-                            8 -> 104
-                            9 -> 10
-                            10 -> 105
-                            else -> lessonId + 1
+                        val nextLId = if (lessonId % 4 == 0) {
+                            100 + (lessonId / 4)
+                        } else if (lessonId == 50) {
+                            113
+                        } else {
+                            lessonId + 1
                         }
                         val nextLesson = repository.getLessonById(nextLId)
                         if (nextLesson != null) {
