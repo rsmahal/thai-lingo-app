@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -57,6 +59,16 @@ fun ReviewScreen(
                     )
                 } else if (state.currentStep >= 0 && state.currentStep < state.reviewQueue.size) {
                     // Active SRS Quiz Step
+                    val ttsHelper = remember { com.example.core.common.ServiceLocator.getTtsHelper(context) }
+                    
+                    // Automatically trigger pronunciation TTS when entering a Thai -> English sub-step
+                    LaunchedEffect(state.currentStep, state.currentSubStep) {
+                        if (state.currentSubStep == 0) {
+                            val word = state.reviewQueue[state.currentStep]
+                            ttsHelper.speak(word.thai)
+                        }
+                    }
+
                     ReviewQuizOverlay(
                         step = state.currentStep,
                         totalSteps = state.reviewQueue.size,
@@ -65,6 +77,8 @@ fun ReviewScreen(
                         selectedOption = state.selectedOption,
                         isChecking = state.isChecking,
                         isCorrect = state.isCorrect,
+                        currentSubStep = state.currentSubStep,
+                        onPlayAudio = { ttsHelper.speak(state.reviewQueue[state.currentStep].thai) },
                         onSelectOption = { viewModel.selectOption(it) },
                         onCheck = { viewModel.checkAnswer() },
                         onContinue = { viewModel.continueToNext() },
@@ -477,6 +491,8 @@ fun ReviewQuizOverlay(
     selectedOption: String,
     isChecking: Boolean,
     isCorrect: Boolean?,
+    currentSubStep: Int = 0,
+    onPlayAudio: () -> Unit = {},
     onSelectOption: (String) -> Unit,
     onCheck: () -> Unit,
     onContinue: () -> Unit,
@@ -531,25 +547,26 @@ fun ReviewQuizOverlay(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // CENTRAL CARD
+        // CENTRAL CARD (Scrollable to prevent elements from being covered by the bottom drawer on compact screens)
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "WHAT DOES THIS MEAN?",
+                text = if (currentSubStep == 0) "WHAT DOES THIS MEAN?" else "TRANSLATE TO THAI",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Black,
                 color = StreakOrange,
                 letterSpacing = 1.sp
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Thai presenting card
+            // Study presenting card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -563,36 +580,68 @@ fun ReviewQuizOverlay(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = if (showRomanizationOnly) word.romanization else word.thai,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
-                    )
-                    if (word.romanization.isNotEmpty() && !showRomanizationOnly) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                    if (currentSubStep == 0) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = if (showRomanizationOnly) word.romanization else word.thai,
+                                fontSize = 32.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            IconButton(
+                                onClick = onPlayAudio,
+                                modifier = Modifier.size(36.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.VolumeUp,
+                                    contentDescription = "Speak pronunciation",
+                                    tint = DuoGreen
+                                )
+                            }
+                        }
+                        if (word.romanization.isNotEmpty() && !showRomanizationOnly) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = word.romanization,
+                                fontSize = 16.sp,
+                                color = DuoGreenDark,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        // English version for English -> Thai quiz sub-step
                         Text(
-                            text = word.romanization,
-                            fontSize = 16.sp,
-                            color = DuoGreenDark,
-                            fontWeight = FontWeight.Bold,
+                            text = word.english,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // MULTIPLE CHOICE LIST
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 options.forEach { option ->
                     val isSelected = selectedOption == option
-                    val isOptionCorrectAnswer = option == word.english
+                    val isOptionCorrectAnswer = if (currentSubStep == 0) {
+                        option == word.english
+                    } else {
+                        option == word.thai
+                    }
 
                     val bg = when {
                         isChecking && isOptionCorrectAnswer -> CorrectFill
@@ -618,7 +667,7 @@ fun ReviewQuizOverlay(
                         onClick = { if (!isChecking) onSelectOption(option) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(58.dp)
+                            .height(54.dp)
                             .testTag("review_option_$option"),
                         colors = CardDefaults.cardColors(containerColor = bg),
                         border = CardDefaults.outlinedCardBorder(enabled = true).copy(
@@ -665,7 +714,11 @@ fun ReviewQuizOverlay(
                     val messageDesc = if (isCorrect == true) {
                         "Excellent! Spacing interval pushed to next memory station."
                     } else {
-                        "Correct: \"${word.english}\". Re-scheduled for immediate practice."
+                        if (currentSubStep == 0) {
+                            "Correct: \"${word.english}\". Re-scheduled for immediate practice."
+                        } else {
+                            "Correct: \"${word.thai}\". Re-scheduled for immediate practice."
+                        }
                     }
                     val icon = if (isCorrect == true) Icons.Default.CheckCircle else Icons.Default.Error
                     val iconColor = if (isCorrect == true) CorrectText else HeartRed

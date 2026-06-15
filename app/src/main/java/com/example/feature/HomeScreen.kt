@@ -270,7 +270,13 @@ fun HomeHeader(
     val isDark = androidx.compose.foundation.isSystemInDarkTheme()
     val getRankColor: (ThaiRank) -> Color = { rank ->
         if (isDark) {
-            if (rank == ThaiRank.SILVER) Color(0xFF80CBC4) else rank.primaryColor
+            when (rank) {
+                ThaiRank.IRON -> Color(0xFFD1D5DB) // Bright Slate Silver
+                ThaiRank.BRONZE -> Color(0xFFFDBA74) // Luminous Copper Peach
+                ThaiRank.SILVER -> Color(0xFF99F6E4) // Radiant Lotus Teal
+                ThaiRank.GOLD -> Color(0xFFFDE047) // Glowing Gold
+                ThaiRank.EMERALD -> Color(0xFF86EFAC) // Bright Emerald Mint
+            }
         } else {
             rank.secColor
         }

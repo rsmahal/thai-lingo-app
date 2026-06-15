@@ -23,6 +23,7 @@ sealed interface ReviewUiState {
         val isCorrect: Boolean? = null,
         val selectedOption: String = "",
         val currentStep: Int = -1, // -1 means viewing main review dashboard, >= 0 means active quiz step
+        val currentSubStep: Int = 0, // 0 = Thai -> English, 1 = English -> Thai
         val options: List<String> = emptyList(),
         val xpEarned: Int = 0,
         val correctCount: Int = 0,
@@ -40,6 +41,7 @@ class ReviewViewModel(
     private var allVocabularyList: List<Vocabulary> = emptyList()
     private var internalReviewWords: List<ReviewWord> = emptyList()
     private var internalTimeOffsetDays: Int = 0
+    private var currentWordMissed: Boolean = false
 
     init {
         viewModelScope.launch {
@@ -99,32 +101,46 @@ class ReviewViewModel(
         val state = _uiState.value as? ReviewUiState.Active ?: return
         if (state.reviewQueue.isEmpty()) return
         
+        currentWordMissed = false
         _uiState.value = state.copy(
             currentStep = 0,
+            currentSubStep = 0,
             xpEarned = 0,
             correctCount = 0
         )
-        generateOptionsForStep(0)
+        generateOptionsForStep(0, 0)
     }
 
-    private fun generateOptionsForStep(step: Int) {
+    private fun generateOptionsForStep(step: Int, subStep: Int) {
         val state = _uiState.value as? ReviewUiState.Active ?: return
         if (step < 0 || step >= state.reviewQueue.size) return
 
         val correctWord = state.reviewQueue[step]
-        val correctTranslation = correctWord.english
-
-        // Distractor options from general vocabulary
-        val distractors = allVocabularyList
-            .filter { it.english != correctTranslation }
-            .shuffled()
-            .take(3)
-            .map { it.english }
-
-        val finalOptions = (distractors + correctTranslation).shuffled()
+        val finalOptions = if (subStep == 0) {
+            // Thai -> English (Eng options)
+            val correctTranslation = correctWord.english
+            val distractors = allVocabularyList
+                .filter { it.english != correctTranslation }
+                .map { it.english }
+                .distinct()
+                .shuffled()
+                .take(3)
+            (distractors + correctTranslation).shuffled()
+        } else {
+            // English -> Thai (Thai options)
+            val correctTranslation = correctWord.thai
+            val distractors = allVocabularyList
+                .filter { it.thai != correctTranslation }
+                .map { it.thai }
+                .distinct()
+                .shuffled()
+                .take(3)
+            (distractors + correctTranslation).shuffled()
+        }
 
         _uiState.value = state.copy(
             currentStep = step,
+            currentSubStep = subStep,
             selectedOption = "",
             isChecking = false,
             isCorrect = null,
@@ -143,39 +159,65 @@ class ReviewViewModel(
         if (state.selectedOption.isEmpty() || state.isChecking) return
 
         val correctWord = state.reviewQueue[state.currentStep]
-        val isCorrect = state.selectedOption == correctWord.english
+        val isCorrect = if (state.currentSubStep == 0) {
+            state.selectedOption == correctWord.english
+        } else {
+            state.selectedOption == correctWord.thai
+        }
+
+        if (!isCorrect) {
+            currentWordMissed = true
+        }
 
         _uiState.value = state.copy(
             isChecking = true,
-            isCorrect = isCorrect,
-            correctCount = if (isCorrect) state.correctCount + 1 else state.correctCount
+            isCorrect = isCorrect
         )
-
-        viewModelScope.launch {
-            repository.updateReviewWordSrs(correctWord.thai, isCorrect = isCorrect)
-        }
     }
 
     fun continueToNext() {
         val state = _uiState.value as? ReviewUiState.Active ?: return
-        val nextStep = state.currentStep + 1
-
-        if (nextStep >= state.reviewQueue.size) {
-            // Finish quiz! Earn XP proportional to correct reviews
-            val xpGain = state.correctCount * 3
-            _uiState.value = state.copy(
-                currentStep = state.reviewQueue.size, // Completion screen
-                xpEarned = xpGain
-            )
-
-            viewModelScope.launch {
-                if (xpGain > 0) {
-                    val progress = repository.getUserProgressOnce()
-                    repository.saveUserProgress(progress.copy(xp = progress.xp + xpGain))
-                }
-            }
+        
+        if (state.currentSubStep == 0) {
+            // Proceed to the English -> Thai portion of the same word
+            generateOptionsForStep(state.currentStep, 1)
         } else {
-            generateOptionsForStep(nextStep)
+            // Completed English -> Thai portion.
+            // Persist overall word SRS status based on whether either was missed.
+            val correctWord = state.reviewQueue[state.currentStep]
+            val wasWordSuccessful = !currentWordMissed
+            
+            viewModelScope.launch {
+                repository.updateReviewWordSrs(correctWord.thai, isCorrect = wasWordSuccessful)
+            }
+
+            val nextStep = state.currentStep + 1
+            currentWordMissed = false // Reset for safe usage on the next word
+
+            val newCorrectCount = if (wasWordSuccessful) state.correctCount + 1 else state.correctCount
+
+            if (nextStep >= state.reviewQueue.size) {
+                // Finish quiz! Earn XP proportional to correct reviews (3 XP per successfully completed word)
+                val xpGain = newCorrectCount * 3
+                _uiState.value = state.copy(
+                    currentStep = state.reviewQueue.size, // Completion screen
+                    currentSubStep = 0,
+                    correctCount = newCorrectCount,
+                    xpEarned = xpGain
+                )
+
+                viewModelScope.launch {
+                    if (xpGain > 0) {
+                        val progress = repository.getUserProgressOnce()
+                        repository.saveUserProgress(progress.copy(xp = progress.xp + xpGain))
+                    }
+                }
+            } else {
+                _uiState.value = state.copy(
+                    correctCount = newCorrectCount
+                )
+                generateOptionsForStep(nextStep, 0)
+            }
         }
     }
 
