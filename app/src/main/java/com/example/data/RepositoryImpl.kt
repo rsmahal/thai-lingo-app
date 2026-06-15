@@ -1113,109 +1113,137 @@ class RepositoryImpl(
         root.toString(2)
     }
 
-    override suspend fun importProgressJson(jsonString: String): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun importProgressJson(jsonString: String): Boolean = withContext(Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
         try {
             val root = JSONObject(jsonString)
             if (!root.has("progress") || !root.has("lessons")) {
+                android.util.Log.e("RepositoryImpl", "Import failed: progress or lessons missing")
                 return@withContext false
             }
             
             // 1. Progress
-            val progressObj = root.getJSONObject("progress")
-            val name = progressObj.optString("name", "Thai Learner")
-            val streak = progressObj.optInt("streak", 1)
-            val xp = progressObj.optInt("xp", 0)
-            val hearts = progressObj.optInt("hearts", 5)
-            val level = progressObj.optInt("level", 1)
-            val selectedLanguageGoal = progressObj.optInt("selectedLanguageGoal", 20)
-            val lastActiveDate = progressObj.optString("lastActiveDate", "")
-            val soundEnabled = progressObj.optBoolean("soundEnabled", true)
-            val isDarkMode = progressObj.optBoolean("isDarkMode", false)
-            val currentLessonId = progressObj.optInt("currentLessonId", 1)
-            val showRomanizationOnly = progressObj.optBoolean("showRomanizationOnly", false)
-            val avatar = progressObj.optString("avatar", "🐘 Elephant")
-            val lastBackupTime = progressObj.optString("lastBackupTime", "")
-            val isOnboardingCompleted = progressObj.optBoolean("isOnboardingCompleted", true)
-            
-            val updatedProgress = UserProgressEntity(
-                id = 1,
-                name = name,
-                streak = streak,
-                xp = xp,
-                hearts = hearts,
-                level = level,
-                selectedLanguageGoal = selectedLanguageGoal,
-                lastActiveDate = lastActiveDate,
-                soundEnabled = soundEnabled,
-                isDarkMode = isDarkMode,
-                currentLessonId = currentLessonId,
-                showRomanizationOnly = showRomanizationOnly,
-                avatar = avatar,
-                lastBackupTime = lastBackupTime,
-                isOnboardingCompleted = isOnboardingCompleted
-            )
-            userProgressDao.saveProgress(updatedProgress)
+            try {
+                val progressObj = root.getJSONObject("progress")
+                val name = progressObj.optString("name", "Thai Learner")
+                val streak = progressObj.optInt("streak", 1)
+                val xp = progressObj.optInt("xp", 0)
+                val hearts = progressObj.optInt("hearts", 5)
+                val level = progressObj.optInt("level", 1)
+                val selectedLanguageGoal = progressObj.optInt("selectedLanguageGoal", 20)
+                val lastActiveDate = progressObj.optString("lastActiveDate", "")
+                val soundEnabled = progressObj.optBoolean("soundEnabled", true)
+                val isDarkMode = progressObj.optBoolean("isDarkMode", false)
+                val currentLessonId = progressObj.optInt("currentLessonId", 1)
+                val showRomanizationOnly = progressObj.optBoolean("showRomanizationOnly", false)
+                val avatar = progressObj.optString("avatar", "🐘 Elephant")
+                val lastBackupTime = progressObj.optString("lastBackupTime", "")
+                val isOnboardingCompleted = progressObj.optBoolean("isOnboardingCompleted", true)
+                
+                val updatedProgress = UserProgressEntity(
+                    id = 1,
+                    name = name,
+                    streak = streak,
+                    xp = xp,
+                    hearts = hearts,
+                    level = level,
+                    selectedLanguageGoal = selectedLanguageGoal,
+                    lastActiveDate = lastActiveDate,
+                    soundEnabled = soundEnabled,
+                    isDarkMode = isDarkMode,
+                    currentLessonId = currentLessonId,
+                    showRomanizationOnly = showRomanizationOnly,
+                    avatar = avatar,
+                    lastBackupTime = lastBackupTime,
+                    isOnboardingCompleted = isOnboardingCompleted
+                )
+                userProgressDao.saveProgress(updatedProgress)
+                android.util.Log.d("RepositoryImpl", "Successfully imported progress for user: $name")
+            } catch (e: Exception) {
+                android.util.Log.e("RepositoryImpl", "Failed to import progress sub-block", e)
+            }
             
             // 2. Lessons
-            val lessonsArray = root.getJSONArray("lessons")
-            for (i in 0 until lessonsArray.length()) {
-                val lessonObj = lessonsArray.getJSONObject(i)
-                val lessonId = lessonObj.optInt("id", -1)
-                val unlocked = lessonObj.optBoolean("unlocked", false)
-                val completed = lessonObj.optBoolean("completed", false)
-                val stars = lessonObj.optInt("stars", 0)
-                
-                if (lessonId == -1) continue
-                
-                val existing = lessonDao.getLessonById(lessonId)
-                if (existing != null) {
-                    val updatedLesson = existing.copy(
-                        unlocked = unlocked,
-                        completed = completed,
-                        stars = stars
-                    )
-                    lessonDao.updateLesson(updatedLesson)
+            try {
+                val lessonsArray = root.getJSONArray("lessons")
+                var successCount = 0
+                for (i in 0 until lessonsArray.length()) {
+                    try {
+                        val lessonObj = lessonsArray.getJSONObject(i)
+                        val lessonId = lessonObj.optInt("id", -1)
+                        val unlocked = lessonObj.optBoolean("unlocked", false)
+                        val completed = lessonObj.optBoolean("completed", false)
+                        val stars = lessonObj.optInt("stars", 0)
+                        
+                        if (lessonId == -1) continue
+                        
+                        val existing = lessonDao.getLessonById(lessonId)
+                        if (existing != null) {
+                            val updatedLesson = existing.copy(
+                                unlocked = unlocked,
+                                completed = completed,
+                                stars = stars
+                            )
+                            lessonDao.updateLesson(updatedLesson)
+                            successCount++
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("RepositoryImpl", "Failed to import line $i in lessons", e)
+                    }
                 }
+                android.util.Log.d("RepositoryImpl", "Imported $successCount / ${lessonsArray.length()} lessons successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("RepositoryImpl", "Failed to import lessons main sub-block", e)
             }
             
             // 3. Review Words
             if (root.has("reviewWords")) {
-                reviewWordDao.clearReviewQueue()
-                val reviewArray = root.getJSONArray("reviewWords")
-                for (i in 0 until reviewArray.length()) {
-                    val wordObj = reviewArray.getJSONObject(i)
-                    val thai = wordObj.optString("thai", "")
-                    val english = wordObj.optString("english", "")
-                    val romanization = wordObj.optString("romanization", "")
-                    val category = wordObj.optString("category", "General")
-                    val addedAt = wordObj.optLong("addedAt", System.currentTimeMillis())
-                    val intervalDays = wordObj.optInt("intervalDays", 0)
-                    val wordStreak = wordObj.optInt("streak", 0)
-                    val lastReviewedAt = wordObj.optLong("lastReviewedAt", 0)
-                    val nextDueAt = wordObj.optLong("nextDueAt", System.currentTimeMillis())
-                    val isMastered = wordObj.optBoolean("isMastered", false)
-                    
-                    if (thai.isEmpty() || english.isEmpty()) continue
-                    
-                    val entity = ReviewWordEntity(
-                        thai = thai,
-                        english = english,
-                        romanization = romanization,
-                        category = category,
-                        addedAt = addedAt,
-                        intervalDays = intervalDays,
-                        streak = wordStreak,
-                        lastReviewedAt = lastReviewedAt,
-                        nextDueAt = nextDueAt,
-                        isMastered = isMastered
-                    )
-                    reviewWordDao.insertReviewWord(entity)
+                try {
+                    reviewWordDao.clearReviewQueue()
+                    val reviewArray = root.getJSONArray("reviewWords")
+                    var successCount = 0
+                    for (i in 0 until reviewArray.length()) {
+                        try {
+                            val wordObj = reviewArray.getJSONObject(i)
+                            val thai = wordObj.optString("thai", "")
+                            val english = wordObj.optString("english", "")
+                            val romanization = wordObj.optString("romanization", "")
+                            val category = wordObj.optString("category", "General")
+                            val addedAt = wordObj.optLong("addedAt", System.currentTimeMillis())
+                            val intervalDays = wordObj.optInt("intervalDays", 0)
+                            val wordStreak = wordObj.optInt("streak", 0)
+                            val lastReviewedAt = wordObj.optLong("lastReviewedAt", 0)
+                            val nextDueAt = wordObj.optLong("nextDueAt", System.currentTimeMillis())
+                            val isMastered = wordObj.optBoolean("isMastered", false)
+                            
+                            if (thai.isEmpty() || english.isEmpty()) continue
+                            
+                            val entity = ReviewWordEntity(
+                                thai = thai,
+                                english = english,
+                                romanization = romanization,
+                                category = category,
+                                addedAt = addedAt,
+                                intervalDays = intervalDays,
+                                streak = wordStreak,
+                                lastReviewedAt = lastReviewedAt,
+                                nextDueAt = nextDueAt,
+                                isMastered = isMastered
+                            )
+                            reviewWordDao.insertReviewWord(entity)
+                            successCount++
+                        } catch (e: Exception) {
+                            android.util.Log.e("RepositoryImpl", "Failed to import line $i in reviewWords", e)
+                        }
+                    }
+                    android.util.Log.d("RepositoryImpl", "Imported $successCount / ${reviewArray.length()} reviewWords successfully")
+                } catch (e: Exception) {
+                    android.util.Log.e("RepositoryImpl", "Failed to import reviewWords main sub-block", e)
                 }
             }
             
             true
         } catch (e: Exception) {
-            android.util.Log.e("RepositoryImpl", "Import failed", e)
+            android.util.Log.e("RepositoryImpl", "Import failed with fatal error", e)
             false
         }
     }
