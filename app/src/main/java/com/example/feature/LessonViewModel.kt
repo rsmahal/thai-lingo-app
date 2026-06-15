@@ -48,7 +48,8 @@ sealed interface LessonUiState {
         val testHasMistakes: Boolean = false,
         val matchingHadMistake: Boolean = false,
         val matchingIncorrectAttempts: Int = 0,
-        val incorrectExercises: List<Pair<Exercise, String>> = emptyList()
+        val incorrectExercises: List<Pair<Exercise, String>> = emptyList(),
+        val vocabularyList: List<Vocabulary> = emptyList()
     ) : LessonUiState
 }
 
@@ -130,7 +131,7 @@ class LessonViewModel(
                             prevLessonIds.any { id -> vocabItem.id in getLessonVocabIdsRange(id) }
                         }
                         if (prevVocabList.isNotEmpty()) {
-                            val selectedVocabs = prevVocabList.shuffled().take(2)
+                            val selectedVocabs = prevVocabList.shuffled().take(3)
                             selectedVocabs.forEach { vocab ->
                                 val generated = generateVocabExercises(listOf(vocab), allVocab)
                                 if (generated.isNotEmpty()) {
@@ -156,7 +157,8 @@ class LessonViewModel(
                         introWords = lessonVocab,
                         currentIntroWordIdx = 0,
                         isTopicTest = isTopicTest,
-                        testHasMistakes = false
+                        testHasMistakes = false,
+                        vocabularyList = allVocab
                     )
                     // Auto-speak the first vocabulary word if in introduction mode
                     if (lessonVocab.isNotEmpty()) {
@@ -406,11 +408,18 @@ class LessonViewModel(
         val currentExercise = state.exercises[state.currentStep]
         if (currentExercise.audioText.isNotEmpty()) {
             ttsHelper.speak(currentExercise.audioText)
+        } else if (currentExercise.question.any { it in '\u0E00'..'\u0E7F' }) {
+            ttsHelper.speak(currentExercise.question)
+        } else if (currentExercise.correctAnswer.any { it in '\u0E00'..'\u0E7F' } && currentExercise.type != ExerciseType.MATCHING) {
+            ttsHelper.speak(currentExercise.correctAnswer.replace("|", " "))
         }
     }
 
     private fun speakCurrentIfListening(exercise: Exercise) {
-        if (exercise.type == ExerciseType.LISTENING && exercise.audioText.isNotEmpty()) {
+        val isListeningSb = exercise.type == ExerciseType.SENTENCE_BUILD && exercise.prompt.contains("Listen", ignoreCase = true)
+        if (isListeningSb && exercise.audioText.isNotEmpty()) {
+            ttsHelper.speak(exercise.audioText)
+        } else if (exercise.type == ExerciseType.LISTENING && exercise.audioText.isNotEmpty()) {
             ttsHelper.speak(exercise.audioText)
         } else if (exercise.type != ExerciseType.MATCHING && exercise.question.any { it in '\u0E00'..'\u0E7F' }) {
             // Auto play Thai audio when the question contains Thai text 
@@ -483,6 +492,7 @@ class LessonViewModel(
                 if (isCorrectMatch) {
                     nextMatched.add("$nextThai:$nextEng")
                     repository.updateReviewWordSrs(nextThai, isCorrect = true)
+                    ttsHelper.speak(nextThai)
                 } else {
                     repository.updateReviewWordSrs(nextThai, isCorrect = false)
                 }
@@ -610,9 +620,11 @@ class LessonViewModel(
             incorrectExercises = nextIncorrectExercises
         )
 
-        // Play Thai sound on result for English -> Thai translation (Correct or Incorrect)
+        // Play Thai sound on result for English -> Thai or Thai -> English translation
         if (currentExercise.audioText.any { it in '\u0E00'..'\u0E7F' }) {
             ttsHelper.speak(currentExercise.audioText)
+        } else if (currentExercise.question.any { it in '\u0E00'..'\u0E7F' }) {
+            ttsHelper.speak(currentExercise.question)
         } else if (currentExercise.correctAnswer.any { it in '\u0E00'..'\u0E7F' } && currentExercise.type != ExerciseType.MATCHING) {
             ttsHelper.speak(currentExercise.correctAnswer.replace("|", " "))
         }

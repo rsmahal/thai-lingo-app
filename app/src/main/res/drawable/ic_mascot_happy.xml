@@ -1,0 +1,93 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Celebrating Sparkles / Confetti -->
+    <path
+        android:pathData="M 35,45 L 43,45 M 39,41 L 39,49"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeColor="#FFC107" />
+    <path
+        android:pathData="M 165,55 L 173,55 M 169,51 L 169,59"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeColor="#FFC107" />
+    <path
+        android:pathData="M 45,150 L 51,154 M 150,145 L 156,141"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeColor="#E91E63" />
+
+    <!-- Left Ear (Outer) -->
+    <path
+        android:pathData="M 65,70 C 20,40 12,120 55,135 C 65,135 65,85 65,70 Z"
+        android:fillColor="#2196F3" />
+    <!-- Left Ear Inner -->
+    <path
+        android:pathData="M 58,80 C 25,55 20,110 50,123 C 58,123 58,95 58,80 Z"
+        android:fillColor="#FF8A80" />
+
+    <!-- Right Ear (Outer) -->
+    <path
+        android:pathData="M 135,70 C 180,40 188,120 145,135 C 135,135 135,85 135,70 Z"
+        android:fillColor="#2196F3" />
+    <!-- Right Ear Inner -->
+    <path
+        android:pathData="M 142,80 C 175,55 180,110 150,123 C 142,123 142,95 142,80 Z"
+        android:fillColor="#FF8A80" />
+
+    <!-- Body -->
+    <path
+        android:pathData="M 70,130 Q 100,110 130,130 L 140,165 C 140,170 120,175 100,175 C 80,175 60,170 60,165 Z"
+        android:fillColor="#1976D2" />
+
+    <!-- Left Foot Waving/Dancing -->
+    <path
+        android:pathData="M 58,150 Q 64,138 75,153 Q 78,165 68,168 Q 55,165 58,150"
+        android:fillColor="#0D47A1" />
+    <!-- Right Foot Waving/Dancing -->
+    <path
+        android:pathData="M 142,150 Q 136,138 125,153 Q 122,165 132,168 Q 145,165 142,150"
+        android:fillColor="#0D47A1" />
+
+    <!-- Main Head -->
+    <path
+        android:pathData="M 100,60 C 145,60 155,100 155,125 C 155,150 135,155 100,155 C 65,155 45,150 45,125 C 45,100 55,60 100,60 Z"
+        android:fillColor="#2196F3" />
+
+    <!-- Cheeks Blush (Deeper color when celebrating!) -->
+    <path
+        android:pathData="M 56,124 A 10,10 0 1,0 76,124 A 10,10 0 1,0 56,124 Z"
+        android:fillColor="#60FF5252" />
+    <path
+        android:pathData="M 124,124 A 10,10 0 1,0 144,124 A 10,10 0 1,0 124,124 Z"
+        android:fillColor="#60FF5252" />
+
+    <!-- Joyful Closed Eyes (Smiling Arcs) -->
+    <path
+        android:pathData="M 68,114 Q 75,106 82,114"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeColor="#1E293B" />
+    <path
+        android:pathData="M 118,114 Q 125,106 132,114"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeColor="#1E293B" />
+
+    <!-- Big Happy Open Smile -->
+    <path
+        android:pathData="M 90,126 Q 100,138 110,126 Z"
+        android:fillColor="#E91E63"
+        android:strokeWidth="2"
+        android:strokeColor="#1E293B" />
+
+    <!-- Celebratory Raised Trunk (U-Shaped up into the air) -->
+    <path
+        android:pathData="M 94,115 C 94,115 90,132 108,132 C 122,132 126,105 116,102 C 111,100 115,115 108,122 C 102,128 98,124 98,115 Z"
+        android:fillColor="#1976D2" />
+
+</vector>

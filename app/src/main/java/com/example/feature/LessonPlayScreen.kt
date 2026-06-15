@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.LocalShowRomanizationOnly
+import com.example.LocalVocabularyList
+import com.example.core.common.getRomanizedText
 import com.example.domain.Exercise
 import com.example.domain.ExerciseType
 import com.example.domain.Lesson
@@ -266,6 +269,52 @@ fun LessonPlayingLayout(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
+            // RENDER DYNAMIC COMPANION MASCOT NONG CHANG
+            // Automatically adapts to correctness, pop quizzes, and learning states.
+            val mascotExpression = when {
+                state.isChecked -> {
+                    if (state.isCorrect) MascotExpression.HAPPY else MascotExpression.SAD
+                }
+                else -> MascotExpression.ENCOURAGING
+            }
+
+            val customMascotMsg = when {
+                state.isChecked && state.isCorrect -> {
+                    listOf(
+                        "Sabai sabai! 🎉 That's absolutely correct!",
+                        "Keng mak! ⭐ You got the perfect answer!",
+                        "Wonderful match! Nong Chang is super happy! 🐘🚀",
+                        "Chai-Yo! You are mastering this category!"
+                    ).random()
+                }
+                state.isChecked && !state.isCorrect -> {
+                    listOf(
+                        "Mai pen rai! ❤️ (No worries!) Let's learn from this mistake.",
+                        "Almost there! Try repeating the Thai words aloud. 🐘",
+                        "Every mistake is a secret pathway to fluency. Su su! 💪",
+                        "Nong Chang is cheerleading your learning comeback!"
+                    ).random()
+                }
+                else -> {
+                    if (isPopQuiz) {
+                        "Stay sharp! ⚡ This is a Pop Quiz for double focus!"
+                    } else {
+                        null // delegates to standard encouraging/neutral phrases
+                    }
+                }
+            }
+
+            ThaiLingoMascot(
+                expression = mascotExpression,
+                customMessage = customMascotMsg,
+                size = 76.dp,
+                showBubble = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+                    .testTag("lesson_play_mascot")
+            )
+
             if (isPopQuiz) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -398,6 +447,9 @@ fun MultipleChoiceView(
     onVoicePlay: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
+    val vocabularyList = LocalVocabularyList.current
+
     Column {
         // Question bubble card
         Card(
@@ -421,12 +473,12 @@ fun MultipleChoiceView(
                 }
                 Column {
                     Text(
-                        text = exercise.question,
+                        text = if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    if (exercise.romanization.isNotEmpty()) {
+                    if (exercise.romanization.isNotEmpty() && !showRomanizationOnly) {
                         Text(
                             text = "(${exercise.romanization})",
                             fontSize = 15.sp,
@@ -469,7 +521,7 @@ fun MultipleChoiceView(
                 ) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
                         Text(
-                            text = option,
+                            text = if (showRomanizationOnly) getRomanizedText(option, vocabularyList) else option,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 20.dp),
@@ -489,6 +541,9 @@ fun TranslateView(
     onTextChange: (String) -> Unit,
     isChecked: Boolean
 ) {
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
+    val vocabularyList = LocalVocabularyList.current
+
     Column {
         // Source card
         Card(
@@ -498,12 +553,12 @@ fun TranslateView(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
-                    text = exercise.question,
+                    text = if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                if (exercise.romanization.isNotEmpty()) {
+                if (exercise.romanization.isNotEmpty() && !showRomanizationOnly) {
                     Text(
                         text = "(${exercise.romanization})",
                         fontSize = 15.sp,
@@ -545,6 +600,9 @@ fun SentenceBuildView(
     isChecked: Boolean,
     onVoicePlay: () -> Unit
 ) {
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
+    val vocabularyList = LocalVocabularyList.current
+
     val selectedTokens = remember(textVal) {
         if (textVal.isEmpty()) emptyList() else textVal.split("|")
     }
@@ -580,39 +638,69 @@ fun SentenceBuildView(
             ),
             shape = RoundedCornerShape(20.dp)
         ) {
+            val isListeningSb = exercise.prompt.contains("Listen", ignoreCase = true)
             Row(
                 modifier = Modifier.padding(18.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                val isQuestionThai = exercise.question.any { it in '\u0E00'..'\u0E7F' }
-                if (isQuestionThai) {
+                if (isListeningSb) {
                     IconButton(
                         onClick = onVoicePlay,
                         modifier = Modifier
                             .background(GemCyan, CircleShape)
-                            .size(44.dp)
+                            .size(56.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.VolumeUp,
                             contentDescription = "Listen to pronunciation",
-                            tint = Color.White
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
-                }
-                Column {
-                    Text(
-                        text = exercise.question,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    if (exercise.romanization.isNotEmpty()) {
+                    Column {
                         Text(
-                            text = "(${exercise.romanization})",
-                            fontSize = 15.sp,
+                            text = "Listen & Translate",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Audio-only challenge",
+                            fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
+                    }
+                } else {
+                    val isQuestionThai = exercise.question.any { it in '\u0E00'..'\u0E7F' }
+                    if (isQuestionThai) {
+                        IconButton(
+                            onClick = onVoicePlay,
+                            modifier = Modifier
+                                .background(GemCyan, CircleShape)
+                                .size(44.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.VolumeUp,
+                                contentDescription = "Listen to pronunciation",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                    Column {
+                        Text(
+                            text = if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (exercise.romanization.isNotEmpty() && !showRomanizationOnly) {
+                            Text(
+                                text = "(${exercise.romanization})",
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
                     }
                 }
             }
@@ -669,7 +757,7 @@ fun SentenceBuildView(
                             modifier = Modifier.testTag("assembled_chip_$index")
                         ) {
                             Text(
-                                text = token,
+                                text = if (showRomanizationOnly) getRomanizedText(token, vocabularyList) else token,
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
@@ -733,7 +821,7 @@ fun SentenceBuildView(
                             modifier = Modifier.testTag("choice_chip_$index")
                         ) {
                             Text(
-                                text = option,
+                                text = if (showRomanizationOnly) getRomanizedText(option, vocabularyList) else option,
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
@@ -936,6 +1024,9 @@ fun MatchingView(
     onSelect: (String, Boolean) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
+    val vocabularyList = LocalVocabularyList.current
+
     // Collect options and sort English/Thai separately to let user match
     val rawOptions = exercise.options
     // English words containing ASCII alphabet characters shuffled stably
@@ -1049,7 +1140,7 @@ fun MatchingView(
                     ) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(
-                                text = word,
+                                text = if (showRomanizationOnly) getRomanizedText(word, vocabularyList) else word,
                                 fontWeight = FontWeight.Bold,
                                 color = textColor,
                                 fontSize = 16.sp,
@@ -1323,7 +1414,21 @@ fun SummaryCompletedScreen(
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ThaiLingoMascot(
+                expression = if (starsAwarded > 0) MascotExpression.HAPPY else MascotExpression.SAD,
+                customMessage = when (starsAwarded) {
+                    3 -> "Sawatdee ka! Look at you! 🏆 Perfect 3-star victory! Nong Chang is dancing for joy! 🐘✨"
+                    2 -> "Amazing session! 🌟 2-stars earned! Nong Chang is so proud of our progress!"
+                    1 -> "You passed! ⭐ 1-star achieved! Su su, tomorrow we aim even higher!"
+                    else -> "Oh, we didn't pass today. But Nong Chang is here with you! Let's review together and try again! ❤️"
+                },
+                size = 94.dp,
+                modifier = Modifier.testTag("summary_mascot")
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1809,6 +1914,7 @@ fun LessonIntroduceLayout(
     onSpeakText: (String) -> Unit
 ) {
     val currentWord = state.introWords[state.currentIntroWordIdx]
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
     val totalWords = state.introWords.size
     val progressFraction = (state.currentIntroWordIdx + 1).toFloat() / totalWords.toFloat()
 
@@ -1898,7 +2004,7 @@ fun LessonIntroduceLayout(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = currentWord.thai,
+                            text = if (showRomanizationOnly) currentWord.romanization else currentWord.thai,
                             fontSize = 42.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = DuoGreen,
@@ -1923,16 +2029,18 @@ fun LessonIntroduceLayout(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    if (!showRomanizationOnly) {
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                    // Transliteration / Romanization block
-                    Text(
-                        text = "/ ${currentWord.romanization} /",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        textAlign = TextAlign.Center
-                    )
+                        // Transliteration / Romanization block
+                        Text(
+                            text = "/ ${currentWord.romanization} /",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -2144,7 +2252,16 @@ fun TestResultScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ThaiLingoMascot(
+                expression = MascotExpression.HAPPY,
+                customMessage = "Chai-Yo! 🎉 You did it! Nong Chang is dancing for joy! You conquered the Topic Test with ${(ratio * 100).toInt()}% correct and unlocked the next topic! 🐘🔓✨",
+                size = 94.dp,
+                modifier = Modifier.testTag("test_result_mascot_pass")
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             Card(
                 modifier = Modifier.width(180.dp),
@@ -2211,6 +2328,17 @@ fun TestResultScreen(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ThaiLingoMascot(
+                expression = MascotExpression.SAD,
+                customMessage = "Mai pen rai! ❤️ Mistake review is where real learning happens. Nong Chang knows you'll crush it on the next try. Let's practice! 🐘💪",
+                size = 94.dp,
+                modifier = Modifier.testTag("test_result_mascot_fail")
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             if (incorrectExercises.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(32.dp))

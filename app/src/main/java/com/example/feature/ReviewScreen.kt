@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.domain.ReviewWord
+import com.example.LocalShowRomanizationOnly
 import com.example.ui.theme.*
 
 @Composable
@@ -90,6 +91,7 @@ fun ReviewDashboardListing(
     onSimulatePass: () -> Unit,
     onResetSimulate: () -> Unit
 ) {
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -341,12 +343,12 @@ fun ReviewDashboardListing(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = word.thai,
+                                    text = if (showRomanizationOnly) word.romanization else word.thai,
                                     fontSize = 19.sp,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
-                                if (word.romanization.isNotEmpty()) {
+                                if (word.romanization.isNotEmpty() && !showRomanizationOnly) {
                                     Text(
                                         text = "[ ${word.romanization} ]",
                                         fontSize = 12.sp,
@@ -480,6 +482,7 @@ fun ReviewQuizOverlay(
     onContinue: () -> Unit,
     onQuit: () -> Unit
 ) {
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -561,13 +564,13 @@ fun ReviewQuizOverlay(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = word.thai,
+                        text = if (showRomanizationOnly) word.romanization else word.thai,
                         fontSize = 32.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center
                     )
-                    if (word.romanization.isNotEmpty()) {
+                    if (word.romanization.isNotEmpty() && !showRomanizationOnly) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = word.romanization,

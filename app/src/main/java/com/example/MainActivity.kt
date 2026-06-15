@@ -38,6 +38,9 @@ enum class AppTab {
     PROFILE
 }
 
+val LocalShowRomanizationOnly = androidx.compose.runtime.staticCompositionLocalOf { false }
+val LocalVocabularyList = androidx.compose.runtime.staticCompositionLocalOf { emptyList<com.example.domain.Vocabulary>() }
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +60,11 @@ class MainActivity : ComponentActivity() {
             val progress = userProgressState
             val isDarkTheme = progress?.isDarkMode ?: false
 
-            ThaiLingoTheme(darkTheme = isDarkTheme) {
+            androidx.compose.runtime.CompositionLocalProvider(
+                LocalShowRomanizationOnly provides (progress?.showRomanizationOnly ?: false),
+                LocalVocabularyList provides vocabulary
+            ) {
+                ThaiLingoTheme(darkTheme = isDarkTheme) {
                 if (isInitializing) {
                     Box(
                         modifier = Modifier
@@ -70,8 +77,8 @@ class MainActivity : ComponentActivity() {
                 } else if (progress == null || progress.name == "Lingo Learner" && progress.streak == 0 && progress.xp == 0) {
                     // Start Onboarding
                     OnboardingScreen(
-                        onFinished = { name, goal ->
-                            mainViewModel.completeOnboarding(name, goal)
+                        onFinished = { name, goal, showRomanOnly ->
+                            mainViewModel.completeOnboarding(name, goal, showRomanOnly)
                         }
                     )
                 } else {
@@ -186,6 +193,7 @@ class MainActivity : ComponentActivity() {
                                             lessons = lessons,
                                             onToggleSound = { mainViewModel.toggleSound(it) },
                                             onToggleDarkMode = { mainViewModel.toggleDarkMode(it) },
+                                            onToggleRomanization = { mainViewModel.toggleRomanization(it) },
                                             onResetProgress = { mainViewModel.resetProgress() }
                                         )
                                     }
@@ -193,6 +201,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                }
                 }
             }
         }

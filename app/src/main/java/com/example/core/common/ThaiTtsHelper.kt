@@ -38,6 +38,28 @@ class ThaiTtsHelper(private val context: Context) : TextToSpeech.OnInitListener 
 
     fun speak(text: String) {
         if (isInitialized && tts != null) {
+            val isMale = text.contains("ผม") || text.contains("ครับ") || text.contains("กระผม")
+            try {
+                val voices = tts?.voices
+                if (voices != null) {
+                    val thVoices = voices.filter { it.locale.language == "th" }
+                    if (thVoices.isNotEmpty()) {
+                        val targetVoice = thVoices.find { voice ->
+                            val nv = voice.name.lowercase()
+                            if (isMale) {
+                                nv.contains("male") || nv.contains("-m-") || nv.contains("#male") || nv.contains("guy") || nv.contains("male")
+                            } else {
+                                nv.contains("female") || nv.contains("-f-") || nv.contains("#female") || nv.contains("girl")
+                            }
+                        } ?: thVoices.firstOrNull()
+                        if (targetVoice != null) {
+                            tts?.voice = targetVoice
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ThaiTtsHelper", "Error setting voice gender", e)
+            }
             tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ThaiLingoTTS")
         }
     }

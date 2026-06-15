@@ -12,7 +12,7 @@ import androidx.room.RoomDatabase
         AchievementEntity::class,
         ReviewWordEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

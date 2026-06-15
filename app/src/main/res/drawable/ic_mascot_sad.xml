@@ -1,0 +1,78 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Empathy Sweet droplet -->
+    <path
+        android:pathData="M 152,78 C 152,84 147,88 143,88 C 139,88 137,84 140,80 C 142,76 152,68 152,68 C 152,68 152,74 152,78 Z"
+        android:fillColor="#4DD0E1" />
+
+    <!-- Left Ear (Outer, drooping slightly) -->
+    <path
+        android:pathData="M 65,75 C 22,65 18,135 55,140 C 65,140 65,90 65,75 Z"
+        android:fillColor="#2196F3" />
+    <path
+        android:pathData="M 58,85 C 32,77 28,125 50,128 C 58,128 58,100 58,85 Z"
+        android:fillColor="#FF8A80" />
+
+    <!-- Right Ear (Outer, drooping slightly) -->
+    <path
+        android:pathData="M 135,75 C 178,65 182,135 145,140 C 135,140 135,90 135,75 Z"
+        android:fillColor="#2196F3" />
+    <path
+        android:pathData="M 142,85 C 168,77 172,125 150,128 C 142,128 142,100 142,85 Z"
+        android:fillColor="#FF8A80" />
+
+    <!-- Body -->
+    <path
+        android:pathData="M 70,135 Q 100,115 130,135 L 140,165 C 140,170 120,175 100,175 C 80,175 60,170 60,165 Z"
+        android:fillColor="#1976D2" />
+
+    <!-- Feet -->
+    <path
+        android:pathData="M 65,155 Q 73,150 80,165 Q 80,175 70,174 Q 60,173 65,155"
+        android:fillColor="#0D47A1" />
+    <path
+        android:pathData="M 135,155 Q 127,150 120,165 Q 120,175 130,174 Q 140,173 135,155"
+        android:fillColor="#0D47A1" />
+
+    <!-- Main Head -->
+    <path
+        android:pathData="M 100,65 C 141,65 152,100 152,125 C 152,150 133,155 100,155 C 67,155 48,150 48,125 C 48,100 59,65 100,65 Z"
+        android:fillColor="#2196F3" />
+
+    <!-- Soft Orange-Pink Blush -->
+    <path
+        android:pathData="M 60,127 A 7,7 0 1,0 74,127 A 7,7 0 1,0 60,127 Z"
+        android:fillColor="#30FF8A80" />
+    <path
+        android:pathData="M 126,127 A 7,7 0 1,0 140,127 A 7,7 0 1,0 126,127 Z"
+        android:fillColor="#30FF8A80" />
+
+    <!-- Gentle Caring Eyes -->
+    <path
+        android:pathData="M 71,114 Q 78,108 85,114"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeColor="#1E293B" />
+    <path
+        android:pathData="M 115,114 Q 122,108 129,114"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeColor="#1E293B" />
+
+    <!-- Warm consoling smile -->
+    <path
+        android:pathData="M 92,128 Q 100,133 108,128"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeColor="#1E293B" />
+
+    <!-- Curved Trunk (Drooping slightly downward with cute tip curve) -->
+    <path
+        android:pathData="M 94,115 C 94,115 95,147 101,147 C 104,147 103,139 101,141 C 98,143 98,131 98,115 Z"
+        android:fillColor="#1976D2" />
+
+</vector>

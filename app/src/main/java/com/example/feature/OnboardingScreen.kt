@@ -27,10 +27,11 @@ import com.example.ui.theme.StreakOrange
 
 @Composable
 fun OnboardingScreen(
-    onFinished: (name: String, dailyGoal: Int) -> Unit
+    onFinished: (name: String, dailyGoal: Int, showRomanizationOnly: Boolean) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var selectedGoal by remember { mutableIntStateOf(20) } // Standard: 20 XP
+    var showRomanizationOnly by remember { mutableStateOf(false) }
     var currentStep by remember { mutableIntStateOf(0) } // 0: Welcome, 1: Name, 2: Goal
 
     Box(
@@ -74,7 +75,10 @@ fun OnboardingScreen(
                 contentAlignment = Alignment.Center
             ) {
                 when (currentStep) {
-                    0 -> WelcomeView()
+                    0 -> WelcomeView(
+                        showRomanizationOnly = showRomanizationOnly,
+                        onRomanizationChange = { showRomanizationOnly = it }
+                    )
                     1 -> SetupNameView(name = name, onNameChanged = { name = it })
                     2 -> SetupGoalView(selectedGoal = selectedGoal, onGoalChanged = { selectedGoal = it })
                 }
@@ -86,7 +90,7 @@ fun OnboardingScreen(
                     if (currentStep < 2) {
                         currentStep++
                     } else {
-                        onFinished(name, selectedGoal)
+                        onFinished(name, selectedGoal, showRomanizationOnly)
                     }
                 },
                 modifier = Modifier
@@ -120,7 +124,10 @@ fun OnboardingScreen(
 }
 
 @Composable
-fun WelcomeView() {
+fun WelcomeView(
+    showRomanizationOnly: Boolean,
+    onRomanizationChange: (Boolean) -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -128,59 +135,106 @@ fun WelcomeView() {
         // Beautiful Drawn Custom Mascot - Cute ThaiLingo Owl
         Box(
             modifier = Modifier
-                .size(160.dp)
+                .size(140.dp)
                 .padding(12.dp)
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val center = Offset(size.width / 2f, size.height / 2f)
                 
                 // Draw feet
-                drawCircle(color = Color(0xFFFF9600), radius = 16f, center = Offset(center.x - 30f, center.y + 60f))
-                drawCircle(color = Color(0xFFFF9600), radius = 16f, center = Offset(center.x + 30f, center.y + 60f))
+                drawCircle(color = Color(0xFFFF9600), radius = 14f, center = Offset(center.x - 26f, center.y + 50f))
+                drawCircle(color = Color(0xFFFF9600), radius = 14f, center = Offset(center.x + 26f, center.y + 50f))
                 
                 // Draw Body
-                drawCircle(color = DuoGreen, radius = 64f, center = center)
+                drawCircle(color = DuoGreen, radius = 56f, center = center)
                 
                 // Draw Wing covers
-                drawCircle(color = DuoGreenDark, radius = 24f, center = Offset(center.x - 56f, center.y + 10f))
-                drawCircle(color = DuoGreenDark, radius = 24f, center = Offset(center.x + 56f, center.y + 10f))
+                drawCircle(color = DuoGreenDark, radius = 20f, center = Offset(center.x - 48f, center.y + 8f))
+                drawCircle(color = DuoGreenDark, radius = 20f, center = Offset(center.x + 48f, center.y + 8f))
 
                 // Draw Eyes circle
-                drawCircle(color = Color.White, radius = 22f, center = Offset(center.x - 22f, center.y - 12f))
-                drawCircle(color = Color.White, radius = 22f, center = Offset(center.x + 22f, center.y - 12f))
+                drawCircle(color = Color.White, radius = 18f, center = Offset(center.x - 18f, center.y - 10f))
+                drawCircle(color = Color.White, radius = 18f, center = Offset(center.x + 18f, center.y - 10f))
                 
                 // Draw Pupils
-                drawCircle(color = Color(0xFF131F22), radius = 10f, center = Offset(center.x - 22f, center.y - 12f))
-                drawCircle(color = Color(0xFF131F22), radius = 10f, center = Offset(center.x + 22f, center.y - 12f))
+                drawCircle(color = Color(0xFF131F22), radius = 8f, center = Offset(center.x - 18f, center.y - 10f))
+                drawCircle(color = Color(0xFF131F22), radius = 8f, center = Offset(center.x + 18f, center.y - 10f))
                 
-                val pupilHighlights = 4f
-                drawCircle(color = Color.White, radius = pupilHighlights, center = Offset(center.x - 26f, center.y - 16f))
-                drawCircle(color = Color.White, radius = pupilHighlights, center = Offset(center.x + 18f, center.y - 16f))
+                val pupilHighlights = 3f
+                drawCircle(color = Color.White, radius = pupilHighlights, center = Offset(center.x - 21f, center.y - 13f))
+                drawCircle(color = Color.White, radius = pupilHighlights, center = Offset(center.x + 15f, center.y - 13f))
 
                 // Draw Beak
-                drawCircle(color = Color(0xFFFF9600), radius = 10f, center = Offset(center.x, center.y + 4f))
+                drawCircle(color = Color(0xFFFF9600), radius = 8f, center = Offset(center.x, center.y + 3f))
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Welcome to ThaiLingo!",
-            fontSize = 28.sp,
+            fontSize = 26.sp,
             fontWeight = FontWeight.ExtraBold,
             color = DuoGreen,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         Text(
             text = "Learn Thai completely offline in a fun, gamified way! Master vocabulary, pronunciation, listening and match phrases easily.",
-            fontSize = 16.sp,
+            fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Romanization Toggle Option Card
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onRomanizationChange(!showRomanizationOnly) }
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Show Romanization Only (Karaoke)",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DuoGreenDark
+                    )
+                    Text(
+                        text = "Show phonetic Romanization instead of Thai script characters",
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Switch(
+                    checked = showRomanizationOnly,
+                    onCheckedChange = onRomanizationChange,
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = DuoGreen,
+                        checkedTrackColor = DuoGreen.copy(alpha = 0.4f)
+                    ),
+                    modifier = Modifier.testTag("romanization_switch_onboarding")
+                )
+            }
+        }
     }
 }
 

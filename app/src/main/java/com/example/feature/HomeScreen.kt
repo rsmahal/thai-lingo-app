@@ -60,6 +60,34 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Welcoming and streak-celebrating Mascot Banner Card
+                item {
+                    val expression = if (progress.streak > 1) MascotExpression.HAPPY else MascotExpression.NEUTRAL
+                    val streakMessage = if (progress.streak <= 1) {
+                        "Sawatdee ka! Welcome back! Nong Chang is super excited to help you learn Thai today. Let's start our daily practice! 🐘✨"
+                    } else {
+                        "Amazing work! You've maintained a 🔥 ${progress.streak}-day study streak! Nong Chang is cheering for you. Keep up the momentum! 🐘🎉"
+                    }
+                    
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .testTag("home_mascot_greeting_card")
+                    ) {
+                        ThaiLingoMascot(
+                            expression = expression,
+                            customMessage = streakMessage,
+                            size = 85.dp,
+                            showBubble = true,
+                            modifier = Modifier.padding(12.dp)
+                        )
+                    }
+                }
+
                 // Section wise grouping
                 val groupedByCategory = lessons.groupBy { it.category }
                 

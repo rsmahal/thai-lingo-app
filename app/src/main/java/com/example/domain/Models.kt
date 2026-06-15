@@ -10,7 +10,8 @@ data class UserProgress(
     val lastActiveDate: String = "", // e.g., "y-M-d"
     val soundEnabled: Boolean = true,
     val isDarkMode: Boolean = false,
-    val currentLessonId: Int = 1
+    val currentLessonId: Int = 1,
+    val showRomanizationOnly: Boolean = false
 ) {
     fun xpProgressFraction(): Float {
         val xpForNextLevel = level * 100

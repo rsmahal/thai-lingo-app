@@ -61,9 +61,18 @@ class MainViewModel(
 
     private fun initializeData() {
         viewModelScope.launch {
-            repository.initializeDatabase()
-            _isInitializing.value = false
-            triggerDailyCheck()
+            try {
+                repository.initializeDatabase()
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Database initialization failed", e)
+            } finally {
+                _isInitializing.value = false
+            }
+            try {
+                triggerDailyCheck()
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Daily check failed", e)
+            }
         }
     }
 
@@ -105,7 +114,7 @@ class MainViewModel(
         recheckAchievements(updatedProgress)
     }
 
-    fun completeOnboarding(name: String, dailyGoal: Int) {
+    fun completeOnboarding(name: String, dailyGoal: Int, showRomanizationOnly: Boolean) {
         viewModelScope.launch {
             val progress = repository.getUserProgressOnce()
             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -117,7 +126,8 @@ class MainViewModel(
                 streak = 1,
                 lastActiveDate = today,
                 hearts = 5,
-                currentLessonId = 1
+                currentLessonId = 1,
+                showRomanizationOnly = showRomanizationOnly
             )
             repository.saveUserProgress(updated)
             recheckAchievements(updated)
@@ -168,6 +178,13 @@ class MainViewModel(
         viewModelScope.launch {
             val progress = repository.getUserProgressOnce()
             repository.saveUserProgress(progress.copy(soundEnabled = enabled))
+        }
+    }
+
+    fun toggleRomanization(enabled: Boolean) {
+        viewModelScope.launch {
+            val progress = repository.getUserProgressOnce()
+            repository.saveUserProgress(progress.copy(showRomanizationOnly = enabled))
         }
     }
 

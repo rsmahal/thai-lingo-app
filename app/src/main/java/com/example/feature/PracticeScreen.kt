@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.common.ServiceLocator
+import com.example.core.common.getRomanizedText
+import com.example.LocalShowRomanizationOnly
+import com.example.LocalVocabularyList
 import com.example.domain.Vocabulary
 import com.example.domain.Lesson
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -37,6 +40,9 @@ fun PracticeScreen(
     vocabulary: List<Vocabulary>,
     lessons: List<Lesson>
 ) {
+    val showRomanizationOnly = LocalShowRomanizationOnly.current
+    val vocabularyList = LocalVocabularyList.current
+
     val context = LocalContext.current
     val viewModel: PracticeViewModel = viewModel(factory = PracticeViewModel.Factory(context))
     
@@ -50,12 +56,30 @@ fun PracticeScreen(
     var activeChapter by remember { mutableIntStateOf(0) } // 0: Dictionary library, 1: Heart shop, 2: Active card study session
     var currentFlashcardStep by remember { mutableIntStateOf(0) }
 
+    var flashcardLimit by remember { mutableIntStateOf(5) }
+    var activeStudyVocabs by remember { mutableStateOf<List<Vocabulary>>(emptyList()) }
+
     val ttsHelper = remember { ServiceLocator.getTtsHelper(context) }
     
     val categories = listOf("All", "Greetings", "Food", "Numbers", "Travel", "Family")
 
     val completedCategories = remember(lessons) {
         lessons.filter { it.completed && it.id < 100 }.map { it.category }.toSet()
+    }
+
+    val seenVocab = remember(vocabulary, completedCategories) {
+        val filtered = vocabulary.filter { it.category in completedCategories }
+        if (filtered.isEmpty()) {
+            vocabulary.filter { it.category == "Greetings" }
+        } else {
+            filtered
+        }
+    }
+
+    LaunchedEffect(seenVocab) {
+        if (seenVocab.isNotEmpty() && (flashcardLimit > seenVocab.size || flashcardLimit == 5)) {
+            flashcardLimit = minOf(5, seenVocab.size)
+        }
     }
 
     val filteredVocab = remember(vocabulary, searchQuery, selectedCategory, completedCategories) {
@@ -221,16 +245,18 @@ fun PracticeScreen(
 
                                                 Column {
                                                     Text(
-                                                        text = word.thai,
+                                                        text = if (showRomanizationOnly) word.romanization else word.thai,
                                                         fontSize = 22.sp,
                                                         fontWeight = FontWeight.Bold,
                                                         color = MaterialTheme.colorScheme.onSurface
                                                     )
-                                                    Text(
-                                                        text = word.romanization,
-                                                        fontSize = 13.sp,
-                                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                                    )
+                                                    if (!showRomanizationOnly) {
+                                                        Text(
+                                                            text = word.romanization,
+                                                            fontSize = 13.sp,
+                                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                                        )
+                                                    }
                                                     
                                                     AnimatedVisibility(
                                                         visible = cardFlipped,
@@ -304,12 +330,79 @@ fun PracticeScreen(
 
                             Spacer(modifier = Modifier.height(28.dp))
 
-                            if (studyVocabs.isNotEmpty()) {
+                            if (seenVocab.isNotEmpty()) {
+                                // Horizontal Slider/Scrollbar Selection Card
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 18.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = "VOCABULARY POOL: ${seenVocab.size} words unlocked",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            letterSpacing = 1.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "$flashcardLimit Flashcards to Study",
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = DuoGreenDark
+                                        )
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            IconButton(
+                                                onClick = {
+                                                    if (flashcardLimit > 1) flashcardLimit--
+                                                },
+                                                modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.surface, CircleShape)
+                                            ) {
+                                                Icon(imageVector = Icons.Default.Remove, contentDescription = "Decrement flashcard limit", tint = DuoGreen)
+                                            }
+                                            
+                                            Slider(
+                                                value = flashcardLimit.toFloat(),
+                                                onValueChange = { flashcardLimit = it.toInt().coerceIn(1, seenVocab.size) },
+                                                valueRange = 1f..seenVocab.size.toFloat(),
+                                                colors = SliderDefaults.colors(
+                                                    thumbColor = DuoGreen,
+                                                    activeTrackColor = DuoGreen,
+                                                    inactiveTrackColor = DuoGreenLight.copy(alpha = 0.3f)
+                                                ),
+                                                modifier = Modifier.weight(1f).testTag("flashcard_limit_slider")
+                                            )
+                                            
+                                            IconButton(
+                                                onClick = {
+                                                    if (flashcardLimit < seenVocab.size) flashcardLimit++
+                                                },
+                                                modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.surface, CircleShape)
+                                            ) {
+                                                Icon(imageVector = Icons.Default.Add, contentDescription = "Increment flashcard limit", tint = DuoGreen)
+                                            }
+                                        }
+                                    }
+                                }
+
                                 // START REVIEW WORKOUT CARD
                                 Card(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
+                                            activeStudyVocabs = seenVocab.shuffled().take(flashcardLimit)
                                             activeChapter = 2
                                             currentFlashcardStep = 0
                                         }
@@ -325,7 +418,7 @@ fun PracticeScreen(
                                             }
                                             Column {
                                                 Text("Start Review Workout", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                                                Text("Review 5 random flashcards", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                                                Text("Review $flashcardLimit random flashcards", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                                             }
                                         }
                                         Text("START", fontWeight = FontWeight.Black, fontSize = 16.sp, color = DuoGreen)
@@ -350,8 +443,8 @@ fun PracticeScreen(
 
                     2 -> {
                         // ACTIVE REVIEW FLASHCARD SESSION
-                        if (studyVocabs.isNotEmpty() && currentFlashcardStep < studyVocabs.size) {
-                            val activeVocab = studyVocabs[currentFlashcardStep]
+                        if (activeStudyVocabs.isNotEmpty() && currentFlashcardStep < activeStudyVocabs.size) {
+                            val activeVocab = activeStudyVocabs[currentFlashcardStep]
                             val isFlipped = revealedFlashcards.contains(activeVocab.id)
                             
                             Column(
@@ -367,7 +460,7 @@ fun PracticeScreen(
                                     horizontalArrangement = Arrangement.Center,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    repeat(studyVocabs.size) { idx ->
+                                    repeat(activeStudyVocabs.size) { idx ->
                                         val color = if (idx <= currentFlashcardStep) DuoGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
                                         Box(modifier = Modifier.size(12.dp).padding(horizontal = 2.dp).background(color, CircleShape))
                                     }
@@ -406,19 +499,21 @@ fun PracticeScreen(
                                         Spacer(modifier = Modifier.height(28.dp))
 
                                         Text(
-                                            text = activeVocab.thai,
+                                            text = if (showRomanizationOnly) activeVocab.romanization else activeVocab.thai,
                                             fontSize = 44.sp,
                                             fontWeight = FontWeight.Black,
                                             color = MaterialTheme.colorScheme.onSurface,
                                             textAlign = TextAlign.Center
                                         )
 
-                                        Text(
-                                            text = "(${activeVocab.romanization})",
-                                            fontSize = 18.sp,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                            textAlign = TextAlign.Center
-                                        )
+                                        if (!showRomanizationOnly) {
+                                            Text(
+                                                text = "(${activeVocab.romanization})",
+                                                fontSize = 18.sp,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
 
                                         Spacer(modifier = Modifier.height(36.dp))
 
@@ -442,7 +537,7 @@ fun PracticeScreen(
                                 // Back / Next button controller
                                 Button(
                                     onClick = {
-                                        if (currentFlashcardStep < studyVocabs.size - 1) {
+                                        if (currentFlashcardStep < activeStudyVocabs.size - 1) {
                                             currentFlashcardStep++
                                         } else {
                                             // Finish Study Session! Restore Heart!
@@ -459,7 +554,7 @@ fun PracticeScreen(
                                     enabled = isFlipped
                                 ) {
                                     Text(
-                                        text = if (currentFlashcardStep == studyVocabs.size - 1) "FINISH WORKOUT" else "NEXT FLASHCARD",
+                                        text = if (currentFlashcardStep == activeStudyVocabs.size - 1) "FINISH WORKOUT" else "NEXT FLASHCARD",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 15.sp
                                     )

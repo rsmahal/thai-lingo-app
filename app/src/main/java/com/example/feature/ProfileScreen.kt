@@ -35,6 +35,7 @@ fun ProfileScreen(
     lessons: List<Lesson>,
     onToggleSound: (Boolean) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
+    onToggleRomanization: (Boolean) -> Unit,
     onResetProgress: () -> Unit
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
@@ -279,6 +280,35 @@ fun ProfileScreen(
                             onCheckedChange = onToggleDarkMode,
                             colors = SwitchDefaults.colors(checkedThumbColor = GemCyan, checkedTrackColor = GemCyanLight),
                             modifier = Modifier.testTag("theme_toggle")
+                        )
+                    }
+
+                    Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+
+                    // ROMANIZATION SWITCH
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(imageVector = Icons.Default.Translate, contentDescription = null, tint = DuoGreenDark)
+                            Column {
+                                Text("Show Romanization Only", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                Text("Show phonetic karaoke instead of Thai letters", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                            }
+                        }
+                        Switch(
+                            checked = progress.showRomanizationOnly,
+                            onCheckedChange = onToggleRomanization,
+                            colors = SwitchDefaults.colors(checkedThumbColor = DuoGreen, checkedTrackColor = DuoGreenLight),
+                            modifier = Modifier.testTag("romanization_toggle")
                         )
                     }
                 }
