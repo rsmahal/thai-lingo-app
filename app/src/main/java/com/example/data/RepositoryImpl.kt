@@ -1160,10 +1160,12 @@ class RepositoryImpl(
             val lessonsArray = root.getJSONArray("lessons")
             for (i in 0 until lessonsArray.length()) {
                 val lessonObj = lessonsArray.getJSONObject(i)
-                val lessonId = lessonObj.getInt("id")
-                val unlocked = lessonObj.getBoolean("unlocked")
-                val completed = lessonObj.getBoolean("completed")
-                val stars = lessonObj.getInt("stars")
+                val lessonId = lessonObj.optInt("id", -1)
+                val unlocked = lessonObj.optBoolean("unlocked", false)
+                val completed = lessonObj.optBoolean("completed", false)
+                val stars = lessonObj.optInt("stars", 0)
+                
+                if (lessonId == -1) continue
                 
                 val existing = lessonDao.getLessonById(lessonId)
                 if (existing != null) {
@@ -1182,16 +1184,18 @@ class RepositoryImpl(
                 val reviewArray = root.getJSONArray("reviewWords")
                 for (i in 0 until reviewArray.length()) {
                     val wordObj = reviewArray.getJSONObject(i)
-                    val thai = wordObj.getString("thai")
-                    val english = wordObj.getString("english")
-                    val romanization = wordObj.getString("romanization")
-                    val category = wordObj.getString("category")
+                    val thai = wordObj.optString("thai", "")
+                    val english = wordObj.optString("english", "")
+                    val romanization = wordObj.optString("romanization", "")
+                    val category = wordObj.optString("category", "General")
                     val addedAt = wordObj.optLong("addedAt", System.currentTimeMillis())
                     val intervalDays = wordObj.optInt("intervalDays", 0)
                     val wordStreak = wordObj.optInt("streak", 0)
                     val lastReviewedAt = wordObj.optLong("lastReviewedAt", 0)
                     val nextDueAt = wordObj.optLong("nextDueAt", System.currentTimeMillis())
                     val isMastered = wordObj.optBoolean("isMastered", false)
+                    
+                    if (thai.isEmpty() || english.isEmpty()) continue
                     
                     val entity = ReviewWordEntity(
                         thai = thai,

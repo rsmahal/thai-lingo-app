@@ -39,40 +39,42 @@ class PracticeViewModel(
     val seenVocabList: StateFlow<List<Vocabulary>> = _seenVocabList.asStateFlow()
 
     init {
-        loadPracticeVocabs()
+        viewModelScope.launch {
+            kotlinx.coroutines.flow.combine(
+                repository.getAllVocabulary(),
+                repository.getAllReviewWords(),
+                _flashcardCount
+            ) { allVocab, reviewWords, flashcardCount ->
+                Triple(allVocab, reviewWords, flashcardCount)
+            }.collect { (allVocab, reviewWords, flashcardCount) ->
+                try {
+                    val seenThaiWords = reviewWords.map { it.thai }.toSet()
+                    val filteredVocab = allVocab.filter { it.thai in seenThaiWords }
+
+                    val finalFiltered = if (filteredVocab.isEmpty()) {
+                        // Fallback to first few words if none are seen yet
+                        allVocab.take(10)
+                    } else {
+                        filteredVocab
+                    }
+
+                    _seenWordsCount.value = finalFiltered.size
+                    _seenVocabList.value = finalFiltered
+                    val currentCount = flashcardCount.coerceIn(1, maxOf(1, finalFiltered.size))
+                    _studyVocabs.value = finalFiltered.shuffled().take(currentCount)
+                } catch (e: Exception) {
+                    _studyVocabs.value = emptyList()
+                }
+            }
+        }
     }
 
     fun updateFlashcardCount(count: Int) {
         _flashcardCount.value = count
-        loadPracticeVocabs()
     }
 
     fun loadPracticeVocabs() {
-        viewModelScope.launch {
-            try {
-                // Get all vocabularies
-                val allVocab = repository.getAllVocabulary().first()
-                // Get review words (seen/encountered words)
-                val reviewWords = repository.getAllReviewWords().first()
-                val seenThaiWords = reviewWords.map { it.thai }.toSet()
-                val filteredVocab = allVocab.filter { it.thai in seenThaiWords }
-
-                val finalFiltered = if (filteredVocab.isEmpty()) {
-                    // Fallback to first few words if none are seen yet
-                    allVocab.take(10)
-                } else {
-                    filteredVocab
-                }
-
-                _seenWordsCount.value = finalFiltered.size
-                _seenVocabList.value = finalFiltered
-                val currentCount = _flashcardCount.value.coerceIn(1, maxOf(1, finalFiltered.size))
-                _studyVocabs.value = finalFiltered.shuffled().take(currentCount)
-            } catch (e: Exception) {
-                // Fail-safe fallback
-                _studyVocabs.value = emptyList()
-            }
-        }
+        // Handled reactively via flow combinations above
     }
 
     fun toggleFlashcardReveal(vocabId: Int) {

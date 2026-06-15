@@ -69,6 +69,9 @@ fun OnboardingScreen(
                         android.widget.Toast.makeText(context, "Failed to read file", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) {
+                        throw e
+                    }
                     android.widget.Toast.makeText(context, "Import failed: ${e.localizedMessage}", android.widget.Toast.LENGTH_LONG).show()
                 }
             }
