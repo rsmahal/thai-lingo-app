@@ -34,7 +34,7 @@ enum class ThaiRank(
         0, 
         149,
         "Backpack", 
-        "Represents the beginning of your Thai journey. Equipping your travel pack!", 
+        "Unlocks Lessons 1 - 12. Represents the beginning of your Thai journey. Equipping your travel pack!", 
         Color(0xFF8E9AA6), 
         Color(0xFF4E5A65)
     ),
@@ -44,7 +44,7 @@ enum class ThaiRank(
         150, 
         299,
         "Tuk-Tuk", 
-        "Cruising the vibrant streets! Ready to explore local food markets and ride tuk-tuks.", 
+        "Unlocks Lessons 13 - 24. Cruising the vibrant streets! Ready to explore local food markets and ride tuk-tuks.", 
         Color(0xFFCD7F32), 
         Color(0xFF8B4513)
     ),
@@ -54,7 +54,7 @@ enum class ThaiRank(
         300, 
         449,
         "Lotus", 
-        "Knowledge begins to bloom serenely like a lotus. Master shopping, numbers, and transit.", 
+        "Unlocks Lessons 25 - 36. Knowledge begins to bloom serenely like a lotus. Master shopping, numbers, and transit.", 
         Color(0xFFE0F2F1), 
         Color(0xFF5E919c)
     ),
@@ -64,7 +64,7 @@ enum class ThaiRank(
         450, 
         599,
         "King's Crown", 
-        "A royal handle on pronunciation and sentence structures. Fluency is shining bright.", 
+        "Unlocks Lessons 37 - 44. A royal handle on pronunciation and sentence structures. Fluency is shining bright.", 
         Color(0xFFFFD700), 
         Color(0xFFF57F17)
     ),
@@ -74,7 +74,7 @@ enum class ThaiRank(
         600, 
         9999,
         "Buddha", 
-        "Absolute enlightenment. Deep social connections and profound linguistic mastery.", 
+        "Unlocks Lessons 45 - 50. Absolute enlightenment. Deep social connections and profound linguistic mastery.", 
         Color(0xFF00C853), 
         Color(0xFF004D40)
     );

@@ -63,28 +63,16 @@ fun PracticeScreen(
     
     val categories = listOf("All", "Greetings", "Food", "Numbers", "Travel", "Family")
 
-    val completedCategories = remember(lessons) {
-        lessons.filter { it.completed && it.id < 100 }.map { it.category }.toSet()
-    }
-
-    val seenVocab = remember(vocabulary, completedCategories) {
-        val filtered = vocabulary.filter { it.category in completedCategories }
-        if (filtered.isEmpty()) {
-            vocabulary.filter { it.category == "Greetings" }
-        } else {
-            filtered
-        }
-    }
+    val seenVocab by viewModel.seenVocabList.collectAsState()
 
     LaunchedEffect(seenVocab) {
-        if (seenVocab.isNotEmpty() && (flashcardLimit > seenVocab.size || flashcardLimit == 5)) {
-            flashcardLimit = minOf(5, seenVocab.size)
+        if (seenVocab.isNotEmpty()) {
+            flashcardLimit = flashcardLimit.coerceIn(1, seenVocab.size)
         }
     }
 
-    val filteredVocab = remember(vocabulary, searchQuery, selectedCategory, completedCategories) {
-        vocabulary.filter { word ->
-            word.category in completedCategories &&
+    val filteredVocab = remember(seenVocab, searchQuery, selectedCategory) {
+        seenVocab.filter { word ->
             (selectedCategory == "All" || word.category == selectedCategory) &&
             (searchQuery.isEmpty() || 
              word.thai.contains(searchQuery, ignoreCase = true) || 
@@ -198,7 +186,7 @@ fun PracticeScreen(
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
-                                                if (completedCategories.isEmpty()) "🚫 No words discovered yet!\n\nComplete standard lessons in the Learn track to unlock words in your bilingual practice dictionary." else "No Thai words found! Try another keyword.",
+                                                if (seenVocab.isEmpty()) "🚫 No words discovered yet!\n\nComplete standard lessons in the Learn track to unlock words in your bilingual practice dictionary." else "No Thai words found! Try another keyword.",
                                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                                 textAlign = TextAlign.Center
                                             )

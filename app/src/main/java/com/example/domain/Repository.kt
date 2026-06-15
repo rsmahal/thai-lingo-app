@@ -17,6 +17,7 @@ interface ThaiLingoRepository {
     suspend fun addWordToReviewQueue(thaiWord: String)
     suspend fun removeWordFromReviewQueue(thaiWord: String)
     suspend fun updateReviewWordSrs(thaiWord: String, isCorrect: Boolean)
+    suspend fun unlockReviewWord(thaiWord: String)
     
     suspend fun getExercisesForLesson(lessonId: Int): List<Exercise>
     
@@ -25,4 +26,7 @@ interface ThaiLingoRepository {
     
     suspend fun initializeDatabase()
     suspend fun resetAllProgress()
+    
+    suspend fun exportProgressJson(): String
+    suspend fun importProgressJson(jsonString: String): Boolean
 }

@@ -40,6 +40,43 @@ fun HomeScreen(
 ) {
     var selectedLessonForSheet by remember { mutableStateOf<Lesson?>(null) }
     var lessonToConfirmReset by remember { mutableStateOf<Lesson?>(null) }
+
+    val lazyListState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    val scrollToIndex = remember(lessons) {
+        if (lessons.isEmpty()) return@remember 0
+        
+        val groupedByCategory = lessons.groupBy { it.category }
+        var currentIndex = 1 // starts after greeting card item (index 0)
+        
+        for (entry in groupedByCategory.entries) {
+            val category = entry.key
+            val lessonsInCat = entry.value
+            val standardLessons = lessonsInCat.filter { it.id < 100 }
+            val testLesson = lessonsInCat.find { it.id >= 100 }
+            
+            val completedCount = standardLessons.count { it.completed }
+            val isNotFull = completedCount < standardLessons.size
+            
+            if (isNotFull) {
+                return@remember currentIndex
+            }
+            
+            currentIndex += 1 // Category banner (stickyHeader)
+            currentIndex += standardLessons.size // Items
+            if (testLesson != null) {
+                currentIndex += 1 // Topic test item
+            }
+            currentIndex += 1 // Spacer item
+        }
+        0
+    }
+
+    LaunchedEffect(scrollToIndex) {
+        if (scrollToIndex > 0) {
+            lazyListState.scrollToItem(scrollToIndex)
+        }
+    }
     
     Box(
         modifier = Modifier
@@ -49,9 +86,10 @@ fun HomeScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // DUOLINGO-STYLE HEADER WITH TOP BAR INSETS
             HomeHeader(progress = progress, lessons = lessons)
-
+ 
             // ROADMAP OF CURRICULUM
             LazyColumn(
+                state = lazyListState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -60,31 +98,56 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Welcoming and streak-celebrating Mascot Banner Card
+                // Welcoming study progress greeting card
                 item {
-                    val expression = if (progress.streak > 1) MascotExpression.HAPPY else MascotExpression.NEUTRAL
                     val streakMessage = if (progress.streak <= 1) {
-                        "Sawatdee ka! Welcome back! Nong Chang is super excited to help you learn Thai today. Let's start our daily practice! 🐘✨"
+                        "Sawatdee ka! Welcome back! Ready to continue your journey? Let's start today's practice and build your daily study habits! ✨"
                     } else {
-                        "Amazing work! You've maintained a 🔥 ${progress.streak}-day study streak! Nong Chang is cheering for you. Keep up the momentum! 🐘🎉"
+                        "Keep the momentum! You've maintained a 🔥 ${progress.streak}-day study streak. Continue practicing to master more Thai sentences!"
                     }
                     
                     Surface(
                         shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp)
-                            .testTag("home_mascot_greeting_card")
+                            .testTag("home_study_greeting_card")
                     ) {
-                        ThaiLingoMascot(
-                            expression = expression,
-                            customMessage = streakMessage,
-                            size = 85.dp,
-                            showBubble = true,
-                            modifier = Modifier.padding(12.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (progress.streak > 1) Icons.Default.Whatshot else Icons.Default.Star,
+                                contentDescription = null,
+                                tint = if (progress.streak > 1) StreakOrange else DuoGreen,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(
+                                        color = (if (progress.streak > 1) StreakOrange else DuoGreen).copy(alpha = 0.1f),
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+                                    .padding(6.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = if (progress.streak > 1) "Daily Streak Active" else "Welcome Back",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = streakMessage,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -204,6 +267,14 @@ fun HomeHeader(
     var showLevelDialog by remember { mutableStateOf(false) }
     val totalStars = lessons.sumOf { it.stars }
     val currentRank = ThaiRank.fromStars(totalStars)
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val getRankColor: (ThaiRank) -> Color = { rank ->
+        if (isDark) {
+            if (rank == ThaiRank.SILVER) Color(0xFF80CBC4) else rank.primaryColor
+        } else {
+            rank.secColor
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -240,12 +311,12 @@ fun HomeHeader(
                         text = currentRank.title,
                         fontWeight = FontWeight.Black,
                         fontSize = 11.sp,
-                        color = currentRank.secColor
+                        color = getRankColor(currentRank)
                     )
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = "Rank details dropdown",
-                        tint = currentRank.secColor,
+                        tint = getRankColor(currentRank),
                         modifier = Modifier.size(12.dp)
                     )
                 }
@@ -293,7 +364,7 @@ fun HomeHeader(
                                     text = "Current Rank: ${currentRank.title}",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = currentRank.secColor
+                                    color = getRankColor(currentRank)
                                 )
                             }
                         }
@@ -353,7 +424,7 @@ fun HomeHeader(
                                                     text = "${r.title} (${r.badgeSymbol})",
                                                     fontWeight = FontWeight.Bold,
                                                     fontSize = 13.sp,
-                                                    color = if (isUnlocked) r.secColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                                    color = if (isUnlocked) getRankColor(r) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                                                 )
                                                 Text(
                                                     text = r.starRange,
@@ -378,7 +449,7 @@ fun HomeHeader(
                                             Icon(
                                                 imageVector = Icons.Default.CheckCircle,
                                                 contentDescription = "Active Rank",
-                                                tint = r.secColor,
+                                                tint = getRankColor(r),
                                                 modifier = Modifier.size(18.dp)
                                             )
                                         } else if (!isUnlocked) {

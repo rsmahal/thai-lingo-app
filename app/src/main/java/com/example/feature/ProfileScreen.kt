@@ -2,6 +2,7 @@ package com.example.feature
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,6 +18,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import android.content.ClipData
+import kotlinx.coroutines.launch
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,9 +43,96 @@ fun ProfileScreen(
     onToggleSound: (Boolean) -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onToggleRomanization: (Boolean) -> Unit,
-    onResetProgress: () -> Unit
+    onResetProgress: () -> Unit,
+    onExportProgress: suspend () -> String,
+    onImportProgress: suspend (String) -> Boolean
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    var showImportConfirmDialog by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                try {
+                    val jsonString = onExportProgress()
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(jsonString.toByteArray())
+                    }
+                    android.widget.Toast.makeText(context, "Progress exported successfully!", android.widget.Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(context, "Export failed: ${e.localizedMessage}", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                try {
+                    val content = context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                        inputStream.bufferedReader().use { it.readText() }
+                    }
+                    if (content != null) {
+                        val success = onImportProgress(content)
+                        if (success) {
+                            android.widget.Toast.makeText(context, "Progress imported successfully!", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            android.widget.Toast.makeText(context, "Failed to import: Invalid backup file", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        android.widget.Toast.makeText(context, "Failed to read file", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(context, "Import failed: ${e.localizedMessage}", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    if (showImportConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportConfirmDialog = false },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.CloudUpload, contentDescription = null, tint = DuoGreenDark)
+                    Text("Import Backup?", fontWeight = FontWeight.Black, fontSize = 20.sp, color = DuoGreenDark)
+                }
+            },
+            text = {
+                Text(
+                    text = "You are about to load your progress from a backup file. Your current offline lesson progress, stars, settings, and spaced-repetition cards WILL BE OVERWRITTEN. Are you sure you want to proceed?",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showImportConfirmDialog = false
+                        importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = DuoGreen)
+                ) {
+                    Text("Confirm & Pick File", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportConfirmDialog = false }) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.outline)
+                }
+            }
+        )
+    }
 
     if (showResetDialog) {
         AlertDialog(
@@ -66,6 +160,14 @@ fun ProfileScreen(
 
     val totalStars = lessons.sumOf { it.stars }
     val rank = ThaiRank.fromStars(totalStars)
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val getRankColor: (ThaiRank) -> Color = { r ->
+        if (isDark) {
+            if (r == ThaiRank.SILVER) Color(0xFF80CBC4) else r.primaryColor
+        } else {
+            r.secColor
+        }
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -133,7 +235,7 @@ fun ProfileScreen(
                         text = "${rank.title} Rank",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = rank.secColor
+                        color = getRankColor(rank)
                     )
                     Text(
                         text = "•",
@@ -309,6 +411,75 @@ fun ProfileScreen(
                             onCheckedChange = onToggleRomanization,
                             colors = SwitchDefaults.colors(checkedThumbColor = DuoGreen, checkedTrackColor = DuoGreenLight),
                             modifier = Modifier.testTag("romanization_toggle")
+                        )
+                    }
+                }
+            }
+        }
+
+        // LOCAL FILE BACKUP & RESTORE UTILITY
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Export Progress Card
+                Card(
+                    onClick = { exportLauncher.launch("thailingo_progress_backup.json") },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(60.dp)
+                        .testTag("export_progress_trigger_btn"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = DuoGreen.copy(alpha = 0.08f)),
+                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+                        width = 1.3.dp,
+                        brush = androidx.compose.ui.graphics.SolidColor(DuoGreen.copy(alpha = 0.3f))
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.Share, contentDescription = null, tint = DuoGreenDark, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Export File",
+                            color = DuoGreenDark,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+
+                // Import Progress Card
+                Card(
+                    onClick = { showImportConfirmDialog = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(60.dp)
+                        .testTag("import_progress_trigger_btn"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = DuoGreen.copy(alpha = 0.08f)),
+                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+                        width = 1.3.dp,
+                        brush = androidx.compose.ui.graphics.SolidColor(DuoGreen.copy(alpha = 0.3f))
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(imageVector = Icons.Default.CloudUpload, contentDescription = null, tint = DuoGreenDark, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Import File",
+                            color = DuoGreenDark,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 14.sp
                         )
                     }
                 }

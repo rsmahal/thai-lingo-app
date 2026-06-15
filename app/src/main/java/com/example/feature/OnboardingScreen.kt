@@ -5,6 +5,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
@@ -132,45 +134,24 @@ fun WelcomeView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Beautiful Drawn Custom Mascot - Cute ThaiLingo Owl
+        // Beautiful Drawn Custom Logo instead of mascot
         Box(
             modifier = Modifier
-                .size(140.dp)
-                .padding(12.dp)
+                .size(120.dp)
+                .background(DuoGreen.copy(alpha = 0.1f), RoundedCornerShape(32.dp))
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val center = Offset(size.width / 2f, size.height / 2f)
-                
-                // Draw feet
-                drawCircle(color = Color(0xFFFF9600), radius = 14f, center = Offset(center.x - 26f, center.y + 50f))
-                drawCircle(color = Color(0xFFFF9600), radius = 14f, center = Offset(center.x + 26f, center.y + 50f))
-                
-                // Draw Body
-                drawCircle(color = DuoGreen, radius = 56f, center = center)
-                
-                // Draw Wing covers
-                drawCircle(color = DuoGreenDark, radius = 20f, center = Offset(center.x - 48f, center.y + 8f))
-                drawCircle(color = DuoGreenDark, radius = 20f, center = Offset(center.x + 48f, center.y + 8f))
-
-                // Draw Eyes circle
-                drawCircle(color = Color.White, radius = 18f, center = Offset(center.x - 18f, center.y - 10f))
-                drawCircle(color = Color.White, radius = 18f, center = Offset(center.x + 18f, center.y - 10f))
-                
-                // Draw Pupils
-                drawCircle(color = Color(0xFF131F22), radius = 8f, center = Offset(center.x - 18f, center.y - 10f))
-                drawCircle(color = Color(0xFF131F22), radius = 8f, center = Offset(center.x + 18f, center.y - 10f))
-                
-                val pupilHighlights = 3f
-                drawCircle(color = Color.White, radius = pupilHighlights, center = Offset(center.x - 21f, center.y - 13f))
-                drawCircle(color = Color.White, radius = pupilHighlights, center = Offset(center.x + 15f, center.y - 13f))
-
-                // Draw Beak
-                drawCircle(color = Color(0xFFFF9600), radius = 8f, center = Offset(center.x, center.y + 3f))
-            }
+            Icon(
+                imageVector = Icons.Default.Translate,
+                contentDescription = "ThaiLingo Logo",
+                tint = DuoGreen,
+                modifier = Modifier.fillMaxSize()
+            )
         }
-
+ 
         Spacer(modifier = Modifier.height(16.dp))
-
+ 
         Text(
             text = "Welcome to ThaiLingo!",
             fontSize = 26.sp,
@@ -178,9 +159,9 @@ fun WelcomeView(
             color = DuoGreen,
             textAlign = TextAlign.Center
         )
-
+ 
         Spacer(modifier = Modifier.height(8.dp))
-
+ 
         Text(
             text = "Learn Thai completely offline in a fun, gamified way! Master vocabulary, pronunciation, listening and match phrases easily.",
             fontSize = 14.sp,
@@ -188,9 +169,9 @@ fun WelcomeView(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
-
+ 
         Spacer(modifier = Modifier.height(16.dp))
-
+ 
         // Romanization Toggle Option Card
         Card(
             modifier = Modifier

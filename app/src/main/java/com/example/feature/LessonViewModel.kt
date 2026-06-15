@@ -84,7 +84,11 @@ class LessonViewModel(
                     emptyList()
                 } else {
                     val range = getLessonVocabIdsRange(lessonId)
-                    allVocab.filter { it.id in range }
+                    val list = allVocab.filter { it.id in range }
+                    list.forEach { vocab ->
+                        repository.unlockReviewWord(vocab.thai)
+                    }
+                    list
                 }
 
                 val exercises = if (isTopicTest) {
@@ -124,6 +128,10 @@ class LessonViewModel(
                         }
                     }
                     combined.addAll(fixedSentences)
+                    val otherCustomExercises = dbExercises.filter {
+                        it.type != ExerciseType.MATCHING && it.type != ExerciseType.SENTENCE_BUILD && (it.id % 100) > 4
+                    }
+                    combined.addAll(otherCustomExercises)
                     val shuffledList = combined.shuffled().toMutableList()
                     if (lessonId > 1 && lessonId < 100) {
                         val prevLessonIds = (1 until lessonId)

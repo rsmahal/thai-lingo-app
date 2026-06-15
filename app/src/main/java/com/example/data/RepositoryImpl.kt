@@ -4,8 +4,11 @@ import com.example.data.local.*
 import com.example.domain.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import org.json.JSONObject
+import org.json.JSONArray
 
 class RepositoryImpl(
     private val userProgressDao: UserProgressDao,
@@ -134,6 +137,30 @@ class RepositoryImpl(
 
     override suspend fun removeWordFromReviewQueue(thaiWord: String) = withContext(Dispatchers.IO) {
         reviewWordDao.deleteReviewWord(thaiWord)
+    }
+
+    override suspend fun unlockReviewWord(thaiWord: String) = withContext(Dispatchers.IO) {
+        val existing = reviewWordDao.getReviewWord(thaiWord)
+        if (existing == null) {
+            val allVocab = getSampleVocabulary()
+            val vocab = allVocab.find { it.thai == thaiWord }
+            if (vocab != null) {
+                val now = System.currentTimeMillis()
+                val entity = ReviewWordEntity(
+                    thai = vocab.thai,
+                    english = vocab.english,
+                    romanization = vocab.romanization,
+                    category = vocab.category,
+                    addedAt = now,
+                    intervalDays = 1,
+                    streak = 1,
+                    lastReviewedAt = now,
+                    nextDueAt = now + 1 * 24 * 3600 * 1000L,
+                    isMastered = false
+                )
+                reviewWordDao.insertReviewWord(entity)
+            }
+        }
     }
 
     override suspend fun getExercisesForLesson(lessonId: Int): List<Exercise> = withContext(Dispatchers.IO) {
@@ -879,7 +906,7 @@ class RepositoryImpl(
                 audioText = ""
             ))
 
-            // 5. First English -> Thai Sentence Building Exercise (SENTENCE_BUILD)
+            // 5. English -> Thai Sentence Building Exercise (SENTENCE_BUILD)
             val sentenceEnToTh1 = when (lessonId) {
                 1 -> Triple("Hello, nice to meet you.", "สวัสดี|ยินดีที่ได้รู้จัก", listOf("ขอโทษ", "ขอบคุณ", "ไม่ใช่", "โชคดี"))
                 2 -> Triple("Goodbye, see you again.", "ลาก่อน|แล้วพบกันใหม่", listOf("สวัสดี", "ยินดีเสมอกับคุณครับ", "ใช่", "ผมชื่อ"))
@@ -915,43 +942,7 @@ class RepositoryImpl(
                 audioText = enToThCorrect1.replace("|", " ")
             ))
 
-            // 6. Second English -> Thai Sentence Building Exercise (SENTENCE_BUILD)
-            val sentenceEnToTh2 = when (lessonId) {
-                1 -> Triple("Hello, thank you.", "สวัสดี|ขอบคุณ", listOf("ยินดี", "โชคดี", "ขอโทษ", "สบายดี"))
-                2 -> Triple("Good night, you.", "ราตรีสวัสดิ์|คุณ", listOf("ขอบคุณ", "สบายดี", "ผม", "ยินดีด้วย"))
-                5 -> Triple("Drink water.", "ดื่ม|น้ำ", listOf("ข้าว", "กิน", "ส้มตำ", "ชา"))
-                6 -> Triple("Hungry for chicken.", "หิว|ไก่", listOf("ชา", "หมู", "ปลา", "ผลไม้"))
-                9 -> Triple("Price five Baht.", "ราคา|ห้า|บาท", listOf("สี่", "สอง", "ร้อย", "แพง"))
-                10 -> Triple("Buy nine shirts.", "ซื้อ|เสื้อ|เก้า", listOf("หก", "เจ็ด", "แปด", "ศูนย์"))
-                13 -> Triple("Go to the hotel.", "ไป|โรงแรม", listOf("เลี้ยวขวา", "เลี้ยวซ้าย", "สถานี", "ห้องน้ำ"))
-                14 -> Triple("Train is near.", "รถไฟ|ใกล้", listOf("ไกล", "ตั๋ว", "บ้าน", "ตรงไป"))
-                17 -> Triple("Father and younger brother.", "พ่อ|และ|น้องชาย", listOf("พี่ชาย", "แม่", "ลูก", "เพื่อน"))
-                18 -> Triple("Have five children.", "มี|เด็ก|ห้า|คน", listOf("ไม่", "ดี", "ชอบ", "คุณยาย"))
-                else -> {
-                    val w2 = lessonVocab.getOrElse(2) { lessonVocab[0] }
-                    val w3 = lessonVocab.getOrElse(3) { lessonVocab[0] }
-                    val eng2 = w2.english.split("/").first().trim()
-                    val eng3 = w3.english.split("/").first().trim()
-                    Triple("$eng2 and $eng3.", "${w2.thai}|และ|${w3.thai}", listOf("ขอบคุณ", "สบายดี", "ผม", "ยินดีเสมอกับคุณครับ"))
-                }
-            }
-
-            val enToThCorrect2 = sentenceEnToTh2.second
-            val enToThCorrectList2 = enToThCorrect2.split("|")
-            val enToThOptions2 = (enToThCorrectList2 + sentenceEnToTh2.third).shuffled()
-            list.add(Exercise(
-                id = lessonId * 100 + 6,
-                lessonId = lessonId,
-                type = ExerciseType.SENTENCE_BUILD,
-                prompt = "Assemble the Thai words that translate this sentence:",
-                question = sentenceEnToTh2.first,
-                correctAnswer = enToThCorrect2,
-                romanization = "",
-                options = enToThOptions2,
-                audioText = enToThCorrect2.replace("|", " ")
-            ))
-
-            // 7. First Thai -> English Sentence Building Exercise (SENTENCE_BUILD)
+            // 6. Thai -> English Sentence Building Exercise (SENTENCE_BUILD)
             val sentenceThToEn1 = when (lessonId) {
                 1 -> Triple("ใช่ สบายดี", "Yes|I am fine", listOf("Hello", "Sorry", "No", "Goodbye"))
                 2 -> Triple("สบายดี ขอบคุณ", "I am fine|Thank you", listOf("Yes", "Goodbye", "Not correct", "You"))
@@ -976,7 +967,7 @@ class RepositoryImpl(
             val thToEnCorrectList1 = thToEnCorrect1.split("|")
             val thToEnOptions1 = (thToEnCorrectList1 + sentenceThToEn1.third).shuffled()
             list.add(Exercise(
-                id = lessonId * 100 + 7,
+                id = lessonId * 100 + 6,
                 lessonId = lessonId,
                 type = ExerciseType.SENTENCE_BUILD,
                 prompt = "Translate this Thai sentence into English:",
@@ -987,7 +978,7 @@ class RepositoryImpl(
                 audioText = ""
             ))
 
-            // 8. Second Thai -> English Sentence Building Exercise (SENTENCE_BUILD)
+            // 7. Listening Sentence Building Exercise (SENTENCE_BUILD)
             val sentenceThToEn2 = when (lessonId) {
                 1 -> Triple("สบายดีไหม ขอบคุณ", "How are you?|Thank you", listOf("Sorry", "Yes", "Goodbye", "Hello"))
                 2 -> Triple("ยินดีด้วย คุณ", "Congratulations|You", listOf("Good night", "How are you?", "Glad", "See you again"))
@@ -1012,15 +1003,33 @@ class RepositoryImpl(
             val thToEnCorrectList2 = thToEnCorrect2.split("|")
             val thToEnOptions2 = (thToEnCorrectList2 + sentenceThToEn2.third).shuffled()
             list.add(Exercise(
-                id = lessonId * 100 + 8,
+                id = lessonId * 100 + 7,
                 lessonId = lessonId,
                 type = ExerciseType.SENTENCE_BUILD,
-                prompt = "Translate this Thai sentence into English:",
-                question = sentenceThToEn2.first,
+                prompt = "Listen and assemble the English translation:",
+                question = "", // Empty to play only Thai voice with no text shown
                 correctAnswer = thToEnCorrect2,
                 romanization = "",
                 options = thToEnOptions2,
-                audioText = ""
+                audioText = sentenceThToEn2.first
+            ))
+
+            // 8. Additional Translation Question (MULTIPLE_CHOICE to compensate)
+            val normalCorrectAnswer = thToEnCorrect2.replace("|", " ")
+            val distractor1 = sentenceThToEn1.second.replace("|", " ")
+            val distractor2 = sentenceEnToTh1.first
+            val distractor3 = "Please try again."
+            val mcOptions = listOf(normalCorrectAnswer, distractor1, distractor2, distractor3).distinct().shuffled()
+            list.add(Exercise(
+                id = lessonId * 100 + 8,
+                lessonId = lessonId,
+                type = ExerciseType.MULTIPLE_CHOICE,
+                prompt = "Translate this Thai sentence:",
+                question = sentenceThToEn2.first,
+                correctAnswer = normalCorrectAnswer,
+                romanization = "",
+                options = mcOptions,
+                audioText = sentenceThToEn2.first
             ))
         }
 
@@ -1035,5 +1044,160 @@ class RepositoryImpl(
             Achievement("stars_60", "Star Champion", "Earn 60 Stars in total.", 0, 60, isUnlocked = false, "star"),
             Achievement("lessons_3", "Graduate", "Complete 3 full lessons.", 0, 3, isUnlocked = false, "lesson")
         )
+    }
+
+    override suspend fun exportProgressJson(): String = withContext(Dispatchers.IO) {
+        val root = JSONObject()
+        root.put("schemaVersion", 1)
+        
+        // 1. Progress
+        val progress = userProgressDao.getProgressOnce() ?: UserProgressEntity.fromDomain(UserProgress())
+        val progressObj = JSONObject().apply {
+            put("name", progress.name)
+            put("streak", progress.streak)
+            put("xp", progress.xp)
+            put("hearts", progress.hearts)
+            put("level", progress.level)
+            put("selectedLanguageGoal", progress.selectedLanguageGoal)
+            put("lastActiveDate", progress.lastActiveDate)
+            put("soundEnabled", progress.soundEnabled)
+            put("isDarkMode", progress.isDarkMode)
+            put("currentLessonId", progress.currentLessonId)
+            put("showRomanizationOnly", progress.showRomanizationOnly)
+        }
+        root.put("progress", progressObj)
+        
+        // 2. Lessons
+        val lessonsList = lessonDao.getAllLessons().first()
+        val lessonsArray = JSONArray()
+        for (lesson in lessonsList) {
+            val lessonObj = JSONObject().apply {
+                put("id", lesson.id)
+                put("unlocked", lesson.unlocked)
+                put("completed", lesson.completed)
+                put("stars", lesson.stars)
+            }
+            lessonsArray.put(lessonObj)
+        }
+        root.put("lessons", lessonsArray)
+        
+        // 3. Review Words
+        val reviewWordsList = reviewWordDao.getAllReviewWords().first()
+        val reviewArray = JSONArray()
+        for (word in reviewWordsList) {
+            val wordObj = JSONObject().apply {
+                put("thai", word.thai)
+                put("english", word.english)
+                put("romanization", word.romanization)
+                put("category", word.category)
+                put("addedAt", word.addedAt)
+                put("intervalDays", word.intervalDays)
+                put("streak", word.streak)
+                put("lastReviewedAt", word.lastReviewedAt)
+                put("nextDueAt", word.nextDueAt)
+                put("isMastered", word.isMastered)
+            }
+            reviewArray.put(wordObj)
+        }
+        root.put("reviewWords", reviewArray)
+        
+        root.toString(2)
+    }
+
+    override suspend fun importProgressJson(jsonString: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val root = JSONObject(jsonString)
+            if (!root.has("progress") || !root.has("lessons")) {
+                return@withContext false
+            }
+            
+            // 1. Progress
+            val progressObj = root.getJSONObject("progress")
+            val name = progressObj.optString("name", "Thai Learner")
+            val streak = progressObj.optInt("streak", 1)
+            val xp = progressObj.optInt("xp", 0)
+            val hearts = progressObj.optInt("hearts", 5)
+            val level = progressObj.optInt("level", 1)
+            val selectedLanguageGoal = progressObj.optInt("selectedLanguageGoal", 20)
+            val lastActiveDate = progressObj.optString("lastActiveDate", "")
+            val soundEnabled = progressObj.optBoolean("soundEnabled", true)
+            val isDarkMode = progressObj.optBoolean("isDarkMode", false)
+            val currentLessonId = progressObj.optInt("currentLessonId", 1)
+            val showRomanizationOnly = progressObj.optBoolean("showRomanizationOnly", false)
+            
+            val updatedProgress = UserProgressEntity(
+                id = 1,
+                name = name,
+                streak = streak,
+                xp = xp,
+                hearts = hearts,
+                level = level,
+                selectedLanguageGoal = selectedLanguageGoal,
+                lastActiveDate = lastActiveDate,
+                soundEnabled = soundEnabled,
+                isDarkMode = isDarkMode,
+                currentLessonId = currentLessonId,
+                showRomanizationOnly = showRomanizationOnly
+            )
+            userProgressDao.saveProgress(updatedProgress)
+            
+            // 2. Lessons
+            val lessonsArray = root.getJSONArray("lessons")
+            for (i in 0 until lessonsArray.length()) {
+                val lessonObj = lessonsArray.getJSONObject(i)
+                val lessonId = lessonObj.getInt("id")
+                val unlocked = lessonObj.getBoolean("unlocked")
+                val completed = lessonObj.getBoolean("completed")
+                val stars = lessonObj.getInt("stars")
+                
+                val existing = lessonDao.getLessonById(lessonId)
+                if (existing != null) {
+                    val updatedLesson = existing.copy(
+                        unlocked = unlocked,
+                        completed = completed,
+                        stars = stars
+                    )
+                    lessonDao.updateLesson(updatedLesson)
+                }
+            }
+            
+            // 3. Review Words
+            if (root.has("reviewWords")) {
+                reviewWordDao.clearReviewQueue()
+                val reviewArray = root.getJSONArray("reviewWords")
+                for (i in 0 until reviewArray.length()) {
+                    val wordObj = reviewArray.getJSONObject(i)
+                    val thai = wordObj.getString("thai")
+                    val english = wordObj.getString("english")
+                    val romanization = wordObj.getString("romanization")
+                    val category = wordObj.getString("category")
+                    val addedAt = wordObj.optLong("addedAt", System.currentTimeMillis())
+                    val intervalDays = wordObj.optInt("intervalDays", 0)
+                    val wordStreak = wordObj.optInt("streak", 0)
+                    val lastReviewedAt = wordObj.optLong("lastReviewedAt", 0)
+                    val nextDueAt = wordObj.optLong("nextDueAt", System.currentTimeMillis())
+                    val isMastered = wordObj.optBoolean("isMastered", false)
+                    
+                    val entity = ReviewWordEntity(
+                        thai = thai,
+                        english = english,
+                        romanization = romanization,
+                        category = category,
+                        addedAt = addedAt,
+                        intervalDays = intervalDays,
+                        streak = wordStreak,
+                        lastReviewedAt = lastReviewedAt,
+                        nextDueAt = nextDueAt,
+                        isMastered = isMastered
+                    )
+                    reviewWordDao.insertReviewWord(entity)
+                }
+            }
+            
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("RepositoryImpl", "Import failed", e)
+            false
+        }
     }
 }

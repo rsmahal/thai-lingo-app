@@ -10,6 +10,7 @@ import com.example.domain.Vocabulary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class PracticeViewModel(
@@ -28,17 +29,48 @@ class PracticeViewModel(
     private val _showFlashcardAnswers = MutableStateFlow<Set<Int>>(emptySet())
     val showFlashcardAnswers: StateFlow<Set<Int>> = _showFlashcardAnswers.asStateFlow()
 
+    private val _flashcardCount = MutableStateFlow(5)
+    val flashcardCount: StateFlow<Int> = _flashcardCount.asStateFlow()
+
+    private val _seenWordsCount = MutableStateFlow(0)
+    val seenWordsCount: StateFlow<Int> = _seenWordsCount.asStateFlow()
+
+    private val _seenVocabList = MutableStateFlow<List<Vocabulary>>(emptyList())
+    val seenVocabList: StateFlow<List<Vocabulary>> = _seenVocabList.asStateFlow()
+
     init {
+        loadPracticeVocabs()
+    }
+
+    fun updateFlashcardCount(count: Int) {
+        _flashcardCount.value = count
         loadPracticeVocabs()
     }
 
     fun loadPracticeVocabs() {
         viewModelScope.launch {
-            repository.getAllVocabulary().collect { list ->
-                if (list.isNotEmpty()) {
-                    // Pull 5 random vocab items for the practice workout
-                    _studyVocabs.value = list.shuffled().take(5)
+            try {
+                // Get all vocabularies
+                val allVocab = repository.getAllVocabulary().first()
+                // Get review words (seen/encountered words)
+                val reviewWords = repository.getAllReviewWords().first()
+                val seenThaiWords = reviewWords.map { it.thai }.toSet()
+                val filteredVocab = allVocab.filter { it.thai in seenThaiWords }
+
+                val finalFiltered = if (filteredVocab.isEmpty()) {
+                    // Fallback to first few words if none are seen yet
+                    allVocab.take(10)
+                } else {
+                    filteredVocab
                 }
+
+                _seenWordsCount.value = finalFiltered.size
+                _seenVocabList.value = finalFiltered
+                val currentCount = _flashcardCount.value.coerceIn(1, maxOf(1, finalFiltered.size))
+                _studyVocabs.value = finalFiltered.shuffled().take(currentCount)
+            } catch (e: Exception) {
+                // Fail-safe fallback
+                _studyVocabs.value = emptyList()
             }
         }
     }

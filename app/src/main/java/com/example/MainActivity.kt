@@ -194,7 +194,9 @@ class MainActivity : ComponentActivity() {
                                             onToggleSound = { mainViewModel.toggleSound(it) },
                                             onToggleDarkMode = { mainViewModel.toggleDarkMode(it) },
                                             onToggleRomanization = { mainViewModel.toggleRomanization(it) },
-                                            onResetProgress = { mainViewModel.resetProgress() }
+                                            onResetProgress = { mainViewModel.resetProgress() },
+                                            onExportProgress = { mainViewModel.getExportedProgressJson() },
+                                            onImportProgress = { mainViewModel.importProgressJson(it) }
                                         )
                                     }
                                 }

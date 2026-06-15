@@ -283,16 +283,16 @@ fun LessonPlayingLayout(
                     listOf(
                         "Sabai sabai! 🎉 That's absolutely correct!",
                         "Keng mak! ⭐ You got the perfect answer!",
-                        "Wonderful match! Nong Chang is super happy! 🐘🚀",
+                        "Wonderful match! You're making swift progress! 🚀",
                         "Chai-Yo! You are mastering this category!"
                     ).random()
                 }
                 state.isChecked && !state.isCorrect -> {
                     listOf(
                         "Mai pen rai! ❤️ (No worries!) Let's learn from this mistake.",
-                        "Almost there! Try repeating the Thai words aloud. 🐘",
+                        "Almost there! Try repeating the Thai words aloud. 🗣️",
                         "Every mistake is a secret pathway to fluency. Su su! 💪",
-                        "Nong Chang is cheerleading your learning comeback!"
+                        "You've got this! Let's make a great comeback!"
                     ).random()
                 }
                 else -> {
@@ -672,20 +672,17 @@ fun SentenceBuildView(
                         )
                     }
                 } else {
-                    val isQuestionThai = exercise.question.any { it in '\u0E00'..'\u0E7F' }
-                    if (isQuestionThai) {
-                        IconButton(
-                            onClick = onVoicePlay,
-                            modifier = Modifier
-                                .background(GemCyan, CircleShape)
-                                .size(44.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.VolumeUp,
-                                contentDescription = "Listen to pronunciation",
-                                tint = Color.White
-                            )
-                        }
+                    IconButton(
+                        onClick = onVoicePlay,
+                        modifier = Modifier
+                            .background(GemCyan, CircleShape)
+                            .size(44.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.VolumeUp,
+                            contentDescription = "Listen to pronunciation",
+                            tint = Color.White
+                        )
                     }
                     Column {
                         Text(
@@ -1419,10 +1416,10 @@ fun SummaryCompletedScreen(
             ThaiLingoMascot(
                 expression = if (starsAwarded > 0) MascotExpression.HAPPY else MascotExpression.SAD,
                 customMessage = when (starsAwarded) {
-                    3 -> "Sawatdee ka! Look at you! 🏆 Perfect 3-star victory! Nong Chang is dancing for joy! 🐘✨"
-                    2 -> "Amazing session! 🌟 2-stars earned! Nong Chang is so proud of our progress!"
+                    3 -> "Sawatdee ka! Look at you! 🏆 Perfect 3-star victory! Outstanding performance! 🎉✨"
+                    2 -> "Amazing session! 🌟 2-stars earned! Excellent learning progress!"
                     1 -> "You passed! ⭐ 1-star achieved! Su su, tomorrow we aim even higher!"
-                    else -> "Oh, we didn't pass today. But Nong Chang is here with you! Let's review together and try again! ❤️"
+                    else -> "Oh, we didn't pass today. But don't worry, let's review together and try again! ❤️"
                 },
                 size = 94.dp,
                 modifier = Modifier.testTag("summary_mascot")
@@ -2256,7 +2253,7 @@ fun TestResultScreen(
 
             ThaiLingoMascot(
                 expression = MascotExpression.HAPPY,
-                customMessage = "Chai-Yo! 🎉 You did it! Nong Chang is dancing for joy! You conquered the Topic Test with ${(ratio * 100).toInt()}% correct and unlocked the next topic! 🐘🔓✨",
+                customMessage = "Chai-Yo! 🎉 You did it! Excellent performance! You conquered the Topic Test with ${(ratio * 100).toInt()}% correct and unlocked the next topic! 🔑🔓✨",
                 size = 94.dp,
                 modifier = Modifier.testTag("test_result_mascot_pass")
             )
@@ -2333,7 +2330,7 @@ fun TestResultScreen(
 
             ThaiLingoMascot(
                 expression = MascotExpression.SAD,
-                customMessage = "Mai pen rai! ❤️ Mistake review is where real learning happens. Nong Chang knows you'll crush it on the next try. Let's practice! 🐘💪",
+                customMessage = "Mai pen rai! ❤️ Mistake review is where real learning happens. Keep up the high energy and you'll crush it on the next try. Let's practice! 💪",
                 size = 94.dp,
                 modifier = Modifier.testTag("test_result_mascot_fail")
             )

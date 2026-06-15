@@ -194,6 +194,19 @@ class MainViewModel(
         }
     }
 
+    suspend fun getExportedProgressJson(): String {
+        return repository.exportProgressJson()
+    }
+
+    suspend fun importProgressJson(jsonString: String): Boolean {
+        val success = repository.importProgressJson(jsonString)
+        if (success) {
+            val progress = repository.getUserProgressOnce()
+            recheckAchievements(progress)
+        }
+        return success
+    }
+
     private suspend fun recheckAchievements(progress: UserProgress) {
         // Evaluate dynamic unlocking of local achievements
         val originalAchievements = achievements.value
