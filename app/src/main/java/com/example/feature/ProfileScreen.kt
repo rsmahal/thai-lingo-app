@@ -3,6 +3,7 @@ package com.example.feature
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -45,10 +46,12 @@ fun ProfileScreen(
     onToggleRomanization: (Boolean) -> Unit,
     onResetProgress: () -> Unit,
     onExportProgress: suspend () -> String,
-    onImportProgress: suspend (String) -> Boolean
+    onImportProgress: suspend (String) -> Boolean,
+    onUpdateProfile: (name: String, avatar: String) -> Unit
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
     var showImportConfirmDialog by remember { mutableStateOf(false) }
+    var showEditProfileDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -134,6 +137,113 @@ fun ProfileScreen(
         )
     }
 
+    if (showEditProfileDialog) {
+        var tempName by remember { mutableStateOf(progress.name) }
+        var tempAvatar by remember { mutableStateOf(progress.avatar) }
+        
+        val animalOptions = listOf(
+            "🐘 Elephant",
+            "🐯 Tiger",
+            "🐒 Monkey",
+            "🐼 Panda",
+            "🐨 Koala",
+            "🦊 Fox",
+            "🦁 Lion",
+            "🐻 Bear",
+            "🐰 Bunny",
+            "🐱 Cat"
+        )
+
+        AlertDialog(
+            onDismissRequest = { showEditProfileDialog = false },
+            title = { Text("Edit Profile", fontWeight = FontWeight.Bold, color = DuoGreenDark) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = tempName,
+                        onValueChange = { tempName = it },
+                        label = { Text("Your Name") },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = DuoGreen,
+                            focusedLabelColor = DuoGreen
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("edit_name_field")
+                    )
+                    
+                    Text("Select Animal Companion", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    
+                    val chunkedAnimals = animalOptions.chunked(5)
+                    chunkedAnimals.forEach { chunk ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            chunk.forEach { animal ->
+                                val isSelected = tempAvatar == animal
+                                val parts = animal.split(" ", limit = 2)
+                                val emoji = parts.getOrNull(0) ?: "🐘"
+                                val animalName = parts.getOrNull(1) ?: ""
+                                
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .aspectRatio(1.5f) // Slightly wider for dialog box
+                                        .background(
+                                            color = if (isSelected) DuoGreen.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .border(
+                                            width = if (isSelected) 2.5.dp else 1.dp,
+                                            color = if (isSelected) DuoGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable { tempAvatar = animal }
+                                        .padding(4.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(text = emoji, fontSize = 20.sp)
+                                        Text(
+                                            text = animalName, 
+                                            fontSize = 8.sp, 
+                                            maxLines = 1, 
+                                            textAlign = TextAlign.Center,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (tempName.isNotBlank()) {
+                            onUpdateProfile(tempName, tempAvatar)
+                            showEditProfileDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = DuoGreen)
+                ) {
+                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditProfileDialog = false }) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.outline)
+                }
+            }
+        )
+    }
+
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
@@ -205,12 +315,14 @@ fun ProfileScreen(
                             .border(3.dp, Color.White, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        val initials = progress.name.firstOrNull()?.toString()?.uppercase() ?: "L"
+                        val parts = progress.avatar.split(" ")
+                        val emoji = parts.firstOrNull() ?: progress.name.firstOrNull()?.toString()?.uppercase() ?: "L"
                         Text(
-                            text = initials,
-                            fontSize = 38.sp,
+                            text = emoji,
+                            fontSize = if (emoji.length <= 2) 48.sp else 32.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
+                            color = Color.White,
+                            textAlign = TextAlign.Center
                         )
                     }
 
@@ -232,6 +344,22 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Black,
                     color = MaterialTheme.colorScheme.onBackground
                 )
+
+                OutlinedButton(
+                    onClick = { showEditProfileDialog = true },
+                    modifier = Modifier.height(34.dp).testTag("edit_profile_btn"),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = DuoGreen)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit Name/Avatar",
+                        modifier = Modifier.size(14.dp),
+                        tint = DuoGreen
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Edit Profile", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = DuoGreen)
+                }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -432,7 +560,10 @@ fun ProfileScreen(
             ) {
                 // Export Progress Card
                 Card(
-                    onClick = { exportLauncher.launch("thailingo_progress_backup.json") },
+                    onClick = {
+                        val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(java.util.Date())
+                        exportLauncher.launch("thailingo_progress_$timestamp.json")
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .height(60.dp)
@@ -490,6 +621,23 @@ fun ProfileScreen(
                     }
                 }
             }
+        }
+
+        item {
+            val backupMsg = if (progress.lastBackupTime.isNotEmpty()) {
+                "Last backed up at: ${progress.lastBackupTime}"
+            } else {
+                "Last backed up: Never"
+            }
+            Text(
+                text = backupMsg,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.fillMaxWidth().testTag("last_backed_up_message"),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(10.dp))
         }
 
         // FACTORY DATA SYSTEM RISKS

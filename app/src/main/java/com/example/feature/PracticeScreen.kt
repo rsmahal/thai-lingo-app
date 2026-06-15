@@ -38,7 +38,8 @@ import com.example.ui.theme.*
 @Composable
 fun PracticeScreen(
     vocabulary: List<Vocabulary>,
-    lessons: List<Lesson>
+    lessons: List<Lesson>,
+    onActiveStateChanged: (Boolean) -> Unit = {}
 ) {
     val showRomanizationOnly = LocalShowRomanizationOnly.current
     val vocabularyList = LocalVocabularyList.current
@@ -55,6 +56,10 @@ fun PracticeScreen(
     var selectedCategory by remember { mutableStateOf("All") }
     var activeChapter by remember { mutableIntStateOf(0) } // 0: Dictionary library, 1: Heart shop, 2: Active card study session
     var currentFlashcardStep by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(activeChapter) {
+        onActiveStateChanged(activeChapter == 2)
+    }
 
     var flashcardLimit by remember { mutableIntStateOf(5) }
     var activeStudyVocabs by remember { mutableStateOf<List<Vocabulary>>(emptyList()) }

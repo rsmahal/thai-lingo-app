@@ -11,7 +11,10 @@ data class UserProgress(
     val soundEnabled: Boolean = true,
     val isDarkMode: Boolean = false,
     val currentLessonId: Int = 1,
-    val showRomanizationOnly: Boolean = false
+    val showRomanizationOnly: Boolean = false,
+    val avatar: String = "🐘 Elephant",
+    val lastBackupTime: String = "",
+    val isOnboardingCompleted: Boolean = false
 ) {
     fun xpProgressFraction(): Float {
         val xpForNextLevel = level * 100

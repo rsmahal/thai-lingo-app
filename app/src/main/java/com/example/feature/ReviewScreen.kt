@@ -33,9 +33,19 @@ import com.example.ui.theme.*
 @Composable
 fun ReviewScreen(
     context: Context = LocalContext.current,
-    viewModel: ReviewViewModel = viewModel(factory = ReviewViewModel.Factory(context))
+    viewModel: ReviewViewModel = viewModel(factory = ReviewViewModel.Factory(context)),
+    onActiveStateChanged: (Boolean) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState) {
+        val activeState = uiState
+        if (activeState is ReviewUiState.Active) {
+            onActiveStateChanged(activeState.currentStep != -1)
+        } else {
+            onActiveStateChanged(false)
+        }
+    }
 
     Box(
         modifier = Modifier

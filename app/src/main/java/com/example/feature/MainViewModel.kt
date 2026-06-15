@@ -114,7 +114,7 @@ class MainViewModel(
         recheckAchievements(updatedProgress)
     }
 
-    fun completeOnboarding(name: String, dailyGoal: Int, showRomanizationOnly: Boolean) {
+    fun completeOnboarding(name: String, avatar: String, dailyGoal: Int, showRomanizationOnly: Boolean) {
         viewModelScope.launch {
             val progress = repository.getUserProgressOnce()
             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -122,15 +122,28 @@ class MainViewModel(
             
             val updated = progress.copy(
                 name = name.takeIf { it.isNotBlank() } ?: "Lingo Learner",
+                avatar = avatar,
                 selectedLanguageGoal = dailyGoal,
                 streak = 1,
                 lastActiveDate = today,
                 hearts = 5,
                 currentLessonId = 1,
-                showRomanizationOnly = showRomanizationOnly
+                showRomanizationOnly = showRomanizationOnly,
+                isOnboardingCompleted = true
             )
             repository.saveUserProgress(updated)
             recheckAchievements(updated)
+        }
+    }
+
+    fun updateProfile(name: String, avatar: String) {
+        viewModelScope.launch {
+            val current = repository.getUserProgressOnce()
+            val updated = current.copy(
+                name = name.takeIf { it.isNotBlank() } ?: current.name,
+                avatar = avatar.takeIf { it.isNotBlank() } ?: current.avatar
+            )
+            repository.saveUserProgress(updated)
         }
     }
 

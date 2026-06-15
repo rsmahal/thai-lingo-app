@@ -23,7 +23,10 @@ data class UserProgressEntity(
     val soundEnabled: Boolean,
     val isDarkMode: Boolean,
     val currentLessonId: Int,
-    val showRomanizationOnly: Boolean = false
+    val showRomanizationOnly: Boolean = false,
+    val avatar: String = "🐘 Elephant",
+    val lastBackupTime: String = "",
+    val isOnboardingCompleted: Boolean = false
 ) {
     fun toDomain() = UserProgress(
         name = name,
@@ -36,7 +39,10 @@ data class UserProgressEntity(
         soundEnabled = soundEnabled,
         isDarkMode = isDarkMode,
         currentLessonId = currentLessonId,
-        showRomanizationOnly = showRomanizationOnly
+        showRomanizationOnly = showRomanizationOnly,
+        avatar = avatar,
+        lastBackupTime = lastBackupTime,
+        isOnboardingCompleted = isOnboardingCompleted
     )
 
     companion object {
@@ -51,7 +57,10 @@ data class UserProgressEntity(
             soundEnabled = domain.soundEnabled,
             isDarkMode = domain.isDarkMode,
             currentLessonId = domain.currentLessonId,
-            showRomanizationOnly = domain.showRomanizationOnly
+            showRomanizationOnly = domain.showRomanizationOnly,
+            avatar = domain.avatar,
+            lastBackupTime = domain.lastBackupTime,
+            isOnboardingCompleted = domain.isOnboardingCompleted
         )
     }
 }

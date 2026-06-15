@@ -265,7 +265,7 @@ class RepositoryImpl(
             Vocabulary(25, "มัน", "It", "Man", "Greetings", "มันใหญ่มากจริงๆ", "It is really very big."),
             Vocabulary(26, "พวกเรา", "We (plural)", "Phuak rao", "Greetings", "พวกเราชอบภาษาไทย", "We like Thai language."),
             Vocabulary(27, "พวกเขา", "They (plural)", "Phuak khao", "Greetings", "พวกเขากำลังมา", "They are coming."),
-            Vocabulary(28, "เธอ", "You (informal/female) / Her", "Thoe", "Greetings", "เธอน่ารักมาก", "You are very cute."),
+            Vocabulary(28, "เธอ", "her", "Thoe", "Greetings", "เธอน่ารักมาก", "You are very cute."),
             Vocabulary(29, "ท่าน", "You (polite) / Respectable person", "Than", "Greetings", "เชิญท่านข้างในครับ", "Please enter inside, sir/ma'am."),
             Vocabulary(30, "ตัวเอง", "Ourselves / Self", "Tua eng", "Greetings", "ดูแลตัวเองด้วยนะ", "Take care of yourself."),
             Vocabulary(31, "อรุณสวัสดิ์", "Good morning", "Arun sawat", "Greetings", "อรุณสวัสดิ์ทุกคน", "Good morning, everyone."),
@@ -1048,22 +1048,31 @@ class RepositoryImpl(
 
     override suspend fun exportProgressJson(): String = withContext(Dispatchers.IO) {
         val root = JSONObject()
-        root.put("schemaVersion", 1)
+        root.put("schemaVersion", 2)
         
         // 1. Progress
         val progress = userProgressDao.getProgressOnce() ?: UserProgressEntity.fromDomain(UserProgress())
+        val format = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+        val formattedDate = format.format(java.util.Date())
+        
+        val updatedWithBackup = progress.copy(lastBackupTime = formattedDate)
+        userProgressDao.saveProgress(updatedWithBackup)
+        
         val progressObj = JSONObject().apply {
-            put("name", progress.name)
-            put("streak", progress.streak)
-            put("xp", progress.xp)
-            put("hearts", progress.hearts)
-            put("level", progress.level)
-            put("selectedLanguageGoal", progress.selectedLanguageGoal)
-            put("lastActiveDate", progress.lastActiveDate)
-            put("soundEnabled", progress.soundEnabled)
-            put("isDarkMode", progress.isDarkMode)
-            put("currentLessonId", progress.currentLessonId)
-            put("showRomanizationOnly", progress.showRomanizationOnly)
+            put("name", updatedWithBackup.name)
+            put("streak", updatedWithBackup.streak)
+            put("xp", updatedWithBackup.xp)
+            put("hearts", updatedWithBackup.hearts)
+            put("level", updatedWithBackup.level)
+            put("selectedLanguageGoal", updatedWithBackup.selectedLanguageGoal)
+            put("lastActiveDate", updatedWithBackup.lastActiveDate)
+            put("soundEnabled", updatedWithBackup.soundEnabled)
+            put("isDarkMode", updatedWithBackup.isDarkMode)
+            put("currentLessonId", updatedWithBackup.currentLessonId)
+            put("showRomanizationOnly", updatedWithBackup.showRomanizationOnly)
+            put("avatar", updatedWithBackup.avatar)
+            put("lastBackupTime", updatedWithBackup.lastBackupTime)
+            put("isOnboardingCompleted", updatedWithBackup.isOnboardingCompleted)
         }
         root.put("progress", progressObj)
         
@@ -1124,6 +1133,9 @@ class RepositoryImpl(
             val isDarkMode = progressObj.optBoolean("isDarkMode", false)
             val currentLessonId = progressObj.optInt("currentLessonId", 1)
             val showRomanizationOnly = progressObj.optBoolean("showRomanizationOnly", false)
+            val avatar = progressObj.optString("avatar", "🐘 Elephant")
+            val lastBackupTime = progressObj.optString("lastBackupTime", "")
+            val isOnboardingCompleted = progressObj.optBoolean("isOnboardingCompleted", true)
             
             val updatedProgress = UserProgressEntity(
                 id = 1,
@@ -1137,7 +1149,10 @@ class RepositoryImpl(
                 soundEnabled = soundEnabled,
                 isDarkMode = isDarkMode,
                 currentLessonId = currentLessonId,
-                showRomanizationOnly = showRomanizationOnly
+                showRomanizationOnly = showRomanizationOnly,
+                avatar = avatar,
+                lastBackupTime = lastBackupTime,
+                isOnboardingCompleted = isOnboardingCompleted
             )
             userProgressDao.saveProgress(updatedProgress)
             
