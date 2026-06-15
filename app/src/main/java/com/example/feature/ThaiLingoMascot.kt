@@ -57,7 +57,7 @@ fun ThaiLingoMascot(
 
     val encouragingPhrases = remember {
         listOf(
-            "Su su! (Keep fighting!) You've got this! 🌟",
+            "You've got this! Let's keep going! 🌟",
             "Take your time and listen to the pronunciation carefully! ❤️",
             "Every completed task boosts your language superpower! ⚡"
         )

@@ -269,52 +269,6 @@ fun LessonPlayingLayout(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // RENDER DYNAMIC COMPANION MASCOT NONG CHANG
-            // Automatically adapts to correctness, pop quizzes, and learning states.
-            val mascotExpression = when {
-                state.isChecked -> {
-                    if (state.isCorrect) MascotExpression.HAPPY else MascotExpression.SAD
-                }
-                else -> MascotExpression.ENCOURAGING
-            }
-
-            val customMascotMsg = when {
-                state.isChecked && state.isCorrect -> {
-                    listOf(
-                        "Sabai sabai! 🎉 That's absolutely correct!",
-                        "Keng mak! ⭐ You got the perfect answer!",
-                        "Wonderful match! You're making swift progress! 🚀",
-                        "Chai-Yo! You are mastering this category!"
-                    ).random()
-                }
-                state.isChecked && !state.isCorrect -> {
-                    listOf(
-                        "Mai pen rai! ❤️ (No worries!) Let's learn from this mistake.",
-                        "Almost there! Try repeating the Thai words aloud. 🗣️",
-                        "Every mistake is a secret pathway to fluency. Su su! 💪",
-                        "You've got this! Let's make a great comeback!"
-                    ).random()
-                }
-                else -> {
-                    if (isPopQuiz) {
-                        "Stay sharp! ⚡ This is a Pop Quiz for double focus!"
-                    } else {
-                        null // delegates to standard encouraging/neutral phrases
-                    }
-                }
-            }
-
-            ThaiLingoMascot(
-                expression = mascotExpression,
-                customMessage = customMascotMsg,
-                size = 76.dp,
-                showBubble = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp)
-                    .testTag("lesson_play_mascot")
-            )
-
             if (isPopQuiz) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -1418,7 +1372,7 @@ fun SummaryCompletedScreen(
                 customMessage = when (starsAwarded) {
                     3 -> "Sawatdee ka! Look at you! 🏆 Perfect 3-star victory! Outstanding performance! 🎉✨"
                     2 -> "Amazing session! 🌟 2-stars earned! Excellent learning progress!"
-                    1 -> "You passed! ⭐ 1-star achieved! Su su, tomorrow we aim even higher!"
+                    1 -> "You passed! ⭐ 1-star achieved! Let's aim even higher tomorrow!"
                     else -> "Oh, we didn't pass today. But don't worry, let's review together and try again! ❤️"
                 },
                 size = 94.dp,
@@ -1970,7 +1924,7 @@ fun LessonIntroduceLayout(
         ) {
             // Header Badge
             Text(
-                text = "NEW WORD",
+                text = if (state.lesson.completed) "VOCABULARY" else "NEW WORD",
                 fontSize = 18.sp,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Black,

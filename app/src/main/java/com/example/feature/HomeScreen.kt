@@ -759,17 +759,18 @@ fun LessonStartDetailsSheetContent(
                 horizontalArrangement = Arrangement.SpaceAround
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("MAX REWARD", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("CURRENT SCORE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(2.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        repeat(3) {
+                        repeat(3) { index ->
+                            val filled = index < lesson.stars
                             Icon(
                                 imageVector = Icons.Default.Star,
                                 contentDescription = null,
-                                tint = LevelGold,
+                                tint = if (filled) LevelGold else Color.Black,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
