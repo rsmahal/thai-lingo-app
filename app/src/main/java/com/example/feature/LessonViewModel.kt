@@ -74,13 +74,14 @@ class LessonViewModel(
     private fun loadLesson() {
         viewModelScope.launch {
             try {
-                val isTopicTest = lessonId >= 100
+                val isTopicTest = lessonId in 100..499
+                val isSentenceLesson = lessonId in 501..600
                 val lesson = repository.getLessonById(lessonId)
                 val progress = repository.getUserProgressOnce()
                 val allVocab = repository.getAllVocabulary().first()
                 
                 // Load specific vocabulary for the lesson to introduce them at the start
-                val lessonVocab = if (isTopicTest) {
+                val lessonVocab = if (isTopicTest || isSentenceLesson) {
                     emptyList()
                 } else {
                     val range = getLessonVocabIdsRange(lessonId)
@@ -97,6 +98,8 @@ class LessonViewModel(
                         ranges.any { r -> vocab.id in r }
                     }
                     generateTestExercises(topicVocab, "", allVocab)
+                } else if (isSentenceLesson) {
+                    repository.getExercisesForLesson(lessonId).shuffled()
                 } else {
                     val dbExercises = repository.getExercisesForLesson(lessonId)
                     val fixedMatching = dbExercises.firstOrNull { it.type == ExerciseType.MATCHING }
@@ -705,9 +708,16 @@ class LessonViewModel(
                         )
                         repository.updateLesson(updatedLesson)
                         
-                        // Unlock next custom lesson or Topic Test
-                        val nextLId = if (lessonId % 4 == 0) {
-                            100 + (lessonId / 4)
+                        // Unlock next custom lesson, Sentence Lesson, or Topic Test
+                        val nextLId = if (lessonId in 501..600) {
+                            100 + (lessonId - 500)
+                        } else if (lessonId % 4 == 0) {
+                            val topicIdx = (lessonId / 4) - 1
+                            if (topicIdx < 3) {
+                                501 + topicIdx
+                            } else {
+                                101 + topicIdx
+                            }
                         } else if (lessonId == 50) {
                             113
                         } else {

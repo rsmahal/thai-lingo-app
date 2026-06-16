@@ -188,10 +188,11 @@ class RepositoryImpl(
     }
 
     override suspend fun initializeDatabase() = withContext(Dispatchers.IO) {
-        // Since we changed vocabulary count to 500 and exercise count to 8 per lesson, let's reset and populate if needed
+        // Since we changed list to include sentence lessons and tests, reset and populate if needed
         val currentVocabCount = vocabularyDao.getVocabularyCount()
         val hasLesson113 = lessonDao.getLessonById(113) != null
-        if (currentVocabCount < 500 || !hasLesson113) {
+        val hasLesson501 = lessonDao.getLessonById(501) != null
+        if (currentVocabCount < 500 || !hasLesson113 || !hasLesson501) {
             // Clear current data first for clean repopulation
             vocabularyDao.clearVocabulary()
             lessonDao.clearLessons()
@@ -803,6 +804,24 @@ class RepositoryImpl(
                     )
                 )
             }
+            
+            // Uniquely structured sentence nodes for Iron Backpack Rank (Topic 1, 2, 3)
+            if (topicIdx < 3) {
+                val sentenceLessonId = 501 + topicIdx
+                list.add(
+                    Lesson(
+                        id = sentenceLessonId,
+                        title = "$topicName Sentences",
+                        description = "Complete 9 interactive sentence building exercises using core vocabulary from $topicName.",
+                        category = topicName,
+                        unlocked = false,
+                        completed = false,
+                        stars = 0,
+                        xpReward = 30
+                    )
+                )
+            }
+
             list.add(
                 Lesson(
                     id = testId,
@@ -906,8 +925,9 @@ class RepositoryImpl(
                 audioText = ""
             ))
 
-            // 5. English -> Thai Sentence Building Exercise (SENTENCE_BUILD)
-            val sentenceEnToTh1 = when (lessonId) {
+            if (lessonId > 12) {
+                // 5. English -> Thai Sentence Building Exercise (SENTENCE_BUILD)
+                val sentenceEnToTh1 = when (lessonId) {
                 1 -> Triple("Hello, nice to meet you.", "สวัสดี|ยินดีที่ได้รู้จัก", listOf("ขอโทษ", "ขอบคุณ", "ไม่ใช่", "โชคดี"))
                 2 -> Triple("Goodbye, see you again.", "ลาก่อน|แล้วพบกันใหม่", listOf("สวัสดี", "ยินดีเสมอกับคุณครับ", "ใช่", "ผมชื่อ"))
                 5 -> Triple("Delicious food.", "อาหาร|อร่อย", listOf("น้ำ", "ข้าว", "ผลไม้", "ขอโทษ"))
@@ -1031,6 +1051,196 @@ class RepositoryImpl(
                 options = mcOptions,
                 audioText = sentenceThToEn2.first
             ))
+            }
+        }
+
+        // Lesson 501: Greetings Basic Sentences
+        val sentences501 = listOf(
+            // 3 English to Thai Sentence Build
+            Triple("Hello, nice to meet you.", "สวัสดี|ยินดีที่ได้รู้จัก", listOf("ขอโทษ", "ขอบคุณ", "ไม่ใช่", "โชคดี")),
+            Triple("What is your name?", "คุณ|ชื่อ|อะไร", listOf("สบายดีไหม", "ยินดีเสมอกับคุณครับ", "ใช่", "ผมชื่อ")),
+            Triple("Today I am fine.", "วันนี้|ฉัน|สบายดี", listOf("พรุ่งนี้", "เมื่อวาน", "ขอบคุณ", "ยินดี")),
+            
+            // 3 Thai to English Sentence Build
+            Triple("ใช่ สบายดี", "Yes|I|am|fine", listOf("Hello", "Sorry", "No", "Goodbye")),
+            Triple("สบายดี ขอบคุณ", "I|am|fine|Thank|you", listOf("Yes", "Goodbye", "Not correct", "You")),
+            Triple("ยินดีด้วย คุณ เก่ง", "Congratulations|you|are|smart", listOf("thank you", "fine", "sorry", "sad")),
+            
+            // 3 Listening Thai (spoken) with English words
+            Triple("ยินดีที่ได้รู้จัก", "Nice|to|meet|you", listOf("Hello", "How", "Tomorrow", "Today")),
+            Triple("ราตรีสวัสดิ์", "Good|night", listOf("Good morning", "Goodbye", "Thank you", "Yes")),
+            Triple("ลาก่อน พรุ่งนี้ พบกันใหม่", "Goodbye|tomorrow|see|you|again", listOf("Good afternoon", "Yesterday", "Good night", "Today"))
+        )
+
+        for (i in sentences501.indices) {
+            val (questionText, correctAnswer, distractors) = sentences501[i]
+            val correctList = correctAnswer.split("|")
+            val options = (correctList + distractors).shuffled()
+            val type = ExerciseType.SENTENCE_BUILD
+            
+            if (i < 3) {
+                list.add(Exercise(
+                    id = 50100 + (i + 1),
+                    lessonId = 501,
+                    type = type,
+                    prompt = "Assemble the Thai words that translate this sentence:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = correctAnswer.replace("|", " ")
+                ))
+            } else if (i < 6) {
+                list.add(Exercise(
+                    id = 50100 + (i + 1),
+                    lessonId = 501,
+                    type = type,
+                    prompt = "Translate this Thai sentence into English:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = ""
+                ))
+            } else {
+                list.add(Exercise(
+                    id = 50100 + (i + 1),
+                    lessonId = 501,
+                    type = type,
+                    prompt = "Listen and assemble the English translation:",
+                    question = "",
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = questionText
+                ))
+            }
+        }
+
+        // Lesson 502: Food Staples Sentences
+        val sentences502 = listOf(
+            // 3 English to Thai Sentence Build
+            Triple("I want to eat Pad Thai.", "ฉัน|อยาก|กิน|ผัดไทย", listOf("ต้มยำกุ้ง", "น้ำเปล่า", "ผลไม้", "กาแฟ")),
+            Triple("Is the green curry spicy?", "แกงเขียวหวาน|เผ็ด|ไหม", listOf("อร่อย", "หวาน", "กิน", "ส้มตำ")),
+            Triple("Please give me hot coffee.", "ขอ|กาแฟ|ร้อน|ครับ", listOf("น้ำ", "ชาเย็น", "ผลไม้", "ค่ะ")),
+            
+            // 3 Thai to English Sentence Build
+            Triple("ต้มยำกุ้ง อร่อย เผ็ด", "Spicy|shrimp|soup|is|delicious|and|spicy", listOf("Sweet", "Water", "Rice", "Tea")),
+            Triple("ผม หิว ข้าว", "I|am|hungry|for|rice", listOf("sweet", "tired", "happy", "water")),
+            Triple("กิน ส้มตำคู่ ข้าวเหนียว", "Eat|papaya|salad|with|sticky|rice", listOf("Chicken", "Fish", "Pork", "Salt")),
+            
+            // 3 Listening Thai (spoken) with English words
+            Triple("ขอน้ำเปล่า หนึ่ง แก้ว", "Please|give|me|a|glass|of|water", listOf("coffee", "tea", "delicious", "banana")),
+            Triple("วันนี้ ฉัน ดื่ม ชาเย็น อร่อย", "Today|I|drink|delicious|Thai|iced|tea", listOf("Water", "Banana", "Omelet", "Pork")),
+            Triple("ส้มตำไทย หวาน เผ็ด อร่อย", "Thai|papaya|salad|is|sweet|spicy|and|delicious", listOf("Green curry", "Chicken", "Fish", "Egg"))
+        )
+
+        for (i in sentences502.indices) {
+            val (questionText, correctAnswer, distractors) = sentences502[i]
+            val correctList = correctAnswer.split("|")
+            val options = (correctList + distractors).shuffled()
+            val type = ExerciseType.SENTENCE_BUILD
+            
+            if (i < 3) {
+                list.add(Exercise(
+                    id = 50200 + (i + 1),
+                    lessonId = 502,
+                    type = type,
+                    prompt = "Assemble the Thai words that translate this sentence:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = correctAnswer.replace("|", " ")
+                ))
+            } else if (i < 6) {
+                list.add(Exercise(
+                    id = 50200 + (i + 1),
+                    lessonId = 502,
+                    type = type,
+                    prompt = "Translate this Thai sentence into English:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = ""
+                ))
+            } else {
+                list.add(Exercise(
+                    id = 50200 + (i + 1),
+                    lessonId = 502,
+                    type = type,
+                    prompt = "Listen and assemble the English translation:",
+                    question = "",
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = questionText
+                ))
+            }
+        }
+
+        // Lesson 503: Numbers & Money Sentences
+        val sentences503 = listOf(
+            // 3 English to Thai Sentence Build
+            Triple("How much is this shirt?", "เสื้อ|ตัวนี้|ราคา|เท่าไหร่", listOf("เงิน", "บาท", "แพง", "ซื้อ")),
+            Triple("I want to buy food for thirty Baht.", "ฉัน|อยาก|ซื้อ|อาหาร|สามสิบ|บาท", listOf("ยี่สิบ", "คน", "สิบเอ็ด", "สี่สิบ")),
+            Triple("The red shirt is cheap.", "เสื้อ|สีแดง|ราคา|ถูก", listOf("แพง", "สีน้ำเงิน", "ซื้อ", "เงิน")),
+            
+            // 3 Thai to English Sentence Build
+            Triple("ราคา ทั้งหมด สี่ร้อย บาท", "The|total|price|is|four|hundred|Baht", listOf("Three", "Five", "Ten", "Seven")),
+            Triple("เสื้อหนาว สีชมพู ราคา แพง เกินไป", "The|pink|sweater|price|is|too|expensive", listOf("cheap", "beautiful", "socks", "T-shirt")),
+            Triple("ซื้อ ส้ม ห้า กิโล ห้าสิบ บาท", "Buy|five|kilos|of|oranges|for|fifty|Baht", listOf("Thirty", "Ten", "One", "Two")),
+            
+            // 3 Listening Thai (spoken) with English words
+            Triple("จ่าย เงินสด สามพัน บาท", "Pay|cash|three|thousand|Baht", listOf("hundred", "million", "Fifty", "Ten")),
+            Triple("รองเท้าผ้าใบ สีดำ ราคาถูก ดี", "Black|sneakers|are|cheap|and|good", listOf("pink", "expensive", "socks", "shirt")),
+            Triple("คน ต่างชาติ ต่อราคา ใน ตลาดสด", "Foreigners|bargaining|prices|in|fresh|market", listOf("Department store", "hospital", "socks", "T-shirt"))
+        )
+
+        for (i in sentences503.indices) {
+            val (questionText, correctAnswer, distractors) = sentences503[i]
+            val correctList = correctAnswer.split("|")
+            val options = (correctList + distractors).shuffled()
+            val type = ExerciseType.SENTENCE_BUILD
+            
+            if (i < 3) {
+                list.add(Exercise(
+                    id = 50300 + (i + 1),
+                    lessonId = 503,
+                    type = type,
+                    prompt = "Assemble the Thai words that translate this sentence:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = correctAnswer.replace("|", " ")
+                ))
+            } else if (i < 6) {
+                list.add(Exercise(
+                    id = 50300 + (i + 1),
+                    lessonId = 503,
+                    type = type,
+                    prompt = "Translate this Thai sentence into English:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = ""
+                ))
+            } else {
+                list.add(Exercise(
+                    id = 50300 + (i + 1),
+                    lessonId = 503,
+                    type = type,
+                    prompt = "Listen and assemble the English translation:",
+                    question = "",
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = questionText
+                ))
+            }
         }
 
         return list

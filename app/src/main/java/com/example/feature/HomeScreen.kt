@@ -53,17 +53,28 @@ fun HomeScreen(
             val category = entry.key
             val lessonsInCat = entry.value
             val standardLessons = lessonsInCat.filter { it.id < 100 }
-            val testLesson = lessonsInCat.find { it.id >= 100 }
+            val sentenceLesson = lessonsInCat.find { it.id in 501..600 }
+            val testLesson = lessonsInCat.find { it.id in 101..499 }
             
-            val completedCount = standardLessons.count { it.completed }
-            val isNotFull = completedCount < standardLessons.size
+            // Check if there is any standard lesson unlocked but not completed
+            val incompleteStandardIdx = standardLessons.indexOfFirst { it.unlocked && !it.completed }
+            if (incompleteStandardIdx != -1) {
+                return@remember currentIndex + 1 + incompleteStandardIdx
+            }
             
-            if (isNotFull) {
-                return@remember currentIndex
+            if (sentenceLesson != null && sentenceLesson.unlocked && !sentenceLesson.completed) {
+                return@remember currentIndex + 1 + standardLessons.size
+            }
+            
+            if (testLesson != null && testLesson.unlocked && !testLesson.completed) {
+                return@remember currentIndex + 1 + standardLessons.size + (if (sentenceLesson != null) 1 else 0)
             }
             
             currentIndex += 1 // Category banner (stickyHeader)
             currentIndex += standardLessons.size // Items
+            if (sentenceLesson != null) {
+                currentIndex += 1 // Sentence lesson item
+            }
             if (testLesson != null) {
                 currentIndex += 1 // Topic test item
             }
@@ -156,7 +167,8 @@ fun HomeScreen(
                 
                 groupedByCategory.forEach { (category, lessonsInCat) ->
                     val standardLessons = lessonsInCat.filter { it.id < 100 }
-                    val testLesson = lessonsInCat.find { it.id >= 100 }
+                    val sentenceLesson = lessonsInCat.find { it.id in 501..600 }
+                    val testLesson = lessonsInCat.find { it.id in 101..499 }
                     val totalCount = standardLessons.size
                     val completedCount = standardLessons.count { it.completed }
 
@@ -185,6 +197,20 @@ fun HomeScreen(
                                 }
                             }
                         )
+                    }
+
+                    // Show Sentence Lesson Node (if present)
+                    if (sentenceLesson != null) {
+                        item {
+                            SentenceBadgeNode(
+                                lesson = sentenceLesson,
+                                onClick = {
+                                    if (sentenceLesson.unlocked) {
+                                        selectedLessonForSheet = sentenceLesson
+                                    }
+                                }
+                            )
+                        }
                     }
                     
                     // Show Topic Test Node (always visible, disabled until available defined by lesson.unlocked)
@@ -686,9 +712,10 @@ fun LessonStartDetailsSheetContent(
     onStart: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val isTest = lesson.id >= 100
-    val badgeColor = if (isTest) Color(0xFFC026D3) else DuoGreen
-    val badgeIcon = if (isTest) Icons.Default.School else Icons.Default.LocalLibrary
+    val isTest = lesson.id in 100..499
+    val isSentence = lesson.id in 501..600
+    val badgeColor = if (isTest) Color(0xFFC026D3) else if (isSentence) Color(0xFF8B5CF6) else DuoGreen
+    val badgeIcon = if (isTest) Icons.Default.School else if (isSentence) Icons.Default.QuestionAnswer else Icons.Default.LocalLibrary
 
     val descriptionText = if (isTest) {
         if (lesson.completed) {
@@ -696,18 +723,22 @@ fun LessonStartDetailsSheetContent(
         } else {
             "Ready for the ultimate challenge? This test compiles 20 randomized exercises from this topic. You must pass with 100% accuracy (no mistakes) to unlock the next topic."
         }
+    } else if (isSentence) {
+        "Challenge yourself with 9 randomized sentence exercises (3 English to Thai, 3 Thai to English, and 3 spoken Listening challenges) using vocabulary from this topic and previous topics!"
     } else {
         if (lesson.completed) "Replay this lesson to refresh your vocabulary! (Keep your highest score & continue earning Stars)" else lesson.description
     }
 
-    val rightLabel = if (isTest) "REQUIRED" else "WORDS"
+    val rightLabel = if (isTest) "REQUIRED" else if (isSentence) "PRACTICE" else "WORDS"
 
     val newWordsCount = if (lesson.id in 1..50) 10 else 0
-    val rightValue = if (isTest) "100% ACCURACY" else "$newWordsCount Words"
-    val questionCount = if (isTest) "20 Questions" else "25 Questions"
+    val rightValue = if (isTest) "100% ACCURACY" else if (isSentence) "9 SENTENCES" else "$newWordsCount Words"
+    val questionCount = if (isTest) "20 Questions" else if (isSentence) "9 Questions" else "25 Questions"
 
     val btnText = if (isTest) {
         if (lesson.completed) "REPLAY TOPIC TEST" else "TAKE TOPIC TEST"
+    } else if (isSentence) {
+        if (lesson.completed) "PRACTICE SENTENCES" else "START CHALLENGE"
     } else {
         if (lesson.completed) "REPLAY LESSON" else "START LESSON"
     }
@@ -880,6 +911,75 @@ fun TopicTestBadgeNode(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Black,
                     color = if (lesson.unlocked) testColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SentenceBadgeNode(
+    lesson: Lesson,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = lesson.unlocked, onClick = onClick)
+            .testTag("sentence_node_${lesson.id}"),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val sentenceColor = if (lesson.completed) DuoGreen else if (lesson.unlocked) Color(0xFF8B5CF6) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        
+        Card(
+            modifier = Modifier
+                .widthIn(max = 280.dp)
+                .fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = sentenceColor.copy(alpha = 0.08f)
+            ),
+            border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+                width = 2.dp,
+                brush = androidx.compose.ui.graphics.SolidColor(sentenceColor.copy(alpha = 0.3f))
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Circular Badge Icon with Speech / Translate bubbles
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(sentenceColor, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (lesson.completed) Icons.Default.CheckCircle else if (lesson.unlocked) Icons.Default.QuestionAnswer else Icons.Default.Lock,
+                        contentDescription = "Sentences Icon",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                
+                Text(
+                    text = lesson.title,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 17.sp,
+                    color = if (lesson.unlocked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    textAlign = TextAlign.Center
+                )
+                
+                Text(
+                    text = if (lesson.completed) "COMPLETED! ⭐⭐⭐" else "9 SENTENCE BUILD CHALLENGES",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                    color = if (lesson.unlocked) sentenceColor else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                     textAlign = TextAlign.Center
                 )
             }

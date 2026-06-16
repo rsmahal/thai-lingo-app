@@ -2,7 +2,7 @@ package com.example
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
-import com.example.feature.WelcomeView
+import com.example.feature.OnboardingScreen
 import com.example.ui.theme.ThaiLingoTheme
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -22,7 +22,14 @@ class GreetingScreenshotTest {
 
   @Test
   fun greeting_screenshot() {
-    composeTestRule.setContent { ThaiLingoTheme { WelcomeView() } }
+    composeTestRule.setContent { 
+      ThaiLingoTheme { 
+        OnboardingScreen(
+          onFinished = { _, _, _, _ -> },
+          onImportProgress = { true }
+        ) 
+      } 
+    }
 
     composeTestRule.onRoot().captureRoboImage(filePath = "src/test/screenshots/greeting.png")
   }
