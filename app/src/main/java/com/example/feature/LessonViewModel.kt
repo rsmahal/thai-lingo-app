@@ -97,15 +97,23 @@ class LessonViewModel(
                     val topicVocab = allVocab.filter { vocab ->
                         ranges.any { r -> vocab.id in r }
                     }
-                    generateTestExercises(topicVocab, "", allVocab)
+                    val optionsPool = if (topicVocab.size >= 4) topicVocab else allVocab
+                    generateTestExercises(topicVocab, "", optionsPool)
                 } else if (isSentenceLesson) {
-                    repository.getExercisesForLesson(lessonId).shuffled()
+                    val rawExercises = repository.getExercisesForLesson(lessonId)
+                    shuffleMixed(rawExercises)
                 } else {
                     val dbExercises = repository.getExercisesForLesson(lessonId)
                     val fixedMatching = dbExercises.firstOrNull { it.type == ExerciseType.MATCHING }
                     val fixedSentences = dbExercises.filter { it.type == ExerciseType.SENTENCE_BUILD }
                     
-                    val vocabExercises = generateVocabExercises(lessonVocab, allVocab)
+                    val optionsPool = if (lesson != null) {
+                        val topicVocab = allVocab.filter { it.category.equals(lesson.category, ignoreCase = true) }
+                        if (topicVocab.size >= 4) topicVocab else allVocab
+                    } else {
+                        allVocab
+                    }
+                    val vocabExercises = generateVocabExercises(lessonVocab, optionsPool)
                     
                     val combined = mutableListOf<Exercise>()
                     combined.addAll(vocabExercises)
@@ -144,7 +152,7 @@ class LessonViewModel(
                         if (prevVocabList.isNotEmpty()) {
                             val selectedVocabs = prevVocabList.shuffled().take(3)
                             selectedVocabs.forEach { vocab ->
-                                val generated = generateVocabExercises(listOf(vocab), allVocab)
+                                val generated = generateVocabExercises(listOf(vocab), optionsPool)
                                 if (generated.isNotEmpty()) {
                                     val quizEx = generated.random().copy(isPopQuiz = true)
                                     val insertIndex = if (shuffledList.size > 1) (1..shuffledList.size).random() else shuffledList.size
@@ -770,6 +778,27 @@ class LessonViewModel(
             )
             speakCurrentIfListening(nextExercise)
         }
+    }
+
+    private fun shuffleMixed(list: List<Exercise>): List<Exercise> {
+        if (list.size <= 2) return list.shuffled()
+        var shuffled = list.shuffled().toMutableList()
+        var attempts = 0
+        while (attempts < 50) {
+            var hasConsecutiveSamePrompt = false
+            for (i in 0 until shuffled.size - 1) {
+                if (shuffled[i].prompt == shuffled[i + 1].prompt) {
+                    hasConsecutiveSamePrompt = true
+                    break
+                }
+            }
+            if (!hasConsecutiveSamePrompt) {
+                return shuffled
+            }
+            shuffled = list.shuffled().toMutableList()
+            attempts++
+        }
+        return shuffled
     }
 
     class Factory(

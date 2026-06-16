@@ -1064,7 +1064,7 @@ class RepositoryImpl(
             // 3 Thai to English Sentence Build
             Triple("ใช่ สบายดี", "Yes|I|am|fine", listOf("Hello", "Sorry", "No", "Goodbye")),
             Triple("สบายดี ขอบคุณ", "I|am|fine|Thank|you", listOf("Yes", "Goodbye", "Not correct", "You")),
-            Triple("ยินดีด้วย คุณ เก่ง", "Congratulations|you|are|smart", listOf("thank you", "fine", "sorry", "sad")),
+            Triple("ยินดีด้วย คุณ โชคดี", "Congratulations|you|are|lucky", listOf("thank you", "fine", "sorry", "sad")),
             
             // 3 Listening Thai (spoken) with English words
             Triple("ยินดีที่ได้รู้จัก", "Nice|to|meet|you", listOf("Hello", "How", "Tomorrow", "Today")),

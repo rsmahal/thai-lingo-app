@@ -870,10 +870,6 @@ fun TopicTestBadgeNode(
             colors = CardDefaults.cardColors(
                 containerColor = testColor.copy(alpha = 0.08f)
             ),
-            border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                width = 2.dp,
-                brush = androidx.compose.ui.graphics.SolidColor(testColor.copy(alpha = 0.3f))
-            ),
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
@@ -938,10 +934,6 @@ fun SentenceBadgeNode(
                 .fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = sentenceColor.copy(alpha = 0.08f)
-            ),
-            border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                width = 2.dp,
-                brush = androidx.compose.ui.graphics.SolidColor(sentenceColor.copy(alpha = 0.3f))
             ),
             shape = RoundedCornerShape(16.dp)
         ) {

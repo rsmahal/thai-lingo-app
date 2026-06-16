@@ -117,8 +117,45 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        // If a lesson exercise is running, show full screen distraction-free overlay
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // Fixed slim countdown timer bar at the very top, slim and elegant
+                        if (isTimerRunning && remainingSeconds > 0) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .statusBarsPadding()
+                                    .testTag("learning_timer_pill"),
+                                color = DuoGreenLight.copy(alpha = 0.95f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, DuoGreen.copy(alpha = 0.4f))
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp, horizontal = 16.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Schedule,
+                                        contentDescription = null,
+                                        tint = DuoGreenDark,
+                                        modifier = Modifier.size(12.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    val min = remainingSeconds / 60
+                                    val sec = remainingSeconds % 60
+                                    Text(
+                                        text = String.format(java.util.Locale.US, "%02d:%02d remaining to daily goal", min, sec),
+                                        color = DuoGreenDark,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            // If a lesson exercise is running, show full screen distraction-free overlay
                         activeLessonId?.let { lessonId ->
                             LessonPlayScreen(
                                 lessonId = lessonId,
@@ -255,52 +292,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
 
-                        // Floating dynamic countdown timer pill
-                        if (isTimerRunning && remainingSeconds > 0) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .statusBarsPadding()
-                                    .padding(top = 16.dp),
-                                contentAlignment = Alignment.TopCenter
-                            ) {
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = DuoGreenLight.copy(alpha = 0.95f)
-                                    ),
-                                    shape = RoundedCornerShape(20.dp),
-                                    border = androidx.compose.foundation.BorderStroke(1.5.dp, DuoGreen),
-                                    modifier = Modifier.testTag("learning_timer_pill")
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Schedule,
-                                            contentDescription = null,
-                                            tint = DuoGreenDark,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        val min = remainingSeconds / 60
-                                        val sec = remainingSeconds % 60
-                                        Text(
-                                            text = String.format(java.util.Locale.US, "%02d:%02d", min, sec),
-                                            color = DuoGreenDark,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp
-                                        )
-                                        Text(
-                                            text = "to daily goal",
-                                            color = DuoGreenDark.copy(alpha = 0.8f),
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                    }
 
                         if (hasShownPopup) {
                             AlertDialog(
