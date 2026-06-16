@@ -732,8 +732,8 @@ fun LessonStartDetailsSheetContent(
     val rightLabel = if (isTest) "REQUIRED" else if (isSentence) "PRACTICE" else "WORDS"
 
     val newWordsCount = if (lesson.id in 1..50) 10 else 0
-    val rightValue = if (isTest) "100% ACCURACY" else if (isSentence) "9 SENTENCES" else "$newWordsCount Words"
-    val questionCount = if (isTest) "20 Questions" else if (isSentence) "9 Questions" else "25 Questions"
+    val rightValue = if (isTest) "100%" else if (isSentence) "9 SENTENCES" else "$newWordsCount Words"
+    val questionCount = if (isTest) "20" else if (isSentence) "9" else "25"
 
     val btnText = if (isTest) {
         if (lesson.completed) "REPLAY TOPIC TEST" else "TAKE TOPIC TEST"
@@ -868,7 +868,7 @@ fun TopicTestBadgeNode(
                 .widthIn(max = 280.dp)
                 .fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = testColor.copy(alpha = 0.08f)
+                containerColor = Color.Transparent
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -933,7 +933,7 @@ fun SentenceBadgeNode(
                 .widthIn(max = 280.dp)
                 .fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = sentenceColor.copy(alpha = 0.08f)
+                containerColor = Color.Transparent
             ),
             shape = RoundedCornerShape(16.dp)
         ) {

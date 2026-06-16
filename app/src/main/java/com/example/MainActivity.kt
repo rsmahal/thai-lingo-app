@@ -41,6 +41,7 @@ enum class AppTab {
 }
 
 val LocalShowRomanizationOnly = androidx.compose.runtime.staticCompositionLocalOf { false }
+val LocalActiveTimerVisible = androidx.compose.runtime.staticCompositionLocalOf { false }
 val LocalVocabularyList = androidx.compose.runtime.staticCompositionLocalOf { emptyList<com.example.domain.Vocabulary>() }
 
 class MainActivity : ComponentActivity() {
@@ -106,6 +107,7 @@ class MainActivity : ComponentActivity() {
 
                     val isLessonActive = activeLessonId != null
                     val isTimerRunning = isLessonActive || isReviewActive || isPracticeActive
+                    val timerShowing = isTimerRunning && remainingSeconds > 0
 
                     LaunchedEffect(isTimerRunning, remainingSeconds) {
                         if (isTimerRunning && remainingSeconds > 0) {
@@ -117,7 +119,8 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    Column(modifier = Modifier.fillMaxSize()) {
+                    androidx.compose.runtime.CompositionLocalProvider(LocalActiveTimerVisible provides timerShowing) {
+                        Column(modifier = Modifier.fillMaxSize()) {
                         // Fixed slim countdown timer bar at the very top, slim and elegant
                         if (isTimerRunning && remainingSeconds > 0) {
                             Surface(
@@ -317,6 +320,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                }
                 }
                 }
             }

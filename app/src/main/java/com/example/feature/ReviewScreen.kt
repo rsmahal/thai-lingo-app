@@ -509,10 +509,11 @@ fun ReviewQuizOverlay(
     onQuit: () -> Unit
 ) {
     val showRomanizationOnly = LocalShowRomanizationOnly.current
+    val isTimerVisible = com.example.LocalActiveTimerVisible.current
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
+            .then(if (isTimerVisible) Modifier else Modifier.statusBarsPadding())
             .navigationBarsPadding()
     ) {
         // TOP RETOUR / PROGRESS BAR

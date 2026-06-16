@@ -220,11 +220,12 @@ fun LessonPlayingLayout(
         MaterialTheme.colorScheme.background
     }
 
+    val isTimerVisible = com.example.LocalActiveTimerVisible.current
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(bgyColor)
-            .statusBarsPadding()
+            .then(if (isTimerVisible) Modifier else Modifier.statusBarsPadding())
             .navigationBarsPadding(),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -1869,10 +1870,11 @@ fun LessonIntroduceLayout(
     val totalWords = state.introWords.size
     val progressFraction = (state.currentIntroWordIdx + 1).toFloat() / totalWords.toFloat()
 
+    val isTimerVisible = com.example.LocalActiveTimerVisible.current
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
+            .then(if (isTimerVisible) Modifier else Modifier.statusBarsPadding())
             .navigationBarsPadding(),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
