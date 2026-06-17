@@ -520,7 +520,12 @@ fun ReviewQuizOverlay(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
+                .padding(
+                    start = 8.dp,
+                    end = 8.dp,
+                    top = if (isTimerVisible) 4.dp else 8.dp,
+                    bottom = if (isTimerVisible) 4.dp else 8.dp
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
@@ -852,70 +857,31 @@ fun ReviewQuizCompletion(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Rewards indicators in Card Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            // Reviews indicator Card
+            Card(
+                modifier = Modifier.widthIn(max = 280.dp).fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = StreakOrange.copy(alpha = 0.05f)),
+                border = CardDefaults.outlinedCardBorder(enabled = true).copy(
+                    width = 1.dp,
+                    brush = androidx.compose.ui.graphics.SolidColor(StreakOrange.copy(alpha = 0.2f))
+                )
             ) {
-                Card(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = StreakOrange.copy(alpha = 0.05f)),
-                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                        width = 1.dp,
-                        brush = androidx.compose.ui.graphics.SolidColor(StreakOrange.copy(alpha = 0.2f))
-                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("REVIEWS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = StreakOrange)
-                        Text(
-                            text = "$correctCount / $totalWordsInQuiz",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text("Words Corrected", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                    }
-                }
-
-                Card(
-                    modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = LevelGold.copy(alpha = 0.05f)),
-                    border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                        width = 1.dp,
-                        brush = androidx.compose.ui.graphics.SolidColor(LevelGold.copy(alpha = 0.2f))
+                    Text("REVIEWS COMPLETED", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = StreakOrange)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "$correctCount / $totalWordsInQuiz",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("TOTAL XP", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = LevelGold)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Bolt,
-                                contentDescription = "XP Icon",
-                                tint = LevelGold,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Text(
-                                text = "+$xpEarned XP",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        Text("SRS Completed", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Words Updated", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                 }
             }
 

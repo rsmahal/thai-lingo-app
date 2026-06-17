@@ -55,7 +55,9 @@ class RepositoryImpl(
     }
 
     override fun getAllReviewWords(): Flow<List<ReviewWord>> {
-        return reviewWordDao.getAllReviewWords().map { list -> list.map { it.toDomain() } }
+        return reviewWordDao.getAllReviewWords().map { list -> 
+            list.map { it.toDomain() }.filter { it.thai != it.english }
+        }
     }
 
     override suspend fun addWordToReviewQueue(thaiWord: String) = withContext(Dispatchers.IO) {
@@ -67,17 +69,20 @@ class RepositoryImpl(
         val now = System.currentTimeMillis()
         if (existing == null) {
             val allVocab = getSampleVocabulary()
-            val vocab = allVocab.find { it.thai == thaiWord }
-            val (english, romanization, category) = if (vocab != null) {
-                Triple(vocab.english, vocab.romanization, vocab.category)
-            } else {
-                Triple(thaiWord, "", "General")
+            val vocab = allVocab.find { it.thai.trim() == thaiWord.trim() }
+            if (vocab == null) {
+                return@withContext
             }
+            val english = vocab.english
+            val romanization = vocab.romanization
+            val category = vocab.category
+
+            val actualThaiWord = vocab.thai // use the official dictionary spelling
 
             if (isCorrect) {
                 val intervalDays = 1
                 val entity = ReviewWordEntity(
-                    thai = thaiWord,
+                    thai = actualThaiWord,
                     english = english,
                     romanization = romanization,
                     category = category,
@@ -91,7 +96,7 @@ class RepositoryImpl(
                 reviewWordDao.insertReviewWord(entity)
             } else {
                 val entity = ReviewWordEntity(
-                    thai = thaiWord,
+                    thai = actualThaiWord,
                     english = english,
                     romanization = romanization,
                     category = category,

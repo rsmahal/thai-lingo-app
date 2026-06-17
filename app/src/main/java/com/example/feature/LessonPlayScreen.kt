@@ -233,7 +233,12 @@ fun LessonPlayingLayout(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = if (isTimerVisible) 4.dp else 12.dp,
+                    bottom = if (isTimerVisible) 4.dp else 12.dp
+                ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -267,6 +272,7 @@ fun LessonPlayingLayout(
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
