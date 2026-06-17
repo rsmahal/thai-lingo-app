@@ -561,14 +561,13 @@ fun ReviewQuizOverlay(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // CENTRAL CARD (Scrollable to prevent elements from being covered by the bottom drawer on compact screens)
+        // CENTRAL CARD
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(androidx.compose.foundation.rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -580,20 +579,20 @@ fun ReviewQuizOverlay(
                 letterSpacing = 1.sp
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Study presenting card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
+                    .padding(vertical = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (currentSubStep == 0) {
@@ -603,7 +602,7 @@ fun ReviewQuizOverlay(
                         ) {
                             Text(
                                 text = if (showRomanizationOnly) word.romanization else word.thai,
-                                fontSize = 32.sp,
+                                fontSize = 24.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center,
@@ -612,7 +611,7 @@ fun ReviewQuizOverlay(
                             Spacer(modifier = Modifier.width(8.dp))
                             IconButton(
                                 onClick = onPlayAudio,
-                                modifier = Modifier.size(36.dp)
+                                modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.VolumeUp,
@@ -622,20 +621,20 @@ fun ReviewQuizOverlay(
                             }
                         }
                         if (word.romanization.isNotEmpty() && !showRomanizationOnly) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = word.romanization,
-                                fontSize = 16.sp,
+                                fontSize = 15.sp,
                                 color = DuoGreenDark,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
-                            )
+                             )
                         }
                     } else {
                         // English version for English -> Thai quiz sub-step
                         Text(
                             text = word.english,
-                            fontSize = 28.sp,
+                            fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center
@@ -644,12 +643,12 @@ fun ReviewQuizOverlay(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // MULTIPLE CHOICE LIST
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 options.forEach { option ->
                     val isSelected = selectedOption == option
@@ -683,7 +682,7 @@ fun ReviewQuizOverlay(
                         onClick = { if (!isChecking) onSelectOption(option) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(54.dp)
+                            .height(48.dp)
                             .testTag("review_option_$option"),
                         colors = CardDefaults.cardColors(containerColor = bg),
                         border = CardDefaults.outlinedCardBorder(enabled = true).copy(
@@ -707,6 +706,7 @@ fun ReviewQuizOverlay(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
         }
 
         // BOTTOM DRAWER PROGRESS DRAWER

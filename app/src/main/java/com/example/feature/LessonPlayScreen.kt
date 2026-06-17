@@ -272,9 +272,8 @@ fun LessonPlayingLayout(
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (isPopQuiz) {
                 Surface(
@@ -316,7 +315,7 @@ fun LessonPlayingLayout(
                 }
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // RENDER BY TYPE
             when (currentExercise.type) {
@@ -381,6 +380,7 @@ fun LessonPlayingLayout(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(10.dp))
         }
 
         // GAUGE BOTTOM EVALUATOR STRIP
@@ -416,33 +416,33 @@ fun MultipleChoiceView(
         Card(
             modifier = Modifier.fillMaxWidth().testTag("choice_question_bubble"),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)),
-            shape = RoundedCornerShape(20.dp)
+            shape = RoundedCornerShape(16.dp)
         ) {
             Row(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 val isQuestionThai = exercise.question.any { it in '\u0E00'..'\u0E7F' }
                 if (isQuestionThai) {
                     IconButton(
                         onClick = onVoicePlay,
-                        modifier = Modifier.background(GemCyan, CircleShape).size(48.dp)
+                        modifier = Modifier.background(GemCyan, CircleShape).size(36.dp)
                     ) {
-                        Icon(imageVector = Icons.Default.VolumeUp, contentDescription = "Listen to pronunciation", tint = Color.White)
+                        Icon(imageVector = Icons.Default.VolumeUp, contentDescription = "Listen to pronunciation", tint = Color.White, modifier = Modifier.size(20.dp))
                     }
                 }
                 Column {
                     Text(
                         text = if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question,
-                        fontSize = 32.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     if (exercise.romanization.isNotEmpty() && !showRomanizationOnly) {
                         Text(
                             text = "(${exercise.romanization})",
-                            fontSize = 15.sp,
+                            fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
@@ -450,10 +450,10 @@ fun MultipleChoiceView(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Grid cards
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             exercise.options.forEach { option ->
                 val isSelected = selectedValue == option
                 val border = when {
@@ -471,10 +471,10 @@ fun MultipleChoiceView(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
+                        .height(48.dp)
                         .testTag("option_$option"),
                     colors = CardDefaults.cardColors(containerColor = bg),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     border = CardDefaults.outlinedCardBorder(enabled = true).copy(
                         width = if (isSelected) 3.dp else 1.5.dp,
                         brush = androidx.compose.ui.graphics.SolidColor(border)
@@ -812,33 +812,33 @@ fun ListeningView(
                 }
                 .testTag("listen_speaker_box"),
             colors = CardDefaults.cardColors(containerColor = GemCyan.copy(alpha = 0.1f)),
-            shape = RoundedCornerShape(20.dp),
-            border = CardDefaults.outlinedCardBorder(enabled = true).copy(width = 2.dp, brush = androidx.compose.ui.graphics.SolidColor(GemCyan))
+            shape = RoundedCornerShape(16.dp),
+            border = CardDefaults.outlinedCardBorder(enabled = true).copy(width = 1.5.dp, brush = androidx.compose.ui.graphics.SolidColor(GemCyan))
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(32.dp),
+                    .padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(56.dp)
                         .background(GemCyan, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(imageVector = Icons.Default.VolumeUp, contentDescription = "Play Pronunciation audio", tint = Color.White, modifier = Modifier.size(44.dp))
+                    Icon(imageVector = Icons.Default.VolumeUp, contentDescription = "Play Pronunciation audio", tint = Color.White, modifier = Modifier.size(28.dp))
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Tap to listen again", fontWeight = FontWeight.Bold, color = GemCyan)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text("Tap to listen again", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GemCyan)
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Options list
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             exercise.options.forEach { option ->
                 val isSelected = selectedValue == option
                 val border = if (isSelected) DuoGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
@@ -853,10 +853,10 @@ fun ListeningView(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
+                        .height(48.dp)
                         .testTag("listen_option_$option"),
                     colors = CardDefaults.cardColors(containerColor = bg),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(12.dp),
                     border = CardDefaults.outlinedCardBorder(enabled = true).copy(
                         width = if (isSelected) 3.dp else 1.5.dp,
                         brush = androidx.compose.ui.graphics.SolidColor(border)
