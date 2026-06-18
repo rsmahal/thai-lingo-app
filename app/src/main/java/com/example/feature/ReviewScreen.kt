@@ -645,20 +645,6 @@ fun ReviewQuizOverlay(
                             color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center
                         )
-                        if (isChecking) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Correct: ${word.thai}",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = DuoGreenDark
-                            )
-                            ThaiToneIndicatorRow(
-                                thaiWord = word.thai,
-                                showLabel = true,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
                     }
                 }
             }
@@ -747,7 +733,7 @@ fun ReviewQuizOverlay(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(horizontal = 24.dp, vertical = 12.dp)
             ) {
                 if (isChecking) {
                     val messageTitle = if (isCorrect == true) "Correct Review!" else "Need revision"
@@ -787,18 +773,10 @@ fun ReviewQuizOverlay(
                                 color = iconColor.copy(alpha = 0.85f),
                                 lineHeight = 18.sp
                             )
-                            if (currentSubStep == 1) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                ThaiToneIndicatorRow(
-                                    thaiWord = word.thai,
-                                    showLabel = true,
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
-                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
                         onClick = onContinue,

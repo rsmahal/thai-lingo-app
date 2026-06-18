@@ -170,80 +170,82 @@ class MainActivity : ComponentActivity() {
                             Scaffold(
                                 modifier = Modifier.fillMaxSize(),
                                 bottomBar = {
-                                    NavigationBar(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                                            .navigationBarsPadding(),
-                                        containerColor = MaterialTheme.colorScheme.surface,
-                                        tonalElevation = 8.dp
-                                    ) {
-                                        NavigationBarItem(
-                                            selected = activeTab == AppTab.LEARN,
-                                            onClick = { 
-                                                activeTab = AppTab.LEARN
-                                                isReviewActive = false
-                                                isPracticeActive = false
-                                            },
-                                            icon = { Icon(imageVector = Icons.Default.School, contentDescription = "Curriculum roadmap") },
-                                            label = { Text("Learn", fontWeight = FontWeight.Bold) },
-                                            colors = NavigationBarItemDefaults.colors(
-                                                selectedIconColor = DuoGreenDark,
-                                                selectedTextColor = DuoGreenDark,
-                                                indicatorColor = DuoGreenLight
-                                            ),
-                                            modifier = Modifier.testTag("learn_tab_btn")
-                                        )
+                                    if (!isReviewActive && !isPracticeActive) {
+                                        NavigationBar(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                                                .navigationBarsPadding(),
+                                            containerColor = MaterialTheme.colorScheme.surface,
+                                            tonalElevation = 8.dp
+                                        ) {
+                                            NavigationBarItem(
+                                                selected = activeTab == AppTab.LEARN,
+                                                onClick = { 
+                                                    activeTab = AppTab.LEARN
+                                                    isReviewActive = false
+                                                    isPracticeActive = false
+                                                },
+                                                icon = { Icon(imageVector = Icons.Default.School, contentDescription = "Curriculum roadmap") },
+                                                label = { Text("Learn", fontWeight = FontWeight.Bold) },
+                                                colors = NavigationBarItemDefaults.colors(
+                                                    selectedIconColor = DuoGreenDark,
+                                                    selectedTextColor = DuoGreenDark,
+                                                    indicatorColor = DuoGreenLight
+                                                ),
+                                                modifier = Modifier.testTag("learn_tab_btn")
+                                            )
 
-                                        NavigationBarItem(
-                                            selected = activeTab == AppTab.REVIEW,
-                                            onClick = { 
-                                                activeTab = AppTab.REVIEW
-                                                isReviewActive = false
-                                                isPracticeActive = false
-                                            },
-                                            icon = { Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "Review mistakes") },
-                                            label = { Text("Review", fontWeight = FontWeight.Bold) },
-                                            colors = NavigationBarItemDefaults.colors(
-                                                selectedIconColor = DuoGreenDark,
-                                                selectedTextColor = DuoGreenDark,
-                                                indicatorColor = DuoGreenLight
-                                            ),
-                                            modifier = Modifier.testTag("review_tab_btn")
-                                        )
+                                            NavigationBarItem(
+                                                selected = activeTab == AppTab.REVIEW,
+                                                onClick = { 
+                                                    activeTab = AppTab.REVIEW
+                                                    isReviewActive = false
+                                                    isPracticeActive = false
+                                                },
+                                                icon = { Icon(imageVector = Icons.Default.CheckCircle, contentDescription = "Review mistakes") },
+                                                label = { Text("Review", fontWeight = FontWeight.Bold) },
+                                                colors = NavigationBarItemDefaults.colors(
+                                                    selectedIconColor = DuoGreenDark,
+                                                    selectedTextColor = DuoGreenDark,
+                                                    indicatorColor = DuoGreenLight
+                                                ),
+                                                modifier = Modifier.testTag("review_tab_btn")
+                                            )
 
-                                        NavigationBarItem(
-                                            selected = activeTab == AppTab.PRACTICE,
-                                            onClick = { 
-                                                activeTab = AppTab.PRACTICE
-                                                isReviewActive = false
-                                                isPracticeActive = false
-                                            },
-                                            icon = { Icon(imageVector = Icons.Default.Book, contentDescription = "Practice & heart shop") },
-                                            label = { Text("Practice", fontWeight = FontWeight.Bold) },
-                                            colors = NavigationBarItemDefaults.colors(
-                                                selectedIconColor = DuoGreenDark,
-                                                selectedTextColor = DuoGreenDark,
-                                                indicatorColor = DuoGreenLight
-                                            ),
-                                            modifier = Modifier.testTag("practice_tab_btn")
-                                        )
+                                            NavigationBarItem(
+                                                selected = activeTab == AppTab.PRACTICE,
+                                                onClick = { 
+                                                    activeTab = AppTab.PRACTICE
+                                                    isReviewActive = false
+                                                    isPracticeActive = false
+                                                },
+                                                icon = { Icon(imageVector = Icons.Default.Book, contentDescription = "Practice & heart shop") },
+                                                label = { Text("Practice", fontWeight = FontWeight.Bold) },
+                                                colors = NavigationBarItemDefaults.colors(
+                                                    selectedIconColor = DuoGreenDark,
+                                                    selectedTextColor = DuoGreenDark,
+                                                    indicatorColor = DuoGreenLight
+                                                ),
+                                                modifier = Modifier.testTag("practice_tab_btn")
+                                            )
 
-                                        NavigationBarItem(
-                                            selected = activeTab == AppTab.PROFILE,
-                                            onClick = { 
-                                                activeTab = AppTab.PROFILE
-                                                isReviewActive = false
-                                                isPracticeActive = false
-                                            },
-                                            icon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Stats & profiles") },
-                                            label = { Text("Profile", fontWeight = FontWeight.Bold) },
-                                            colors = NavigationBarItemDefaults.colors(
-                                                selectedIconColor = DuoGreenDark,
-                                                selectedTextColor = DuoGreenDark,
-                                                indicatorColor = DuoGreenLight
-                                            ),
-                                            modifier = Modifier.testTag("profile_tab_btn")
-                                        )
+                                            NavigationBarItem(
+                                                selected = activeTab == AppTab.PROFILE,
+                                                onClick = { 
+                                                    activeTab = AppTab.PROFILE
+                                                    isReviewActive = false
+                                                    isPracticeActive = false
+                                                },
+                                                icon = { Icon(imageVector = Icons.Default.Person, contentDescription = "Stats & profiles") },
+                                                label = { Text("Profile", fontWeight = FontWeight.Bold) },
+                                                colors = NavigationBarItemDefaults.colors(
+                                                    selectedIconColor = DuoGreenDark,
+                                                    selectedTextColor = DuoGreenDark,
+                                                    indicatorColor = DuoGreenLight
+                                                ),
+                                                modifier = Modifier.testTag("profile_tab_btn")
+                                            )
+                                        }
                                     }
                                 }
                             ) { innerPadding ->

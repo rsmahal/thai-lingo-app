@@ -72,7 +72,7 @@ class ReviewViewModel(
         if (currentState is ReviewUiState.Active) {
             _uiState.value = currentState.copy(
                 allReviewWords = internalReviewWords,
-                reviewQueue = dueWords,
+                reviewQueue = if (currentState.currentStep >= 0) currentState.reviewQueue else dueWords,
                 masteredCount = masteredCount,
                 timeOffsetDays = internalTimeOffsetDays
             )
@@ -222,15 +222,13 @@ class ReviewViewModel(
     }
 
     fun quitOrFinishQuiz() {
-        _uiState.value = ReviewUiState.Loading
-        viewModelScope.launch {
-            // Get fresh status
-            updateActiveState()
-            val state = _uiState.value as? ReviewUiState.Active
-            if (state != null) {
-                _uiState.value = state.copy(currentStep = -1)
-            }
+        val currentState = _uiState.value as? ReviewUiState.Active
+        if (currentState != null) {
+            _uiState.value = currentState.copy(currentStep = -1)
+        } else {
+            _uiState.value = ReviewUiState.Loading
         }
+        updateActiveState()
     }
 
     class Factory(private val context: Context) : ViewModelProvider.Factory {
