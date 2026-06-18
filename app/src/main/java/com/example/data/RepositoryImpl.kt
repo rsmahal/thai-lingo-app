@@ -1063,18 +1063,18 @@ class RepositoryImpl(
         val sentences501 = listOf(
             // 3 English to Thai Sentence Build
             Triple("Hello, nice to meet you.", "สวัสดี|ยินดีที่ได้รู้จัก", listOf("ขอโทษ", "ขอบคุณ", "ไม่ใช่", "โชคดี")),
-            Triple("What is your name?", "คุณ|ชื่อ|อะไร", listOf("สบายดีไหม", "ยินดีเสมอกับคุณครับ", "ใช่", "ผมชื่อ")),
+            Triple("How are you today?", "คุณ|สบายดีไหม|วันนี้", listOf("พรุ่งนี้", "เมื่อวาน", "ขอบคุณ", "ยินดี")),
             Triple("Today I am fine.", "วันนี้|ฉัน|สบายดี", listOf("พรุ่งนี้", "เมื่อวาน", "ขอบคุณ", "ยินดี")),
             
             // 3 Thai to English Sentence Build
             Triple("ใช่ สบายดี", "Yes|I|am|fine", listOf("Hello", "Sorry", "No", "Goodbye")),
             Triple("สบายดี ขอบคุณ", "I|am|fine|Thank|you", listOf("Yes", "Goodbye", "Not correct", "You")),
-            Triple("ยินดีด้วย คุณ โชคดี", "Congratulations|you|are|lucky", listOf("thank you", "fine", "sorry", "sad")),
+            Triple("ยินดีด้วย คุณ โชคดี", "Congratulations|you|are|lucky", listOf("thank you", "fine", "sorry", "today")),
             
             // 3 Listening Thai (spoken) with English words
-            Triple("ยินดีที่ได้รู้จัก", "Nice|to|meet|you", listOf("Hello", "How", "Tomorrow", "Today")),
+            Triple("ยินดีที่ได้รู้จัก", "Nice|to|meet|you", listOf("Hello", "Sorry", "Tomorrow", "Today")),
             Triple("ราตรีสวัสดิ์", "Good|night", listOf("Good morning", "Goodbye", "Thank you", "Yes")),
-            Triple("ลาก่อน พรุ่งนี้ พบกันใหม่", "Goodbye|tomorrow|see|you|again", listOf("Good afternoon", "Yesterday", "Good night", "Today"))
+            Triple("ลาก่อน พรุ่งนี้ แล้วพบกันใหม่", "Goodbye|tomorrow|see|you|again", listOf("Good afternoon", "Yesterday", "Good night", "Today"))
         )
 
         for (i in sentences501.indices) {
@@ -1125,19 +1125,19 @@ class RepositoryImpl(
         // Lesson 502: Food Staples Sentences
         val sentences502 = listOf(
             // 3 English to Thai Sentence Build
-            Triple("I want to eat Pad Thai.", "ฉัน|อยาก|กิน|ผัดไทย", listOf("ต้มยำกุ้ง", "น้ำเปล่า", "ผลไม้", "กาแฟ")),
-            Triple("Is the green curry spicy?", "แกงเขียวหวาน|เผ็ด|ไหม", listOf("อร่อย", "หวาน", "กิน", "ส้มตำ")),
-            Triple("Please give me hot coffee.", "ขอ|กาแฟ|ร้อน|ครับ", listOf("น้ำ", "ชาเย็น", "ผลไม้", "ค่ะ")),
+            Triple("Today I eat chicken.", "วันนี้|ฉัน|กิน|ไก่", listOf("พริก", "ไข่", "พรุ่งนี้", "ปลา")),
+            Triple("I am hungry for rice.", "ผม|หิว|ข้าว", listOf("หวาน", "ดื่ม", "เกลือ", "น้ำ")),
+            Triple("Green curry is spicy and delicious.", "แกงเขียวหวาน|เผ็ด|อร่อย", listOf("ข้าว", "หมู", "ปู", "ไข่")),
             
             // 3 Thai to English Sentence Build
             Triple("ต้มยำกุ้ง อร่อย เผ็ด", "Spicy|shrimp|soup|is|delicious|and|spicy", listOf("Sweet", "Water", "Rice", "Tea")),
-            Triple("ผม หิว ข้าว", "I|am|hungry|for|rice", listOf("sweet", "tired", "happy", "water")),
-            Triple("กิน ส้มตำคู่ ข้าวเหนียว", "Eat|papaya|salad|with|sticky|rice", listOf("Chicken", "Fish", "Pork", "Salt")),
+            Triple("กิน ส้มตำ อร่อย", "Eat|delicious|papaya|salad", listOf("Chicken", "Fish", "Pork", "Salt")),
+            Triple("เขา ดื่ม น้ำ", "He|drinks|water", listOf("Coffee", "Tea", "Delicious", "Chicken")),
             
             // 3 Listening Thai (spoken) with English words
-            Triple("ขอน้ำเปล่า หนึ่ง แก้ว", "Please|give|me|a|glass|of|water", listOf("coffee", "tea", "delicious", "banana")),
-            Triple("วันนี้ ฉัน ดื่ม ชาเย็น อร่อย", "Today|I|drink|delicious|Thai|iced|tea", listOf("Water", "Banana", "Omelet", "Pork")),
-            Triple("ส้มตำไทย หวาน เผ็ด อร่อย", "Thai|papaya|salad|is|sweet|spicy|and|delicious", listOf("Green curry", "Chicken", "Fish", "Egg"))
+            Triple("วันนี้ ฉัน ดื่ม ชา หวาน", "Today|I|drink|sweet|tea", listOf("Water", "Fruit", "Egg", "Pork")),
+            Triple("เธอ กิน ผลไม้ หวาน", "She|eats|sweet|fruits", listOf("Coffee", "Water", "Rice", "Tea")),
+            Triple("กิน กุ้ง ปู อร่อย", "Eat|delicious|shrimp|and|crab", listOf("Duck", "Pork", "Tea", "Milk"))
         )
 
         for (i in sentences502.indices) {
@@ -1188,19 +1188,19 @@ class RepositoryImpl(
         // Lesson 503: Numbers & Money Sentences
         val sentences503 = listOf(
             // 3 English to Thai Sentence Build
-            Triple("How much is this shirt?", "เสื้อ|ตัวนี้|ราคา|เท่าไหร่", listOf("เงิน", "บาท", "แพง", "ซื้อ")),
-            Triple("I want to buy food for thirty Baht.", "ฉัน|อยาก|ซื้อ|อาหาร|สามสิบ|บาท", listOf("ยี่สิบ", "คน", "สิบเอ็ด", "สี่สิบ")),
-            Triple("The red shirt is cheap.", "เสื้อ|สีแดง|ราคา|ถูก", listOf("แพง", "สีน้ำเงิน", "ซื้อ", "เงิน")),
+            Triple("How much is the shirt?", "เสื้อ|ราคา|เท่าไหร่", listOf("เงิน", "บาท", "แพง", "ซื้อ")),
+            Triple("Today I buy food for fifty Baht.", "วันนี้|ฉัน|ซื้อ|อาหาร|ห้าสิบ|บาท", listOf("ยี่สิบ", "สิบเอ็ด", "สี่สิบ", "สามสิบ")),
+            Triple("The shirt is cheap.", "เสื้อ|ราคา|ถูก", listOf("แพง", "หนึ่ง", "ซื้อ", "เงิน")),
             
             // 3 Thai to English Sentence Build
             Triple("ราคา ทั้งหมด สี่ร้อย บาท", "The|total|price|is|four|hundred|Baht", listOf("Three", "Five", "Ten", "Seven")),
-            Triple("เสื้อหนาว สีชมพู ราคา แพง เกินไป", "The|pink|sweater|price|is|too|expensive", listOf("cheap", "beautiful", "socks", "T-shirt")),
-            Triple("ซื้อ ส้ม ห้า กิโล ห้าสิบ บาท", "Buy|five|kilos|of|oranges|for|fifty|Baht", listOf("Thirty", "Ten", "One", "Two")),
+            Triple("ฉัน ซื้อ หมู ยี่สิบ บาท", "I|buy|pork|for|twenty|Baht", listOf("Thirty", "Ten", "One", "Two")),
+            Triple("ฉัน ซื้อ กาแฟ หนึ่ง", "I|buy|one|coffee", listOf("Thirty", "Ten", "Two", "Forty")),
             
             // 3 Listening Thai (spoken) with English words
-            Triple("จ่าย เงินสด สามพัน บาท", "Pay|cash|three|thousand|Baht", listOf("hundred", "million", "Fifty", "Ten")),
-            Triple("รองเท้าผ้าใบ สีดำ ราคาถูก ดี", "Black|sneakers|are|cheap|and|good", listOf("pink", "expensive", "socks", "shirt")),
-            Triple("คน ต่างชาติ ต่อราคา ใน ตลาดสด", "Foreigners|bargaining|prices|in|fresh|market", listOf("Department store", "hospital", "socks", "T-shirt"))
+            Triple("เงิน ทั้งหมด สามพัน บาท", "Total|money|is|three|thousand|Baht", listOf("hundred", "million", "Fifty", "Ten")),
+            Triple("เสื้อ หนึ่ง ราคา ห้าสิบ บาท", "One|shirt|is|fifty|Baht", listOf("twenty", "thirty", "expensive", "cheap")),
+            Triple("ฉัน ซื้อ อาหาร สองร้อย บาท", "I|buy|food|for|two|hundred|Baht", listOf("Thirty", "Ten", "Omelet", "Water"))
         )
 
         for (i in sentences503.indices) {
