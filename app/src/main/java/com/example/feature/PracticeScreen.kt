@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.common.ServiceLocator
 import com.example.core.common.getRomanizedText
+import com.example.core.common.ThaiToneIndicatorRow
 import com.example.LocalShowRomanizationOnly
 import com.example.LocalVocabularyList
 import com.example.domain.Vocabulary
@@ -249,6 +250,10 @@ fun PracticeScreen(
                                                             fontSize = 13.sp,
                                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                                                         )
+                                                        Spacer(modifier = Modifier.height(4.dp))
+                                                        ThaiToneIndicatorRow(thaiWord = word.thai, showLabel = true)
+                                                    } else {
+                                                        ThaiToneIndicatorRow(thaiWord = word.thai, showLabel = true)
                                                     }
                                                     
                                                     AnimatedVisibility(
@@ -507,6 +512,12 @@ fun PracticeScreen(
                                                 textAlign = TextAlign.Center
                                             )
                                         }
+
+                                        ThaiToneIndicatorRow(
+                                            thaiWord = activeVocab.thai,
+                                            showLabel = true,
+                                            modifier = Modifier.padding(top = 12.dp)
+                                        )
 
                                         Spacer(modifier = Modifier.height(36.dp))
 

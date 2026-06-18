@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.domain.ReviewWord
 import com.example.LocalShowRomanizationOnly
+import com.example.core.common.ThaiToneIndicatorRow
 import com.example.ui.theme.*
 
 @Composable
@@ -630,6 +631,11 @@ fun ReviewQuizOverlay(
                                 textAlign = TextAlign.Center
                              )
                         }
+                        ThaiToneIndicatorRow(
+                            thaiWord = word.thai,
+                            showLabel = true,
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
                     } else {
                         // English version for English -> Thai quiz sub-step
                         Text(
@@ -639,6 +645,20 @@ fun ReviewQuizOverlay(
                             color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center
                         )
+                        if (isChecking) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Correct: ${word.thai}",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = DuoGreenDark
+                            )
+                            ThaiToneIndicatorRow(
+                                thaiWord = word.thai,
+                                showLabel = true,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -691,9 +711,10 @@ fun ReviewQuizOverlay(
                         ),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                        Row(
+                            modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
                                 text = option,
@@ -702,6 +723,9 @@ fun ReviewQuizOverlay(
                                 fontSize = 16.sp,
                                 textAlign = TextAlign.Center
                             )
+                            if (currentSubStep == 1 && isChecking && (isSelected || isOptionCorrectAnswer)) {
+                                ThaiToneIndicatorRow(thaiWord = option, showLabel = true)
+                            }
                         }
                     }
                 }
@@ -763,6 +787,14 @@ fun ReviewQuizOverlay(
                                 color = iconColor.copy(alpha = 0.85f),
                                 lineHeight = 18.sp
                             )
+                            if (currentSubStep == 1) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                ThaiToneIndicatorRow(
+                                    thaiWord = word.thai,
+                                    showLabel = true,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
                         }
                     }
 

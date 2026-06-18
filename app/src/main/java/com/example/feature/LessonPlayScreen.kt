@@ -46,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.LocalShowRomanizationOnly
 import com.example.LocalVocabularyList
 import com.example.core.common.getRomanizedText
+import com.example.core.common.ThaiToneIndicatorRow
 import com.example.domain.Exercise
 import com.example.domain.ExerciseType
 import com.example.domain.Lesson
@@ -446,6 +447,11 @@ fun MultipleChoiceView(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
+                    ThaiToneIndicatorRow(
+                        thaiWord = exercise.question,
+                        showLabel = true,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
         }
@@ -480,14 +486,20 @@ fun MultipleChoiceView(
                         brush = androidx.compose.ui.graphics.SolidColor(border)
                     )
                 ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
                         Text(
                             text = if (showRomanizationOnly) getRomanizedText(option, vocabularyList) else option,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 20.dp),
                             color = if (isSelected) DuoGreenDark else MaterialTheme.colorScheme.onSurface
                         )
+                        if (isChecked && (isSelected || option == exercise.correctAnswer)) {
+                            ThaiToneIndicatorRow(thaiWord = option, showLabel = true)
+                        }
                     }
                 }
             }
@@ -526,6 +538,11 @@ fun TranslateView(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 }
+                ThaiToneIndicatorRow(
+                    thaiWord = exercise.question,
+                    showLabel = true,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
             }
         }
 
@@ -832,6 +849,11 @@ fun ListeningView(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text("Tap to listen again", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GemCyan)
+                val thaiAudioText = if (exercise.audioText.isNotEmpty()) exercise.audioText else if (exercise.question.any { it in '\u0E00'..'\u0E7F' }) exercise.question else ""
+                if (thaiAudioText.any { it in '\u0E00'..'\u0E7F' }) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    ThaiToneIndicatorRow(thaiWord = thaiAudioText, showLabel = true)
+                }
             }
         }
 
@@ -862,14 +884,18 @@ fun ListeningView(
                         brush = androidx.compose.ui.graphics.SolidColor(border)
                     )
                 ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+                    Row(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
                         Text(
                             text = option,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 20.dp),
                             color = if (isSelected) DuoGreenDark else MaterialTheme.colorScheme.onSurface
                         )
+                        ThaiToneIndicatorRow(thaiWord = option, showLabel = true)
                     }
                 }
             }
@@ -2001,7 +2027,13 @@ fun LessonIntroduceLayout(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    ThaiToneIndicatorRow(
+                        thaiWord = currentWord.thai,
+                        showLabel = true
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     // Divider
                     HorizontalDivider(
