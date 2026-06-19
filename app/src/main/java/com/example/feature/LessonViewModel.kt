@@ -108,7 +108,27 @@ class LessonViewModel(
                     val fixedSentences = dbExercises.filter { it.type == ExerciseType.SENTENCE_BUILD }
                     
                     val optionsPool = if (lesson != null) {
-                        val topicVocab = allVocab.filter { it.category.equals(lesson.category, ignoreCase = true) }
+                        val topicTestId = when {
+                            lessonId in 49..50 -> 113
+                            else -> 101 + (lessonId - 1) / 4
+                        }
+                        val topicRanges = when (topicTestId) {
+                            101 -> listOf(1..40)
+                            102 -> listOf(101..140)
+                            103 -> listOf(201..240)
+                            104 -> listOf(301..340)
+                            105 -> listOf(401..440)
+                            106 -> listOf(41..80)
+                            107 -> listOf(141..180)
+                            108 -> listOf(241..280)
+                            109 -> listOf(341..380)
+                            110 -> listOf(441..480)
+                            111 -> listOf(81..100, 181..200)
+                            112 -> listOf(281..300, 381..400)
+                            113 -> listOf(481..500)
+                            else -> listOf(1..40)
+                        }
+                        val topicVocab = allVocab.filter { v -> topicRanges.any { range -> v.id in range } }
                         if (topicVocab.size >= 4) topicVocab else allVocab
                     } else {
                         allVocab
@@ -152,7 +172,7 @@ class LessonViewModel(
                         if (prevVocabList.isNotEmpty()) {
                             val selectedVocabs = prevVocabList.shuffled().take(3)
                             selectedVocabs.forEach { vocab ->
-                                val generated = generateVocabExercises(listOf(vocab), optionsPool)
+                                val generated = generateVocabExercises(listOf(vocab), allVocab)
                                 if (generated.isNotEmpty()) {
                                     val quizEx = generated.random().copy(isPopQuiz = true)
                                     val insertIndex = if (shuffledList.size > 1) (1..shuffledList.size).random() else shuffledList.size
@@ -226,8 +246,9 @@ class LessonViewModel(
                 when (type) {
                     ExerciseType.MULTIPLE_CHOICE -> {
                         val isEngQuestion = listOf(true, false).random()
+                        val topicPool = allVocab.filter { it.category.equals(vocabWord.category, ignoreCase = true) }
                         if (isEngQuestion) {
-                            val otherThais = allVocab.filter { it.id != vocabWord.id }
+                            val otherThais = topicPool.filter { it.id != vocabWord.id }
                                 .map { it.thai }
                                 .distinct()
                                 .shuffled()
@@ -245,7 +266,7 @@ class LessonViewModel(
                                 audioText = vocabWord.thai
                             ))
                         } else {
-                            val otherEnglishes = allVocab.filter { it.id != vocabWord.id }
+                            val otherEnglishes = topicPool.filter { it.id != vocabWord.id }
                                 .map { it.english }
                                 .distinct()
                                 .shuffled()
@@ -265,7 +286,8 @@ class LessonViewModel(
                         }
                     }
                     ExerciseType.LISTENING -> {
-                        val otherEnglishes = allVocab.filter { it.id != vocabWord.id }
+                        val topicPool = allVocab.filter { it.category.equals(vocabWord.category, ignoreCase = true) }
+                        val otherEnglishes = topicPool.filter { it.id != vocabWord.id }
                             .map { it.english }
                             .distinct()
                             .shuffled()
@@ -313,6 +335,10 @@ class LessonViewModel(
         var listeningCount = 0
 
         lessonVocab.forEach { v ->
+            val topicPool = allVocab.filter { it.category.equals(v.category, ignoreCase = true) }.let {
+                if (it.size >= 4) it else allVocab
+            }
+
             val possibleTypes = mutableListOf("EN_TO_TH_MC", "TH_TO_EN_MC")
             if (listeningCount < 8) {
                 possibleTypes.add("LISTENING")
@@ -325,7 +351,7 @@ class LessonViewModel(
             selectedTypes.forEach { type ->
                 when (type) {
                     "EN_TO_TH_MC" -> {
-                        val otherThais = allVocab.filter { it.id != v.id }
+                        val otherThais = topicPool.filter { it.id != v.id }
                             .map { it.thai }
                             .distinct()
                             .shuffled()
@@ -344,7 +370,7 @@ class LessonViewModel(
                         ))
                     }
                     "TH_TO_EN_MC" -> {
-                        val otherEnglishes = allVocab.filter { it.id != v.id }
+                        val otherEnglishes = topicPool.filter { it.id != v.id }
                             .map { it.english }
                             .distinct()
                             .shuffled()
@@ -363,7 +389,7 @@ class LessonViewModel(
                         ))
                     }
                     "LISTENING" -> {
-                        val otherEnglishes = allVocab.filter { it.id != v.id }
+                        val otherEnglishes = topicPool.filter { it.id != v.id }
                             .map { it.english }
                             .distinct()
                             .shuffled()

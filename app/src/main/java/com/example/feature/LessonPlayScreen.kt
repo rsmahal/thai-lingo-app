@@ -462,11 +462,47 @@ fun MultipleChoiceView(
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             exercise.options.forEach { option ->
                 val isSelected = selectedValue == option
-                val border = when {
-                    isSelected -> DuoGreen
-                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                val isCorrectAnswer = option == exercise.correctAnswer
+
+                val bg: Color
+                val border: Color
+                val textColor: Color
+                val borderWidth: androidx.compose.ui.unit.Dp
+
+                if (isChecked) {
+                    when {
+                        isCorrectAnswer -> {
+                            bg = CorrectFill.copy(alpha = 0.2f)
+                            border = CorrectStroke
+                            textColor = CorrectText
+                            borderWidth = 3.dp
+                        }
+                        isSelected -> {
+                            bg = IncorrectFill.copy(alpha = 0.2f)
+                            border = HeartRed
+                            textColor = HeartRed
+                            borderWidth = 3.dp
+                        }
+                        else -> {
+                            bg = MaterialTheme.colorScheme.surface
+                            border = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                            textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            borderWidth = 1.5.dp
+                        }
+                    }
+                } else {
+                    if (isSelected) {
+                        bg = GemCyan.copy(alpha = 0.08f)
+                        border = GemCyan
+                        textColor = GemCyan
+                        borderWidth = 3.dp
+                    } else {
+                        bg = MaterialTheme.colorScheme.surface
+                        border = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                        textColor = MaterialTheme.colorScheme.onSurface
+                        borderWidth = 1.5.dp
+                    }
                 }
-                val bg = if (isSelected) DuoGreen.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
 
                 Card(
                     onClick = {
@@ -482,7 +518,7 @@ fun MultipleChoiceView(
                     colors = CardDefaults.cardColors(containerColor = bg),
                     shape = RoundedCornerShape(12.dp),
                     border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                        width = if (isSelected) 3.dp else 1.5.dp,
+                        width = borderWidth,
                         brush = androidx.compose.ui.graphics.SolidColor(border)
                     )
                 ) {
@@ -495,7 +531,7 @@ fun MultipleChoiceView(
                             text = if (showRomanizationOnly) getRomanizedText(option, vocabularyList) else option,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) DuoGreenDark else MaterialTheme.colorScheme.onSurface
+                            color = textColor
                         )
                         if (isChecked && (isSelected || option == exercise.correctAnswer)) {
                             ThaiToneIndicatorRow(thaiWord = option, showLabel = true)
@@ -863,8 +899,47 @@ fun ListeningView(
         Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             exercise.options.forEach { option ->
                 val isSelected = selectedValue == option
-                val border = if (isSelected) DuoGreen else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-                val bg = if (isSelected) DuoGreen.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+                val isCorrectAnswer = option == exercise.correctAnswer
+
+                val bg: Color
+                val border: Color
+                val textColor: Color
+                val borderWidth: androidx.compose.ui.unit.Dp
+
+                if (isChecked) {
+                    when {
+                        isCorrectAnswer -> {
+                            bg = CorrectFill.copy(alpha = 0.2f)
+                            border = CorrectStroke
+                            textColor = CorrectText
+                            borderWidth = 3.dp
+                        }
+                        isSelected -> {
+                            bg = IncorrectFill.copy(alpha = 0.2f)
+                            border = HeartRed
+                            textColor = HeartRed
+                            borderWidth = 3.dp
+                        }
+                        else -> {
+                            bg = MaterialTheme.colorScheme.surface
+                            border = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                            textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            borderWidth = 1.5.dp
+                        }
+                    }
+                } else {
+                    if (isSelected) {
+                        bg = GemCyan.copy(alpha = 0.08f)
+                        border = GemCyan
+                        textColor = GemCyan
+                        borderWidth = 3.dp
+                    } else {
+                        bg = MaterialTheme.colorScheme.surface
+                        border = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                        textColor = MaterialTheme.colorScheme.onSurface
+                        borderWidth = 1.5.dp
+                    }
+                }
 
                 Card(
                     onClick = {
@@ -880,7 +955,7 @@ fun ListeningView(
                     colors = CardDefaults.cardColors(containerColor = bg),
                     shape = RoundedCornerShape(12.dp),
                     border = CardDefaults.outlinedCardBorder(enabled = true).copy(
-                        width = if (isSelected) 3.dp else 1.5.dp,
+                        width = borderWidth,
                         brush = androidx.compose.ui.graphics.SolidColor(border)
                     )
                 ) {
@@ -893,7 +968,7 @@ fun ListeningView(
                             text = option,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (isSelected) DuoGreenDark else MaterialTheme.colorScheme.onSurface
+                            color = textColor
                         )
                         ThaiToneIndicatorRow(thaiWord = option, showLabel = true)
                     }

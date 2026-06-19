@@ -120,7 +120,7 @@ class ReviewViewModel(
             // Thai -> English (Eng options)
             val correctTranslation = correctWord.english
             val distractors = allVocabularyList
-                .filter { it.english != correctTranslation }
+                .filter { it.category.equals(correctWord.category, ignoreCase = true) && it.english != correctTranslation }
                 .map { it.english }
                 .distinct()
                 .shuffled()
@@ -130,7 +130,7 @@ class ReviewViewModel(
             // English -> Thai (Thai options)
             val correctTranslation = correctWord.thai
             val distractors = allVocabularyList
-                .filter { it.thai != correctTranslation }
+                .filter { it.category.equals(correctWord.category, ignoreCase = true) && it.thai != correctTranslation }
                 .map { it.thai }
                 .distinct()
                 .shuffled()

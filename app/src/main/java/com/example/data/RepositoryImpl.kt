@@ -857,9 +857,29 @@ class RepositoryImpl(
             
             if (lessonVocab.isEmpty()) continue
 
-            // 1. English word -> select Thai (multiple choice)
+            val topicTestId = when {
+                lessonId in 49..50 -> 113
+                else -> 101 + (lessonId - 1) / 4
+            }
+            val topicRanges = when (topicTestId) {
+                101 -> listOf(1..40)
+                102 -> listOf(101..140)
+                103 -> listOf(201..240)
+                104 -> listOf(301..340)
+                105 -> listOf(401..440)
+                106 -> listOf(41..80)
+                107 -> listOf(141..180)
+                108 -> listOf(241..280)
+                109 -> listOf(341..380)
+                110 -> listOf(441..480)
+                111 -> listOf(81..100, 181..200)
+                112 -> listOf(281..300, 381..400)
+                113 -> listOf(481..500)
+                else -> listOf(1..40)
+            }
             val w1 = lessonVocab[0]
-            val otherThais1 = vocabulary.filter { it.id != w1.id }
+            val topicVocab = vocabulary.filter { it.category.equals(w1.category, ignoreCase = true) }
+            val otherThais1 = topicVocab.filter { it.id != w1.id }
                 .map { it.thai }
                 .distinct()
                 .shuffled()
@@ -879,7 +899,7 @@ class RepositoryImpl(
 
             // 2. Thai word -> select English (multiple choice)
             val w2 = lessonVocab[1]
-            val otherEnglishesForW2 = vocabulary.filter { it.id != w2.id }
+            val otherEnglishesForW2 = topicVocab.filter { it.id != w2.id }
                 .map { it.english }
                 .distinct()
                 .shuffled()
@@ -899,7 +919,7 @@ class RepositoryImpl(
 
             // 3. Listening exercise. Sound plays in Thai. Answers in English
             val w3 = lessonVocab[2]
-            val otherEnglishesForW3 = vocabulary.filter { it.id != w3.id }
+            val otherEnglishesForW3 = topicVocab.filter { it.id != w3.id }
                 .map { it.english }
                 .distinct()
                 .shuffled()
