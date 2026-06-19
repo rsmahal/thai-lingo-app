@@ -193,42 +193,45 @@ class RepositoryImpl(
     }
 
     override suspend fun initializeDatabase() = withContext(Dispatchers.IO) {
-        // Since we changed list to include sentence lessons and tests, reset and populate if needed
-        val currentVocabCount = vocabularyDao.getVocabularyCount()
-        val hasLesson113 = lessonDao.getLessonById(113) != null
-        val hasLesson501 = lessonDao.getLessonById(501) != null
-        if (currentVocabCount < 500 || !hasLesson113 || !hasLesson501) {
-            // Clear current data first for clean repopulation
-            vocabularyDao.clearVocabulary()
-            lessonDao.clearLessons()
-            exerciseDao.clearExercises()
+        // ALWAYS synchronize local static tables (Vocabulary and Exercises) with the latest definitions in code.
+        // This makes sure corrections to spelling, vocab mappings, or sentence building distractors
+        // take effect instantly when the app is updated/restarted, even if the progress is restored from Android backup or another device.
 
-            // Populate Vocabulary (500 words total!)
-            val vocabulary = getSampleVocabulary()
-            vocabularyDao.insertVocabulary(vocabulary.map { VocabularyEntity.fromDomain(it) })
+        // 1. Populate/Update Vocabulary
+        val vocabulary = getSampleVocabulary()
+        vocabularyDao.insertVocabulary(vocabulary.map { VocabularyEntity.fromDomain(it) })
 
-            // Populate Lessons (50 lessons + 5 tests)
-            val lessons = getSampleLessons()
-            lessonDao.insertLessons(lessons.map { LessonEntity.fromDomain(it) })
+        // 2. Clear and Insert all Exercises (ensures edits to sentence paths operate correctly/instantly)
+        exerciseDao.clearExercises()
+        val exercises = getSampleExercises()
+        exerciseDao.insertExercises(exercises.map { ExerciseEntity.fromDomain(it) })
 
-            // Populate Exercises (fixed matching and sentence building for all 50 lessons)
-            val exercises = getSampleExercises()
-            exerciseDao.insertExercises(exercises.map { ExerciseEntity.fromDomain(it) })
-
-            // Populate Achievements
-            val achievements = getSampleAchievements()
-            achievementDao.insertAchievements(achievements.map { AchievementEntity.fromDomain(it) })
-
-            // Setup default progress (if not existing)
-            if (userProgressDao.getProgressOnce() == null) {
-                userProgressDao.saveProgress(UserProgressEntity.fromDomain(UserProgress()))
+        // 3. Populate/Update Lessons without erasing user completed state, unlocked state, or star counts
+        val sampleLessons = getSampleLessons()
+        for (sample in sampleLessons) {
+            val existing = lessonDao.getLessonById(sample.id)
+            if (existing != null) {
+                // Preserve user-dynamic fields (unlocked, completed, stars), update static ones
+                val updated = existing.copy(
+                    title = sample.title,
+                    description = sample.description,
+                    category = sample.category,
+                    xpReward = sample.xpReward
+                )
+                lessonDao.updateLesson(updated)
+            } else {
+                // New lesson, insert
+                lessonDao.insertLessons(listOf(LessonEntity.fromDomain(sample)))
             }
-        } else {
-            // Make sure the Topic Test lessons are populated if they are missing
-            if (lessonDao.getLessonById(101) == null || lessonDao.getLessonById(113) == null) {
-                val tests = getSampleLessons().filter { it.id >= 100 }
-                lessonDao.insertLessons(tests.map { LessonEntity.fromDomain(it) })
-            }
+        }
+
+        // 4. Populate achievements if none exist
+        val achievements = getSampleAchievements()
+        achievementDao.insertAchievements(achievements.map { AchievementEntity.fromDomain(it) })
+
+        // 5. Setup default progress (if not existing)
+        if (userProgressDao.getProgressOnce() == null) {
+            userProgressDao.saveProgress(UserProgressEntity.fromDomain(UserProgress()))
         }
     }
 
