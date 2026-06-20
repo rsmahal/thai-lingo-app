@@ -41,7 +41,13 @@ class ReviewViewModel(
     private var allVocabularyList: List<Vocabulary> = emptyList()
     private var internalReviewWords: List<ReviewWord> = emptyList()
     private var internalTimeOffsetDays: Int = 0
-    private var currentWordMissed: Boolean = false
+    data class ReviewStep(
+        val word: ReviewWord,
+        val subStep: Int // 0 = Thai -> English, 1 = English -> Thai
+    )
+
+    private var activeQuizSteps: List<ReviewStep> = emptyList()
+    private val missedWordThais = mutableSetOf<String>()
 
     init {
         viewModelScope.launch {
@@ -97,18 +103,80 @@ class ReviewViewModel(
         updateActiveState()
     }
 
+    private fun generateReviewSteps(words: List<ReviewWord>): List<ReviewStep> {
+        if (words.isEmpty()) return emptyList()
+        val steps = mutableListOf<ReviewStep>()
+        if (words.size == 1) {
+            steps.add(ReviewStep(words[0], 0))
+            steps.add(ReviewStep(words[0], 1))
+            return steps
+        }
+        
+        if (words.size == 2) {
+            return listOf(
+                ReviewStep(words[0], 0),
+                ReviewStep(words[1], 1),
+                ReviewStep(words[0], 1),
+                ReviewStep(words[1], 0)
+            )
+        }
+        
+        val baseSteps = mutableListOf<ReviewStep>()
+        words.forEach { word ->
+            baseSteps.add(ReviewStep(word, 0))
+            baseSteps.add(ReviewStep(word, 1))
+        }
+        
+        var shuffled = baseSteps.shuffled().toMutableList()
+        var hasConsecutive = true
+        var attempts = 0
+        while (hasConsecutive && attempts < 500) {
+            hasConsecutive = false
+             for (i in 0 until shuffled.size - 1) {
+                if (shuffled[i].word.thai == shuffled[i + 1].word.thai) {
+                    hasConsecutive = true
+                    val j = shuffled.indices.random()
+                    val temp = shuffled[i + 1]
+                    shuffled[i + 1] = shuffled[j]
+                    shuffled[j] = temp
+                }
+            }
+            if (!hasConsecutive) {
+                return shuffled
+            }
+            attempts++
+        }
+        
+        val list0 = words.map { ReviewStep(it, 0) }
+        val list1 = words.map { ReviewStep(it, 1) }
+        val result = mutableListOf<ReviewStep>()
+        for (i in 0 until words.size) {
+            result.add(list0[i])
+        }
+        for (i in 0 until words.size) {
+            result.add(list1[(i + 1) % words.size])
+        }
+        return result
+    }
+
     fun startQuiz() {
         val state = _uiState.value as? ReviewUiState.Active ?: return
         if (state.reviewQueue.isEmpty()) return
         
-        currentWordMissed = false
+        missedWordThais.clear()
+        val dueWords = state.reviewQueue
+        activeQuizSteps = generateReviewSteps(dueWords)
+        
+        val mappedQueue = activeQuizSteps.map { it.word }
+        
         _uiState.value = state.copy(
+            reviewQueue = mappedQueue,
             currentStep = 0,
-            currentSubStep = 0,
+            currentSubStep = activeQuizSteps[0].subStep,
             xpEarned = 0,
             correctCount = 0
         )
-        generateOptionsForStep(0, 0)
+        generateOptionsForStep(0, activeQuizSteps[0].subStep)
     }
 
     private fun generateOptionsForStep(step: Int, subStep: Int) {
@@ -117,7 +185,6 @@ class ReviewViewModel(
 
         val correctWord = state.reviewQueue[step]
         val finalOptions = if (subStep == 0) {
-            // Thai -> English (Eng options)
             val correctTranslation = correctWord.english
             val distractors = allVocabularyList
                 .filter { it.category.equals(correctWord.category, ignoreCase = true) && it.english != correctTranslation }
@@ -127,7 +194,6 @@ class ReviewViewModel(
                 .take(3)
             (distractors + correctTranslation).shuffled()
         } else {
-            // English -> Thai (Thai options)
             val correctTranslation = correctWord.thai
             val distractors = allVocabularyList
                 .filter { it.category.equals(correctWord.category, ignoreCase = true) && it.thai != correctTranslation }
@@ -166,7 +232,7 @@ class ReviewViewModel(
         }
 
         if (!isCorrect) {
-            currentWordMissed = true
+            missedWordThais.add(correctWord.thai)
         }
 
         _uiState.value = state.copy(
@@ -178,46 +244,46 @@ class ReviewViewModel(
     fun continueToNext() {
         val state = _uiState.value as? ReviewUiState.Active ?: return
         
-        if (state.currentSubStep == 0) {
-            // Proceed to the English -> Thai portion of the same word
-            generateOptionsForStep(state.currentStep, 1)
-        } else {
-            // Completed English -> Thai portion.
-            // Persist overall word SRS status based on whether either was missed.
-            val correctWord = state.reviewQueue[state.currentStep]
-            val wasWordSuccessful = !currentWordMissed
-            
-            viewModelScope.launch {
-                repository.updateReviewWordSrs(correctWord.thai, isCorrect = wasWordSuccessful)
-            }
+        val nextStep = state.currentStep + 1
+        val wasCurrentCorrect = state.isCorrect ?: false
+        val newCorrectCount = if (wasCurrentCorrect) state.correctCount + 1 else state.correctCount
 
-            val nextStep = state.currentStep + 1
-            currentWordMissed = false // Reset for safe usage on the next word
-
-            val newCorrectCount = if (wasWordSuccessful) state.correctCount + 1 else state.correctCount
-
-            if (nextStep >= state.reviewQueue.size) {
-                // Finish quiz! Earn XP proportional to correct reviews (3 XP per successfully completed word)
-                val xpGain = newCorrectCount * 3
-                _uiState.value = state.copy(
-                    currentStep = state.reviewQueue.size, // Completion screen
-                    currentSubStep = 0,
-                    correctCount = newCorrectCount,
-                    xpEarned = xpGain
-                )
-
-                viewModelScope.launch {
-                    if (xpGain > 0) {
-                        val progress = repository.getUserProgressOnce()
-                        repository.saveUserProgress(progress.copy(xp = progress.xp + xpGain))
+        if (nextStep >= state.reviewQueue.size) {
+            val uniqueWordsInQuiz = activeQuizSteps.map { it.word }.distinct()
+            var successfulWordsCount = 0
+            uniqueWordsInQuiz.forEach { word ->
+                if (word.thai !in missedWordThais) {
+                    successfulWordsCount++
+                    viewModelScope.launch {
+                        repository.updateReviewWordSrs(word.thai, isCorrect = true)
+                    }
+                } else {
+                    viewModelScope.launch {
+                        repository.updateReviewWordSrs(word.thai, isCorrect = false)
                     }
                 }
-            } else {
-                _uiState.value = state.copy(
-                    correctCount = newCorrectCount
-                )
-                generateOptionsForStep(nextStep, 0)
             }
+
+            val xpGain = successfulWordsCount * 3
+            _uiState.value = state.copy(
+                reviewQueue = uniqueWordsInQuiz,
+                currentStep = uniqueWordsInQuiz.size,
+                currentSubStep = 0,
+                correctCount = successfulWordsCount,
+                xpEarned = xpGain
+            )
+
+            viewModelScope.launch {
+                if (xpGain > 0) {
+                    val progress = repository.getUserProgressOnce()
+                    repository.saveUserProgress(progress.copy(xp = progress.xp + xpGain))
+                }
+            }
+        } else {
+            _uiState.value = state.copy(
+                correctCount = newCorrectCount
+            )
+            generateOptionsForStep(nextStep, activeQuizSteps[nextStep].subStep)
         }
     }
 

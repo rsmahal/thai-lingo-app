@@ -747,7 +747,7 @@ class LessonViewModel(
                             100 + (lessonId - 500)
                         } else if (lessonId % 4 == 0) {
                             val topicIdx = (lessonId / 4) - 1
-                            if (topicIdx < 3) {
+                            if (topicIdx < 4) {
                                 501 + topicIdx
                             } else {
                                 101 + topicIdx

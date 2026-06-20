@@ -1114,13 +1114,13 @@ fun MatchingView(
                     val bg = when {
                         isActiveCheck && isMatchingCorrect == true -> CorrectFill
                         isActiveCheck && isMatchingCorrect == false -> HeartRedLight
-                        isSelected -> DuoGreen.copy(alpha = 0.08f)
+                        isSelected -> GemCyan.copy(alpha = 0.08f)
                         else -> MaterialTheme.colorScheme.surface
                     }
                     val border = when {
                         isActiveCheck && isMatchingCorrect == true -> CorrectStroke
                         isActiveCheck && isMatchingCorrect == false -> HeartRed
-                        isSelected -> DuoGreen
+                        isSelected -> GemCyan
                         else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                     }
                     val textColor = when {
@@ -1170,13 +1170,13 @@ fun MatchingView(
                     val bg = when {
                         isActiveCheck && isMatchingCorrect == true -> CorrectFill
                         isActiveCheck && isMatchingCorrect == false -> HeartRedLight
-                        isSelected -> DuoGreen.copy(alpha = 0.08f)
+                        isSelected -> GemCyan.copy(alpha = 0.08f)
                         else -> MaterialTheme.colorScheme.surface
                     }
                     val border = when {
                         isActiveCheck && isMatchingCorrect == true -> CorrectStroke
                         isActiveCheck && isMatchingCorrect == false -> HeartRed
-                        isSelected -> DuoGreen
+                        isSelected -> GemCyan
                         else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                     }
                     val textColor = when {
@@ -2057,21 +2057,23 @@ fun LessonIntroduceLayout(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Thai word & Sound button Row
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
+                    // Thai word & Sound button displayed stacked to support longer words comfortably without overlapping
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
+                        val wordText = if (showRomanizationOnly) currentWord.romanization else currentWord.thai
                         Text(
-                            text = if (showRomanizationOnly) currentWord.romanization else currentWord.thai,
-                            fontSize = 42.sp,
+                            text = wordText,
+                            fontSize = if (wordText.length > 10) 32.sp else 42.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = DuoGreen,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            lineHeight = if (wordText.length > 10) 38.sp else 46.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp)
                         )
 
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         IconButton(
                             onClick = onVoiceClick,

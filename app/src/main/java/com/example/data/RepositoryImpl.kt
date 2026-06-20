@@ -813,8 +813,8 @@ class RepositoryImpl(
                 )
             }
             
-            // Uniquely structured sentence nodes for Iron Backpack Rank (Topic 1, 2, 3)
-            if (topicIdx < 3) {
+            // Uniquely structured sentence nodes for Iron Backpack Rank (Topic 1, 2, 3) and Topic 4
+            if (topicIdx < 4) {
                 val sentenceLessonId = 501 + topicIdx
                 list.add(
                     Lesson(
@@ -953,7 +953,7 @@ class RepositoryImpl(
                 audioText = ""
             ))
 
-            if (lessonId > 12) {
+            if (lessonId > 16) {
                 // 5. English -> Thai Sentence Building Exercise (SENTENCE_BUILD)
                 val sentenceEnToTh1 = when (lessonId) {
                 1 -> Triple("Hello, nice to meet you.", "สวัสดี|ยินดีที่ได้รู้จัก", listOf("ขอโทษ", "ขอบคุณ", "ไม่ใช่", "โชคดี"))
@@ -1260,6 +1260,69 @@ class RepositoryImpl(
                 list.add(Exercise(
                     id = 50300 + (i + 1),
                     lessonId = 503,
+                    type = type,
+                    prompt = "Listen and assemble the English translation:",
+                    question = "",
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = questionText
+                ))
+            }
+        }
+
+        // Lesson 504: Directions & Transit Sentences
+        val sentences504 = listOf(
+            // 3 English to Thai Sentence Build
+            Triple("Where is the restroom?", "ห้องน้ำ|ที่ไหน", listOf("โรงแรม", "แผนที่", "สนามบิน", "ไป")),
+            Triple("Go straight to the temple.", "ตรงไป|วัด", listOf("รถไฟ", "เลี้ยวซ้าย", "บ้าน", "ตั๋ว")),
+            Triple("Go to the hotel.", "ไป|โรงแรม", listOf("สนามบิน", "เลี้ยวขวา", "รถตุ๊กตุ๊ก", "ห้องน้ำ")),
+            
+            // 3 Thai to English Sentence Build
+            Triple("ไป สนามบิน", "Go|Airport", listOf("Turn left", "Restroom", "Hotel", "Tuk-Tuk")),
+            Triple("โรงแรม ใกล้", "Hotel|Near / Close", listOf("Far", "Station", "Airport", "Map")),
+            Triple("เลี้ยวซ้าย ไป สถานี", "Turn left|Go|Station", listOf("Turn right", "Hotel", "Restroom", "Airport")),
+            
+            // 3 Listening Thai (spoken) with English words
+            Triple("บ้าน อยู่ ไกล", "House / Home|Have|Far", listOf("Near / Close", "Ticket", "Train", "Turn")),
+            Triple("เลี้ยวขวา ไป วัด", "Turn right|Go|Temple", listOf("Airport", "Hotel", "Transit", "Go straight")),
+            Triple("นั่ง รถตุ๊กตุ๊ก ไป เที่ยว", "Riding|tuk-tuk|is|fun|to|tour", listOf("Train", "Hotel", "Map", "Where"))
+        )
+
+        for (i in sentences504.indices) {
+            val (questionText, correctAnswer, distractors) = sentences504[i]
+            val correctList = correctAnswer.split("|")
+            val options = (correctList + distractors).shuffled()
+            val type = ExerciseType.SENTENCE_BUILD
+            
+            if (i < 3) {
+                list.add(Exercise(
+                    id = 50400 + (i + 1),
+                    lessonId = 504,
+                    type = type,
+                    prompt = "Assemble the Thai words that translate this sentence:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = correctAnswer.replace("|", " ")
+                ))
+            } else if (i < 6) {
+                list.add(Exercise(
+                    id = 50400 + (i + 1),
+                    lessonId = 504,
+                    type = type,
+                    prompt = "Translate this Thai sentence into English:",
+                    question = questionText,
+                    correctAnswer = correctAnswer,
+                    romanization = "",
+                    options = options,
+                    audioText = ""
+                ))
+            } else {
+                list.add(Exercise(
+                    id = 50400 + (i + 1),
+                    lessonId = 504,
                     type = type,
                     prompt = "Listen and assemble the English translation:",
                     question = "",
