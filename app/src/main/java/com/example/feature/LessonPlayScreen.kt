@@ -43,6 +43,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import android.widget.Toast
 import com.example.LocalShowRomanizationOnly
 import com.example.LocalVocabularyList
 import com.example.core.common.getRomanizedText
@@ -313,7 +318,8 @@ fun LessonPlayingLayout(
                     if (isDark) Color(0xFFEADBFF) else Color(0xFF3B1E54)
                 } else {
                     MaterialTheme.colorScheme.onBackground
-                }
+                },
+                modifier = copyOnLongPressModifier(currentExercise.prompt)
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -438,7 +444,8 @@ fun MultipleChoiceView(
                         text = if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = copyOnLongPressModifier(if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question)
                     )
                     if (exercise.romanization.isNotEmpty() && !showRomanizationOnly) {
                         Text(
@@ -565,7 +572,8 @@ fun TranslateView(
                     text = if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = copyOnLongPressModifier(if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question)
                 )
                 if (exercise.romanization.isNotEmpty() && !showRomanizationOnly) {
                     Text(
@@ -703,7 +711,8 @@ fun SentenceBuildView(
                             text = if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = copyOnLongPressModifier(if (showRomanizationOnly) getRomanizedText(exercise.question, vocabularyList) else exercise.question)
                         )
                         if (exercise.romanization.isNotEmpty() && !showRomanizationOnly) {
                             Text(
@@ -1005,7 +1014,8 @@ fun SpeakingView(
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Black,
                     color = DuoGreen,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = copyOnLongPressModifier(exercise.question)
                 )
                 if (exercise.romanization.isNotEmpty()) {
                     Text(
@@ -2070,7 +2080,7 @@ fun LessonIntroduceLayout(
                             color = DuoGreen,
                             textAlign = TextAlign.Center,
                             lineHeight = if (wordText.length > 10) 38.sp else 46.sp,
-                            modifier = Modifier.padding(horizontal = 8.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp).then(copyOnLongPressModifier(wordText))
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -2136,7 +2146,8 @@ fun LessonIntroduceLayout(
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = copyOnLongPressModifier(currentWord.english)
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -2503,3 +2514,18 @@ fun TestResultScreen(
         }
     }
 }
+
+@Composable
+fun copyOnLongPressModifier(text: String): Modifier {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    return Modifier.pointerInput(text) {
+        detectTapGestures(
+            onLongPress = {
+                clipboardManager.setText(AnnotatedString(text))
+                Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+}
+

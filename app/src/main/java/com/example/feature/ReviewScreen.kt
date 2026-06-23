@@ -609,13 +609,14 @@ fun ReviewQuizOverlay(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.Center
                         ) {
+                            val reviewText = if (showRomanizationOnly) word.romanization else word.thai
                             Text(
-                                text = if (showRomanizationOnly) word.romanization else word.thai,
+                                text = reviewText,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.weight(1f, fill = false)
+                                modifier = Modifier.weight(1f, fill = false).then(copyOnLongPressModifier(reviewText))
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             IconButton(
@@ -651,7 +652,8 @@ fun ReviewQuizOverlay(
                             fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            modifier = copyOnLongPressModifier(word.english)
                         )
                     }
                 }

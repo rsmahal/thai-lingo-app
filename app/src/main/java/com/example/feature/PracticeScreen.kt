@@ -497,7 +497,7 @@ fun PracticeScreen(
                                         Spacer(modifier = Modifier.height(28.dp))
 
                                         Text(
-                                            text = if (showRomanizationOnly) activeVocab.romanization else activeVocab.thai,
+                                            text = if (showRomanizationOnly) activeVocab.romanization else activeVocab.thai, modifier = copyOnLongPressModifier(if (showRomanizationOnly) activeVocab.romanization else activeVocab.thai),
                                             fontSize = 44.sp,
                                             fontWeight = FontWeight.Black,
                                             color = MaterialTheme.colorScheme.onSurface,
@@ -524,7 +524,7 @@ fun PracticeScreen(
                                         if (isFlipped) {
                                             Text("English Meaning:", fontSize = 13.sp, color = DuoGreenDark, fontWeight = FontWeight.Bold)
                                             Text(
-                                                text = activeVocab.english,
+                                                text = activeVocab.english, modifier = copyOnLongPressModifier(activeVocab.english),
                                                 fontSize = 28.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = DuoGreenDark,
