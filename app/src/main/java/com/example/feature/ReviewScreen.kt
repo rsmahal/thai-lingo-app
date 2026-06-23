@@ -80,6 +80,14 @@ fun ReviewScreen(
                         }
                     }
 
+                    // Trigger Thai pronunciation when checking in English -> Thai ("Translate to Thai") questions
+                    LaunchedEffect(state.isChecking) {
+                        if (state.isChecking && state.currentSubStep == 1) {
+                            val word = state.reviewQueue[state.currentStep]
+                            ttsHelper.speak(word.thai)
+                        }
+                    }
+
                     ReviewQuizOverlay(
                         step = state.currentStep,
                         totalSteps = state.reviewQueue.size,
