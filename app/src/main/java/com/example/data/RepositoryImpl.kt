@@ -592,7 +592,7 @@ class RepositoryImpl(
             Vocabulary(328, "สวนสัตว์", "Zoo", "Suan sat", "Travel", "พาน้องสาวซื้อตั๋วชี้ดูกวางเสือในสวนสัตว์ปลา", "Bought a ticket to watch deer and tigers at zoo."),
             Vocabulary(329, "เมือง", "City", "Mueang", "Travel", "รถไฟฟ้าบีทีเอสส่งตรงสะพานใกล้จุดตึกในเมืองหลวง", "Skytrain travels straight to the city center."),
             Vocabulary(330, "จังหวัด", "Province", "Changwat", "Travel", "ขึ้นสายรถทัวร์หนีเมืองยักษ์ไปสูดควันต่างจังหวัด", "Taking tour bus away from urban chaos to countryside."),
-            Vocabulary(331, "รถบัส", "Bus", "Rot bat", "Travel", "กระเป๋าเดินทางสิบใบเก็บลานเก็บล้อใต้รถบัสทัวร์", "Ten bags of luggage stored under tour bus belly."),
+            Vocabulary(331, "รถตู้", "Van", "Rot too", "Travel", "จองตั๋วนั่งรถตู้ไปต่างจังหวัดรวดเร็วดี", "Booked a ticket to ride a van to the province which is fast."),
             Vocabulary(332, "รถเมล์", "Bus", "Rot me", "Travel", "โหนจับราวยาวเหงื่อท่วมเบียดเสียดในรถเมล์ประจำทาง", "Holding rails tight inside hot crowded city buses."),
             Vocabulary(333, "เรือ", "Boat", "Rua", "Travel", "เรือหางยาวติดเครื่องเบสิกสับฟองคลื่นสาดเปียกฝน", "Longtail boat motor roars across white splash waves."),
             Vocabulary(334, "เครื่องบิน", "Airplane", "Khruang bin", "Travel", "เครื่องบินเหินสยบท้องฟ้าข้ามไปเมืองจีนสามแยก", "Giant airplane soars high crossing skies above clouds."),
