@@ -1024,7 +1024,7 @@ fun SpeakingView(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp).then(copyOnLongPressModifier(exercise.romanization))
                     )
                 }
             }
@@ -2183,7 +2183,8 @@ fun LessonIntroduceLayout(
                                 text = currentWord.exampleThai,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = copyOnLongPressModifier(currentWord.exampleThai)
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -2191,7 +2192,8 @@ fun LessonIntroduceLayout(
                             Text(
                                 text = currentWord.exampleEnglish,
                                 fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.60f)
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.60f),
+                                modifier = copyOnLongPressModifier(currentWord.exampleEnglish)
                             )
                         }
                     }

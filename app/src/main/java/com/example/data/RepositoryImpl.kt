@@ -274,7 +274,7 @@ class RepositoryImpl(
             Vocabulary(25, "มัน", "It", "Man", "Greetings", "มันใหญ่มากจริงๆ", "It is really very big."),
             Vocabulary(26, "พวกเรา", "We (plural)", "Phuak rao", "Greetings", "พวกเราชอบภาษาไทย", "We like Thai language."),
             Vocabulary(27, "พวกเขา", "They (plural)", "Phuak khao", "Greetings", "พวกเขากำลังมา", "They are coming."),
-            Vocabulary(28, "เธอ", "her", "Thoe", "Greetings", "เธอน่ารักมาก", "You are very cute."),
+            Vocabulary(28, "เธอ", "She/Her", "Thoe", "Greetings", "เธอน่ารักมาก", "You are very cute."),
             Vocabulary(29, "ท่าน", "You (polite) / Respectable person", "Than", "Greetings", "เชิญท่านข้างในครับ", "Please enter inside, sir/ma'am."),
             Vocabulary(30, "ตัวเอง", "Ourselves / Self", "Tua eng", "Greetings", "ดูแลตัวเองด้วยนะ", "Take care of yourself."),
             Vocabulary(31, "อรุณสวัสดิ์", "Good morning", "Arun sawat", "Greetings", "อรุณสวัสดิ์ทุกคน", "Good morning, everyone."),
@@ -537,26 +537,26 @@ class RepositoryImpl(
             Vocabulary(278, "เก่าแก่", "Old (object)", "Kao", "Numbers", "วัดโพธิ์เก่าแก่มีนักท่องเที่ยวทั่วสนามบินมาเยือน", "Ancient old temple has global travelers visiting."),
             Vocabulary(279, "หนาเตอะ", "Thick", "Na", "Numbers", "อ่านหนังสือเล่มหนาเตอะจนง่วงราตรีสวัสดิ์", "Read thick book until sleepy, good night."),
             Vocabulary(280, "บางเฉียบ", "Thin / Flat", "Bang", "Numbers", "กระดาษทิชชูแผ่นบางเฉียบแต่เหนียวซึมซับดี", "Tissue sheet is thin but tough and absorbing."),
-            Vocabulary(281, "เงินสดกระดาษ", "Cash", "Ngen sot", "Numbers", "ตลาดสดเล็กๆ ไม่รับสแกนต้องใช้เงินสดหมื่นบาท", "Tiny markets only take cash, no scanning."),
-            Vocabulary(282, "บัตรเครดิตพลาสติก", "Credit card", "Bat khredit", "Numbers", "ห้างแบรนด์เนมสไลด์รูดบัตรเครดิตสะดวกมาก", "Mall slide-swipes credit card easily."),
-            Vocabulary(283, "เงินทอนครบ", "Give change / Refund", "Thon ngen", "Numbers", "ทอนเงินทอนครบถ้วนไร้กังวลยอดโกงเงิน", "Giving exact correct change, no fraud worries."),
-            Vocabulary(284, "เงินเงินทอน", "Change / Coins", "Ngen thon", "Numbers", "โกยเหรียญและเศษเงินเงินทอนใส่กระเป๋าสะพายก้าว", "Stashed coins and change into sling-bag."),
+            Vocabulary(281, "เงินสด", "Cash", "Ngen sot", "Numbers", "ตลาดสดเล็กๆ ไม่รับสแกนต้องใช้เงินสดหมื่นบาท", "Tiny markets only take cash, no scanning."),
+            Vocabulary(282, "บัตรเครดิต", "Credit card", "Bat khredit", "Numbers", "ห้างแบรนด์เนมสไลด์รูดบัตรเครดิตสะดวกมาก", "Mall slide-swipes credit card easily."),
+            Vocabulary(283, "เงินทอน", "Give change / Refund", "Thon ngen", "Numbers", "ทอนเงินทอนครบถ้วนไร้กังวลยอดโกงเงิน", "Giving exact correct change, no fraud worries."),
+            Vocabulary(284, "เหรียญ", "Change / Coins", "Rian", "Numbers", "โกยเหรียญและเศษเงินเงินทอนใส่กระเป๋าสะพายก้าว", "Stashed coins and change into sling-bag."),
             Vocabulary(285, "ตู้กดเงิน", "ATM", "ATM", "Numbers", "ตู้กดเงินเอบีเอ็มโชว์รหัสวิซ่าล่มชั่วคราว", "ATM displays service error during visa check."),
-            Vocabulary(286, "โอนเงินเข้า", "Transfer money", "On ngen", "Numbers", "โอนเงินเข้าบัญชีโรงพยาบาลช่วยผู้ป่วยเจ็บ", "Transfer money to hospital to help injured souls."),
-            Vocabulary(287, "บัญชีเงินฝาก", "Account", "Banchi", "Numbers", "ออมเงินล้านบาทลึกในบัญชีส่วนบุคคลมั่นคง", "Keep million Baht safe in individual account."),
-            Vocabulary(288, "สแกนคิวอาร์", "Scan", "Scan", "Numbers", "ช้อปปิ้งสแกนคิวอาร์สะดวกรวดเร็วไม่พกเงินสด", "Bargaining with QR scan, no cash needed."),
-            Vocabulary(289, "สลิปโอนเงิน", "Receipt / Slip", "Slip", "Numbers", "ส่งภาพถ่ายสลิปยืนยันการจ่ายเงินซื้อของฝาก", "Sent transfer receipt photo to back purchase."),
-            Vocabulary(290, "ตั๋วแลกเงิน", "Bank note / Note", "Tua ngen", "Numbers", "พกตั๋วแลกเงินแสนล้านผ่านตรวจด่านตม.ราบรื่น", "Carried high-value notes through customs safely."),
-            Vocabulary(291, "ของฝากเมืองไทย", "Souvenir / Gift", "Khong fak", "Numbers", "ซื้อพวงกุญแจตุ๊กตาช้างเป็นของฝากเพื่อนหมอ", "Bought elephant keychain souvenir for doctor friend."),
-            Vocabulary(292, "เลือกสรร", "Choose / Select", "Lueak", "Numbers", "เลือกสรรเสื้อผ้าสีเหลืองสยบสีดำเรียบหรู", "Select yellow shirt over classic plain black."),
-            Vocabulary(293, "ลองสวม", "Try on", "Long", "Numbers", "ลองสวมแว่นตารองเท้าผ้าใบสะพายเป้เท่ระบาด", "Try on sunglasses, sneakers, backpack."),
-            Vocabulary(294, "พวงกุญแจช้าง", "Keychain", "Phuang kunchae", "Numbers", "พวงกุญแจไม้ทำรูปช้างราคาห้าสิบบาทขาดตัว", "Elephant wooden keychain priced fifty Baht flat."),
-            Vocabulary(295, "โปสการ์ดวัดอรุณ", "Postcard", "Postcard", "Numbers", "บันเดิลกระดาษเขียนส่งโปสการ์ดสวดพรให้ยาย", "Wrote a lovely postcard to grandma wishing well."),
-            Vocabulary(296, "ร่มกางฝน", "Umbrella", "Rom", "Numbers", "กางร่มกันแดดกลางสะพานลอยลมพัดแรงสะพัด", "Open umbrella to block sun on breezy walk."),
-            Vocabulary(297, "สบู่เหลวหอม", "Soap", "Sabu", "Numbers", "ถูสบู่เหลวเย็นซ่าล้างเนื้อตัวหลังลุยฝนตก", "Wash with cooling liquid soap after rain shower."),
-            Vocabulary(298, "แชมพูสระผม", "Shampoo", "Shampoo", "Numbers", "สระนวดผมด้วยแชมพูมะกรูดสมุนไพรสดเปี่ยมสะอาด", "Wash hair with organic bergamot shampoo."),
-            Vocabulary(299, "แปรงสีฟันสะอาด", "Toothbrush", "Praeng see fan", "Numbers", "เปลี่ยนแปรงสีฟันอันใหม่นุ่มสบายเหงือกฟัน", "Swapped to a brand new soft-bristle toothbrush."),
-            Vocabulary(300, "ยาสีฟันระบาย", "Toothpaste", "Ya see fan", "Numbers", "บีบยาสีฟันรสชาติสะระแหน่เย็นซ่าฟองหอมฟุ้ง", "Squeezed minty-fresh cooling toothpaste.")
+            Vocabulary(286, "โอนเงิน", "Transfer money", "On ngen", "Numbers", "โอนเงินเข้าบัญชีโรงพยาบาลช่วยผู้ป่วยเจ็บ", "Transfer money to hospital to help injured souls."),
+            Vocabulary(287, "บัญชี", "Account", "Banchi", "Numbers", "ออมเงินล้านบาทลึกในบัญชีส่วนบุคคลมั่นคง", "Keep million Baht safe in individual account."),
+            Vocabulary(288, "สแกน", "Scan", "Scan", "Numbers", "ช้อปปิ้งสแกนคิวอาร์สะดวกรวดเร็วไม่พกเงินสด", "Bargaining with QR scan, no cash needed."),
+            Vocabulary(289, "สลิป", "Receipt / Slip", "Slip", "Numbers", "ส่งภาพถ่ายสลิปยืนยันการจ่ายเงินซื้อของฝาก", "Sent transfer receipt photo to back purchase."),
+            Vocabulary(290, "ธนบัตร", "Bank note / Note", "Thonnabat", "Numbers", "พกธนบัตรหนาใบละหนึ่งพันบาทจ่ายค่าอาหารสะดวกดี", "Carrying thick banknotes makes paying for food convenient."),
+            Vocabulary(291, "ของฝาก", "Souvenir / Gift", "Khong fak", "Numbers", "ซื้อพวงกุญแจตุ๊กตาช้างเป็นของฝากเพื่อนหมอ", "Bought elephant keychain souvenir for doctor friend."),
+            Vocabulary(292, "เลือก", "Choose / Select", "Lueak", "Numbers", "เลือกเสื้อผ้าสีเหลืองสยบสีดำเรียบหรู", "Select yellow shirt over classic plain black."),
+            Vocabulary(293, "ลอง", "Try on", "Long", "Numbers", "ลองแว่นตารองเท้าผ้าใบสะพายเป้เท่ระบาด", "Try on sunglasses, sneakers, backpack."),
+            Vocabulary(294, "พวงกุญแจ", "Keychain", "Phuang kunchae", "Numbers", "พวงกุญแจไม้ทำรูปช้างราคาห้าสิบบาทขาดตัว", "Elephant wooden keychain priced fifty Baht flat."),
+            Vocabulary(295, "โปสการ์ด", "Postcard", "Postcard", "Numbers", "บันเดิลกระดาษเขียนส่งโปสการ์ดสวดพรให้ยาย", "Wrote a lovely postcard to grandma wishing well."),
+            Vocabulary(296, "ร่ม", "Umbrella", "Rom", "Numbers", "กางร่มกันแดดกลางสะพานลอยลมพัดแรงสะพัด", "Open umbrella to block sun on breezy walk."),
+            Vocabulary(297, "สบู่", "Soap", "Sabu", "Numbers", "ถูสบู่เหลวเย็นซ่าล้างเนื้อตัวหลังลุยฝนตก", "Wash with cooling liquid soap after rain shower."),
+            Vocabulary(298, "แชมพู", "Shampoo", "Shampoo", "Numbers", "สระนวดผมด้วยแชมพูมะกรูดสมุนไพรสดเปี่ยมสะอาด", "Wash hair with organic bergamot shampoo."),
+            Vocabulary(299, "แปรงสีฟัน", "Toothbrush", "Praeng see fan", "Numbers", "เปลี่ยนแปรงสีฟันอันใหม่นุ่มสบายเหงือกฟัน", "Swapped to a brand new soft-bristle toothbrush."),
+            Vocabulary(300, "ยาสีฟัน", "Toothpaste", "Ya see fan", "Numbers", "บีบยาสีฟันรสชาติสะระแหน่เย็นซ่าฟองหอมฟุ้ง", "Squeezed minty-fresh cooling toothpaste.")
         )
     }
 
@@ -813,22 +813,20 @@ class RepositoryImpl(
                 )
             }
             
-            // Uniquely structured sentence nodes for Iron Backpack Rank (Topic 1, 2, 3) and Topic 4
-            if (topicIdx < 4) {
-                val sentenceLessonId = 501 + topicIdx
-                list.add(
-                    Lesson(
-                        id = sentenceLessonId,
-                        title = "$topicName Sentences",
-                        description = "Complete 9 interactive sentence building exercises using core vocabulary from $topicName.",
-                        category = topicName,
-                        unlocked = false,
-                        completed = false,
-                        stars = 0,
-                        xpReward = 30
-                    )
+            // Uniquely structured sentence nodes for all topics
+            val sentenceLessonId = 501 + topicIdx
+            list.add(
+                Lesson(
+                    id = sentenceLessonId,
+                    title = "$topicName Sentences",
+                    description = "Complete 9 interactive sentence building exercises using core vocabulary from $topicName.",
+                    category = topicName,
+                    unlocked = false,
+                    completed = false,
+                    stars = 0,
+                    xpReward = 30
                 )
-            }
+            )
 
             list.add(
                 Lesson(
@@ -953,133 +951,7 @@ class RepositoryImpl(
                 audioText = ""
             ))
 
-            if (lessonId > 16) {
-                // 5. English -> Thai Sentence Building Exercise (SENTENCE_BUILD)
-                val sentenceEnToTh1 = when (lessonId) {
-                1 -> Triple("Hello, nice to meet you.", "สวัสดี|ยินดีที่ได้รู้จัก", listOf("ขอโทษ", "ขอบคุณ", "ไม่ใช่", "โชคดี"))
-                2 -> Triple("Goodbye, see you again.", "ลาก่อน|แล้วพบกันใหม่", listOf("สวัสดี", "ยินดีเสมอกับคุณครับ", "ใช่", "ผมชื่อ"))
-                5 -> Triple("Delicious food.", "อาหาร|อร่อย", listOf("น้ำ", "ข้าว", "ผลไม้", "ขอโทษ"))
-                6 -> Triple("I eat spicy shrimp soup.", "ฉัน|กิน|ต้มยำกุ้ง", listOf("กาแฟ", "หวาน", "ข้าว", "น้ำ"))
-                9 -> Triple("Three Baht.", "สาม|บาท", listOf("ห้า", "ราคา", "สิบ", "หนึ่ง"))
-                10 -> Triple("How much is the price?", "ราคา|เท่าไหร่", listOf("เงิน", "บาท", "แพง", "ถูก"))
-                13 -> Triple("Where is the restroom?", "ห้องน้ำ|ที่ไหน", listOf("โรงแรม", "แผนที่", "สนามบิน", "ไป"))
-                14 -> Triple("Go straight to the temple.", "ตรงไป|วัด", listOf("รถไฟ", "เลี้ยวซ้าย", "บ้าน", "ตั๋ว"))
-                17 -> Triple("I love older sister.", "ฉัน|รัก|พี่สาว", listOf("น้องชาย", "ครอบครัว", "พ่อ", "เพื่อน"))
-                18 -> Triple("Mother and father are good.", "แม่|และ|พ่อ|ดี", listOf("รัก", "คุณตา", "มี", "ไม่"))
-                else -> {
-                    val w0 = lessonVocab.getOrElse(0) { lessonVocab[0] }
-                    val w1 = lessonVocab.getOrElse(1) { lessonVocab[0] }
-                    val eng0 = w0.english.split("/").first().trim()
-                    val eng1 = w1.english.split("/").first().trim()
-                    Triple("$eng0 and $eng1.", "${w0.thai}|และ|${w1.thai}", listOf("ไม่ใช่", "ใช่", "สบายดี", "ยินดี"))
-                }
-            }
 
-            val enToThCorrect1 = sentenceEnToTh1.second
-            val enToThCorrectList1 = enToThCorrect1.split("|")
-            val enToThOptions1 = (enToThCorrectList1 + sentenceEnToTh1.third).shuffled()
-            list.add(Exercise(
-                id = lessonId * 100 + 5,
-                lessonId = lessonId,
-                type = ExerciseType.SENTENCE_BUILD,
-                prompt = "Assemble the Thai words that translate this sentence:",
-                question = sentenceEnToTh1.first,
-                correctAnswer = enToThCorrect1,
-                romanization = "",
-                options = enToThOptions1,
-                audioText = enToThCorrect1.replace("|", " ")
-            ))
-
-            // 6. Thai -> English Sentence Building Exercise (SENTENCE_BUILD)
-            val sentenceThToEn1 = when (lessonId) {
-                1 -> Triple("ใช่ สบายดี", "Yes|I am fine", listOf("Hello", "Sorry", "No", "Goodbye"))
-                2 -> Triple("สบายดี ขอบคุณ", "I am fine|Thank you", listOf("Yes", "Goodbye", "Not correct", "You"))
-                5 -> Triple("กิน ข้าว", "Eat|Rice", listOf("Water", "Coffee", "Thank you", "Delicious"))
-                6 -> Triple("ดื่ม กาแฟ", "Drink|Coffee", listOf("Eat", "Pork", "Fish", "Rice"))
-                9 -> Triple("แกงเขียวหวาน แพง", "Green curry|Expensive", listOf("Delicious", "Cheap / Correct", "Egg", "Rice"))
-                10 -> Triple("ซื้อ ไข่ ห้า", "Buy|Egg|Five", listOf("Eat", "Money", "Three", "Pork"))
-                13 -> Triple("ไป สนามบิน", "Go|Airport", listOf("Turn left", "Restroom", "Hotel", "Tuk-Tuk"))
-                14 -> Triple("โรงแรม ใกล้", "Hotel|Near / Close", listOf("Far", "Station", "Airport", "Map"))
-                17 -> Triple("พ่อ รัก ลูก", "Father|Love|Child / Offspring", listOf("Mother", "Friend", "Older brother", "Near / Close"))
-                18 -> Triple("ฉัน ชอบ ครอบครัว", "I (female)|Like|Family", listOf("Love", "Not", "Good", "Friend"))
-                else -> {
-                    val w4 = lessonVocab.getOrElse(4) { lessonVocab[0] }
-                    val w5 = lessonVocab.getOrElse(5) { lessonVocab[0] }
-                    val eng4 = w4.english.split("/").first().trim()
-                    val eng5 = w5.english.split("/").first().trim()
-                    Triple("${w4.thai} และ ${w5.thai}", "$eng4|and|$eng5", listOf("Hello", "Sorry", "No", "Goodbye"))
-                }
-            }
-
-            val thToEnCorrect1 = sentenceThToEn1.second
-            val thToEnCorrectList1 = thToEnCorrect1.split("|")
-            val thToEnOptions1 = (thToEnCorrectList1 + sentenceThToEn1.third).shuffled()
-            list.add(Exercise(
-                id = lessonId * 100 + 6,
-                lessonId = lessonId,
-                type = ExerciseType.SENTENCE_BUILD,
-                prompt = "Translate this Thai sentence into English:",
-                question = sentenceThToEn1.first,
-                correctAnswer = thToEnCorrect1,
-                romanization = "",
-                options = thToEnOptions1,
-                audioText = ""
-            ))
-
-            // 7. Listening Sentence Building Exercise (SENTENCE_BUILD)
-            val sentenceThToEn2 = when (lessonId) {
-                1 -> Triple("สบายดีไหม ขอบคุณ", "How are you?|Thank you", listOf("Sorry", "Yes", "Goodbye", "Hello"))
-                2 -> Triple("ยินดีด้วย คุณ", "Congratulations|You", listOf("Good night", "How are you?", "Glad", "See you again"))
-                5 -> Triple("กาแฟ อร่อย", "Coffee|Delicious", listOf("Water", "Spicy shrimp soup", "Stir-fried noodles", "Papaya salad"))
-                6 -> Triple("กิน ไข่ อร่อย", "Eat|Egg|Delicious", listOf("Pork", "Green curry", "Chicken", "Sweet"))
-                9 -> Triple("ราคา สิบ บาท", "Price|Ten|Baht", listOf("One", "Two", "Five", "Hundred"))
-                10 -> Triple("เสื้อ ราคา ถูก", "Shirt|Price|Cheap / Correct", listOf("Buy", "Nine", "Six", "Eight"))
-                13 -> Triple("เลี้ยวซ้าย ไป สถานี", "Turn left|Go|Station", listOf("Turn right", "Hotel", "Restroom", "Airport"))
-                14 -> Triple("บ้าน อยู่ ไกล", "House / Home|Have|Far", listOf("Near / Close", "Ticket", "Train", "Turn"))
-                17 -> Triple("พี่สาว มี เพื่อน", "Older sister|Have|Friend", listOf("Older brother", "Younger sister", "Family", "Love"))
-                18 -> Triple("คุณยาย และ คุณตา", "Grandmother (maternal)|And|Grandfather (maternal)", listOf("Child / Kid", "Good", "Not", "Have"))
-                else -> {
-                    val w6 = lessonVocab.getOrElse(6) { lessonVocab[0] }
-                    val w7 = lessonVocab.getOrElse(7) { lessonVocab[0] }
-                    val eng6 = w6.english.split("/").first().trim()
-                    val eng7 = w7.english.split("/").first().trim()
-                    Triple("${w6.thai} และ ${w7.thai}", "$eng6|and|$eng7", listOf("Good night", "How are you?", "Glad", "See you again"))
-                }
-            }
-
-            val thToEnCorrect2 = sentenceThToEn2.second
-            val thToEnCorrectList2 = thToEnCorrect2.split("|")
-            val thToEnOptions2 = (thToEnCorrectList2 + sentenceThToEn2.third).shuffled()
-            list.add(Exercise(
-                id = lessonId * 100 + 7,
-                lessonId = lessonId,
-                type = ExerciseType.SENTENCE_BUILD,
-                prompt = "Listen and assemble the English translation:",
-                question = "", // Empty to play only Thai voice with no text shown
-                correctAnswer = thToEnCorrect2,
-                romanization = "",
-                options = thToEnOptions2,
-                audioText = sentenceThToEn2.first
-            ))
-
-            // 8. Additional Translation Question (MULTIPLE_CHOICE to compensate)
-            val normalCorrectAnswer = thToEnCorrect2.replace("|", " ")
-            val distractor1 = sentenceThToEn1.second.replace("|", " ")
-            val distractor2 = sentenceEnToTh1.first
-            val distractor3 = "Please try again."
-            val mcOptions = listOf(normalCorrectAnswer, distractor1, distractor2, distractor3).distinct().shuffled()
-            list.add(Exercise(
-                id = lessonId * 100 + 8,
-                lessonId = lessonId,
-                type = ExerciseType.MULTIPLE_CHOICE,
-                prompt = "Translate this Thai sentence:",
-                question = sentenceThToEn2.first,
-                correctAnswer = normalCorrectAnswer,
-                romanization = "",
-                options = mcOptions,
-                audioText = sentenceThToEn2.first
-            ))
-            }
         }
 
         // Lesson 501: Greetings Basic Sentences
@@ -1331,6 +1203,155 @@ class RepositoryImpl(
                     options = options,
                     audioText = questionText
                 ))
+            }
+        }
+
+        val extraSentences = mapOf(
+            505 to listOf(
+                Triple("My father loves mother.", "พ่อ|รัก|แม่", listOf("พี่ชาย", "น้องสาว", "ลูก", "แฟน")),
+                Triple("Grandfather and grandmother have children.", "คุณตา|และ|คุณยาย|มี|ลูก", listOf("เพื่อน", "สามี", "คน", "ดี")),
+                Triple("I have a good family.", "ฉัน|มี|ครอบครัว|ดี", listOf("รัก", "ไม่", "เพื่อน", "ลูก")),
+                Triple("สามี และ ภรรยา", "Husband|and|wife", listOf("Brother", "Sister", "Grandpa", "Friend")),
+                Triple("พ่อแม่ รัก ลูก", "Parents|love|children", listOf("Single", "Married", "Ex", "Friend")),
+                Triple("พี่ชาย ไม่ โสด", "Older brother|is|not|single", listOf("Good", "Like", "Love", "Married")),
+                Triple("คุณตา รัก พี่สาว", "Grandfather|loves|older sister", listOf("husband", "wife", "parents", "ex-boyfriend")),
+                Triple("น้องสาว และ น้องชาย", "Younger sister|and|younger brother", listOf("mother", "father", "husband", "wife")),
+                Triple("คุณยาย มี แฟน ดี", "Grandmother|has|a|good|boyfriend", listOf("parents", "children", "single", "married"))
+            ),
+            506 to listOf(
+                Triple("I am tired and sleepy.", "ฉัน|เหนื่อย|และ|ง่วง", listOf("สบาย", "เศร้า", "โกรธ", "สวย")),
+                Triple("He speaks, I listen.", "เขา|พูด|ฉัน|ฟัง", listOf("เขียน", "อ่าน", "รู้", "ถาม")),
+                Triple("I do not understand what you say.", "ฉัน|ไม่เข้าใจ|คุณ|พูด", listOf("รู้", "ตอบ", "ถาม", "เขียน")),
+                Triple("เขากำลังพูดอะไร", "What|is|he|speaking?", listOf("Where", "Why", "When", "Who")),
+                Triple("เธอ น่ารัก และ ใจดี", "She|is|cute|and|kind", listOf("Tired", "Angry", "Sleepy", "Sad")),
+                Triple("ฉัน อยาก พูด ภาษาไทย", "I|want|to|speak|Thai", listOf("write", "listen", "read", "sleep")),
+                Triple("เธอ มีความสุข ไหม", "Are|you|happy?", listOf("tired", "sleepy", "sad", "angry")),
+                Triple("เขา โกรธ และ เศร้า", "He|is|angry|and|sad", listOf("happy", "comfortable", "cute", "kind")),
+                Triple("คุณ สวย และ ใจดี", "You|are|beautiful|and|kind", listOf("sad", "angry", "tired", "sleepy"))
+            ),
+            507 to listOf(
+                Triple("I like mango and sticky rice.", "ฉัน|ชอบ|มะม่วง|และ|ข้าวเหนียว", listOf("เบียร์", "ชาร้อน", "ส้ม", "ย่าง")),
+                Triple("Please give me young coconut water.", "ขอ|น้ำมะพร้าวอ่อน", listOf("สุรา", "ไวน์", "กล้วย", "สับปะรด")),
+                Triple("I want to drink Thai iced tea.", "ฉัน|อยาก|ดื่ม|ชาเย็น", listOf("ส้มตำ", "ไก่", "แกง", "สับปะรด")),
+                Triple("ทุเรียน มี กลิ่นหอม", "Durian|is|very|fragrant", listOf("Banana", "Watermelon", "Omelet", "Beer")),
+                Triple("ข้าวผัดปู และ ไข่เจียว", "Crab|fried|rice|and|omelet", listOf("Banana", "Young coconut water", "Hot tea", "Wine")),
+                Triple("ฉัน ชอบ กิน ส้ม", "I|like|to|eat|oranges", listOf("boil", "fry", "steam", "bake")),
+                Triple("ดื่ม ไวน์ และ เบียร์", "Drink|wine|and|beer", listOf("young coconut water", "orange juice", "hot tea", "omelet")),
+                Triple("ย่าง ไก่ และ ทอด ปลา", "Grill|chicken|and|deep-fry|fish", listOf("banana", "mango", "watermelon", "pineapple")),
+                Triple("ขอ น้ำส้ม และ น้ำแข็ง", "Please|give|orange|juice|and|ice", listOf("beer", "wine", "durian", "mango"))
+            ),
+            508 to listOf(
+                Triple("This red shirt is too expensive.", "เสื้อ|สีแดง|นี้|แพงเกินไป", listOf("ลดสุดๆ", "ถูก", "สีเขียว", "เงิน")),
+                Triple("I pay cash at the market.", "ฉัน|จ่ายเงินสด|ที่|ตลาดสด", listOf("ของขวัญ", "แว่นตากันแดด", "กระเป๋าสะพาย", "สีดำ")),
+                Triple("Please bargain for a discount.", "กรุณา|ต่อราคาลด", listOf("จ่ายเงินสด", "ของขวัญ", "สีเหลือง", "เล็กจิ๋ว")),
+                Triple("ฉัน ซื้อ เสื้อยืด สีขาว", "I|buy|a|white|t-shirt", listOf("black", "red", "blue", "green")),
+                Triple("กระเป๋าสะพาย สีน้ำเงิน ราคา ถูก", "The|blue|bag|is|cheap", listOf("expensive", "heavy", "thick", "old")),
+                Triple("เขา อยาก ซื้อ รองเท้าผ้าใบ", "He|wants|to|buy|sneakers", listOf("t-shirt", "pants", "socks", "hat")),
+                Triple("เสื้อยืด สีเขียว ตัว เล็กจิ๋ว", "The|green|t-shirt|is|tiny", listOf("red", "white", "black", "blue")),
+                Triple("ซื้อ แว่นตากันแดด และ หมวกฟาง", "Buy|sunglasses|and|a|straw|hat", listOf("pants", "socks", "t-shirt", "belt")),
+                Triple("จ่ายเงินสด ซื้อ ของขวัญ สีชมพู", "Pay|cash|to|buy|a|pink|gift", listOf("green", "black", "blue", "yellow"))
+            ),
+            509 to listOf(
+                Triple("Check-in at the hotel.", "เช็คอิน|โรงแรม", listOf("วีซ่า", "ตั๋ว", "ทางออก", "ทิศเหนือ")),
+                Triple("Please give me the room key.", "ขอ|กุญแจ|ห้องพัก", listOf("กระเป๋าเดินทาง", "พนักงานต้อนรับ", "หมอน", "สะพาน")),
+                Triple("I wait at the checkpoint.", "ฉัน|รอ|ที่|ด่านตรวจ", listOf("ไวไฟ", "อินเทอร์เน็ต", "ซอย", "ทิศใต้")),
+                Triple("แสดง หนังสือเดินทาง และ วีซ่า", "Show|passport|and|visa", listOf("key", "pillow", "map", "towel")),
+                Triple("เดิน ข้าม ทางม้าลาย", "Walk|cross|the|pedestrian|crossing", listOf("ride", "drive", "run", "stop")),
+                Triple("ขึ้นรถ ที่ ทางเข้า โรงแรม", "Get|on|at|the|hotel|entrance", listOf("exit", "gate", "bridge", "intersection")),
+                Triple("หลงทาง ใน ซอย", "Get|lost|in|the|alley", listOf("wait", "stop", "drive", "ride")),
+                Triple("พนักงานต้อนรับ ดี และ สุภาพ", "The|receptionist|is|good|and|polite", listOf("tired", "angry", "sad", "lazy")),
+                Triple("เลี้ยวขวา ที่ สามแยก", "Turn|right|at|the|junction", listOf("left", "straight", "bridge", "alley"))
+            ),
+            510 to listOf(
+                Triple("The doctor is generous and kind.", "หมอ|ใจกว้าง|และ|ใจดี", listOf("ตำรวจ", "ทหาร", "ครู", "นักเรียน")),
+                Triple("The student is diligent and polite.", "นักเรียน|ขยัน|และ|สุภาพ", listOf("หมอ", "ขี้เกียจ", "ขี้อาย", "ตำรวจ")),
+                Triple("คุย และ หัวเราะ", "Chat|and|laugh", listOf("cry", "work", "study", "meet up")),
+                Triple("ครู ช่วยเหลือ นักเรียน", "The|teacher|helps|students", listOf("doctor", "nurse", "police", "soldier")),
+                Triple("ฉัน สัญญา จะ ซื่อสัตย์", "I|promise|to|be|honest", listOf("lazy", "shy", "patient", "polite")),
+                Triple("พยาบาล ทำงาน ที่ โรงพยาบาล", "The|nurse|works|at|the|hospital", listOf("teacher", "student", "merchant", "soldier")),
+                Triple("ตำรวจ ซื่อสัตย์ และ ขยัน", "The|police|is|honest|and|diligent", listOf("lazy", "shy", "ex-boyfriend", "boss")),
+                Triple("น้องสาว ขี้อาย และ สุภาพ", "Younger|sister|is|shy|and|polite", listOf("generous", "cheerful", "honest", "lazy")),
+                Triple("ปู่ เกษียณ และ มี ความสุข", "Grandfather|is|retired|and|happy", listOf("teacher", "doctor", "student", "soldier"))
+            ),
+            511 to listOf(
+                Triple("Check the bill please.", "เก็บเงินด้วย", listOf("สั่งอาหาร", "รายการอาหาร", "ห่อกลับบ้าน", "รสชาติ")),
+                Triple("Please give me spoon and fork.", "ขอ|ช้อน|และ|ส้อม", listOf("ตะเกียบ", "มีด", "แก้วน้ำ", "จาน")),
+                Triple("I agree, the food is delicious.", "ฉัน|เห็นด้วย|อาหาร|อร่อย", listOf("ไม่เห็นด้วย", "ไม่จริง", "จริง", "แน่นอน")),
+                Triple("ฝนตก และ หนาว", "Raining|and|cold", listOf("hot", "sunny", "windy", "sky")),
+                Triple("ขอกระดาษทิชชู บน โต๊ะอาหาร", "Please|give|napkin|on|the|dining|table", listOf("spoon", "fork", "knife", "cup")),
+                Triple("พนักงานต้อนรับ สุภาพ แน่นอน", "The|waiter|is|polite|definitely", listOf("angry", "tired", "sad", "lazy")),
+                Triple("ฉัน ดีใจ ที่ คุณ สบายดี", "I|am|glad|that|you|are|healthy", listOf("sad", "angry", "hurt", "tired")),
+                Triple("สภาพอากาศ วันนี้ แดดออก", "The|weather|today|is|sunny", listOf("raining", "windy", "cold", "sky")),
+                Triple("สั่งอาหาร เผ็ดน้อย ได้ไหม", "Can|I|order|food|less|spicy?", listOf("take away", "check bill", "expensive", "cheap"))
+            ),
+            512 to listOf(
+                Triple("Pay with a credit card.", "จ่าย|บัตรเครดิตพลาสติก", listOf("เงินสดกระดาษ", "สลิปโอนเงิน", "คูปอง", "สบู่เหลวหอม")),
+                Triple("Please take a photo.", "ขอ|ถ่ายรูป", listOf("ลองสวม", "เลือกสรร", "ลืม", "หาย")),
+                Triple("I forget my passport.", "ฉัน|ลืม|หนังสือเดินทาง", listOf("กล้อง", "ไกด์", "คูปอง", "แชมพูสระผม")),
+                Triple("ระวัง ขโมย อันตราย", "Watch|out|dangerous|thief", listOf("towel", "umbrella", "soap", "shampoo")),
+                Triple("โอนเงินเข้า บัญชีเงินฝาก", "Transfer|money|to|the|account", listOf("ATM", "credit card", "receipt", "toothbrush")),
+                Triple("กล้อง สวยงาม และ ของแท้", "The|camera|is|beautiful|and|genuine", listOf("dangerous", "lost", "shampoo", "soap")),
+                Triple("สแกนคิวอาร์ จ่ายเงิน", "Scan|QR|to|pay|money", listOf("ATM", "credit card", "shampoo", "toothbrush")),
+                Triple("ไป โรงพยาบาล", "Go|to|the|hospital", listOf("hotel", "airport", "station", "shop")),
+                Triple("ไกด์ แนะนำ ของฝากเมืองไทย", "The|guide|recommends|Thai|souvenirs", listOf("camera", "shampoo", "soap", "toothpaste"))
+            ),
+            513 to listOf(
+                Triple("รวมกัน ที่ บ้าน", "Gather|at|home", listOf("party", "dessert", "garden", "fridge")),
+                Triple("I miss you forever.", "ฉัน|คิดถึงกัน|ตลอดไป", listOf("มีความรัก", "อบอุ่น", "ปลอดภัย", "มีความหวัง")),
+                Triple("The bedroom is warm and safe.", "ห้องนอน|อบอุ่น|และ|ปลอดภัย", listOf("ห้องครัว", "ทีวี", "ตู้เย็น", "หน้าต่าง")),
+                Triple("มีความรัก และ ความสุข", "In|love|and|happiness", listOf("sadness", "tired", "angry", "sleepy")),
+                Triple("เปิด ประตู และ หน้าต่าง", "Open|door|and|window", listOf("TV", "fridge", "bed", "garden")),
+                Triple("กิน ของหวาน ใน ห้องครัว", "Eat|dessert|in|the|kitchen", listOf("bedroom", "living room", "garden", "TV")),
+                Triple("งานเลี้ยง มี ความสุข", "The|party|has|happiness", listOf("bedroom", "fridge", "door", "window")),
+                Triple("มี น้ำส้ม ใน ตู้เย็น", "There|is|orange|juice|in|the|fridge", listOf("bed", "TV", "door", "window")),
+                Triple("นอน บน เตียงนอน", "Sleep|on|the|bed", listOf("TV", "fridge", "window", "door"))
+            )
+        )
+
+        for ((lId, sList) in extraSentences) {
+            for (i in sList.indices) {
+                val (questionText, correctAnswer, distractors) = sList[i]
+                val correctList = correctAnswer.split("|")
+                val options = (correctList + distractors).shuffled()
+                val type = ExerciseType.SENTENCE_BUILD
+                
+                if (i < 3) {
+                    list.add(Exercise(
+                        id = lId * 100 + (i + 1),
+                        lessonId = lId,
+                        type = type,
+                        prompt = "Assemble the Thai words that translate this sentence:",
+                        question = questionText,
+                        correctAnswer = correctAnswer,
+                        romanization = "",
+                        options = options,
+                        audioText = correctAnswer.replace("|", " ")
+                    ))
+                } else if (i < 6) {
+                    list.add(Exercise(
+                        id = lId * 100 + (i + 1),
+                        lessonId = lId,
+                        type = type,
+                        prompt = "Translate this Thai sentence into English:",
+                        question = questionText,
+                        correctAnswer = correctAnswer,
+                        romanization = "",
+                        options = options,
+                        audioText = ""
+                    ))
+                } else {
+                    list.add(Exercise(
+                        id = lId * 100 + (i + 1),
+                        lessonId = lId,
+                        type = type,
+                        prompt = "Listen and assemble the English translation:",
+                        question = "",
+                        correctAnswer = correctAnswer,
+                        romanization = "",
+                        options = options,
+                        audioText = questionText
+                    ))
+                }
             }
         }
 
