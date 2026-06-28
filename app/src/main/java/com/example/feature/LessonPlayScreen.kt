@@ -1331,17 +1331,27 @@ fun BottomActionStrip(
                                 fontSize = 14.sp,
                                 color = WarningText.copy(alpha = 0.8f)
                             )
-                        } else if (!isCorrect) {
+                        } else {
                             val formattedCorrectAnswer = if (currentType == ExerciseType.SENTENCE_BUILD) {
                                 correctAnswer.replace("|", " ")
                             } else {
                                 correctAnswer
                             }
-                            Text(
-                                text = "Correct answer: $formattedCorrectAnswer",
-                                fontSize = 14.sp,
-                                color = IncorrectText.copy(alpha = 0.8f)
-                            )
+                            if (!isCorrect) {
+                                Text(
+                                    text = "Correct answer: $formattedCorrectAnswer",
+                                    fontSize = 14.sp,
+                                    color = IncorrectText.copy(alpha = 0.8f),
+                                    modifier = copyOnLongPressModifier(formattedCorrectAnswer)
+                                )
+                            } else {
+                                Text(
+                                    text = "Answer: $formattedCorrectAnswer",
+                                    fontSize = 14.sp,
+                                    color = CorrectText.copy(alpha = 0.8f),
+                                    modifier = copyOnLongPressModifier(formattedCorrectAnswer)
+                                )
+                            }
                         }
                     }
                 }

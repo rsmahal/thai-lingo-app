@@ -748,7 +748,11 @@ fun ReviewQuizOverlay(
                 if (isChecking) {
                     val messageTitle = if (isCorrect == true) "Correct Review!" else "Need revision"
                     val messageDesc = if (isCorrect == true) {
-                        "Excellent! Spacing interval pushed to next memory station."
+                        if (currentSubStep == 0) {
+                            "Correct: \"${word.english}\". Excellent!"
+                        } else {
+                            "Correct: \"${word.thai}\". Excellent!"
+                        }
                     } else {
                         if (currentSubStep == 0) {
                             "Correct: \"${word.english}\". Re-scheduled for immediate practice."
@@ -756,6 +760,7 @@ fun ReviewQuizOverlay(
                             "Correct: \"${word.thai}\". Re-scheduled for immediate practice."
                         }
                     }
+                    val clipboardText = if (currentSubStep == 0) word.english else word.thai
                     val icon = if (isCorrect == true) Icons.Default.CheckCircle else Icons.Default.Error
                     val iconColor = if (isCorrect == true) CorrectText else HeartRed
 
@@ -781,7 +786,8 @@ fun ReviewQuizOverlay(
                                 text = messageDesc,
                                 fontSize = 13.sp,
                                 color = iconColor.copy(alpha = 0.85f),
-                                lineHeight = 18.sp
+                                lineHeight = 18.sp,
+                                modifier = copyOnLongPressModifier(clipboardText)
                             )
                         }
                     }

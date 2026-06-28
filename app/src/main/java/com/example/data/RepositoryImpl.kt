@@ -201,6 +201,22 @@ class RepositoryImpl(
         val vocabulary = getSampleVocabulary()
         vocabularyDao.insertVocabulary(vocabulary.map { VocabularyEntity.fromDomain(it) })
 
+        // 1.5. Synchronize existing review words with the latest vocabulary definitions
+        // to update fields like english, romanization, and category if they have changed.
+        val latestVocabMap = vocabulary.associateBy { it.thai }
+        val existingReviewWords = reviewWordDao.getAllReviewWordsOnce()
+        for (rw in existingReviewWords) {
+            val matchingVocab = latestVocabMap[rw.thai]
+            if (matchingVocab != null && (rw.english != matchingVocab.english || rw.romanization != matchingVocab.romanization || rw.category != matchingVocab.category)) {
+                val updatedRw = rw.copy(
+                    english = matchingVocab.english,
+                    romanization = matchingVocab.romanization,
+                    category = matchingVocab.category
+                )
+                reviewWordDao.insertReviewWord(updatedRw)
+            }
+        }
+
         // 2. Clear and Insert all Exercises (ensures edits to sentence paths operate correctly/instantly)
         exerciseDao.clearExercises()
         val exercises = getSampleExercises()

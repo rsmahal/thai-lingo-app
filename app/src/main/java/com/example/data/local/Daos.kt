@@ -80,6 +80,9 @@ interface ReviewWordDao {
     @Query("SELECT * FROM review_words ORDER BY addedAt DESC")
     fun getAllReviewWords(): Flow<List<ReviewWordEntity>>
 
+    @Query("SELECT * FROM review_words")
+    suspend fun getAllReviewWordsOnce(): List<ReviewWordEntity>
+
     @Query("SELECT * FROM review_words WHERE thai = :thai LIMIT 1")
     suspend fun getReviewWord(thai: String): ReviewWordEntity?
 
